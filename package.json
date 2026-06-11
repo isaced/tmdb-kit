@@ -1,35 +1,74 @@
 {
-  "name": "tsdown-starter",
+  "name": "tmdb-sdk",
   "type": "module",
-  "version": "0.0.0",
-  "description": "A starter for creating a TypeScript package.",
-  "author": "Author Name <author.name@mail.com>",
+  "version": "0.1.0-beta.0",
+  "description": "A tiny, typed, zero-runtime-dependency TMDB SDK for Node.js, Bun, Deno, and edge runtimes.",
+  "author": "isaced",
   "license": "MIT",
-  "homepage": "https://github.com/author/library#readme",
+  "homepage": "https://github.com/isaced/tmdb-sdk#readme",
+  "keywords": [
+    "tmdb",
+    "themoviedb",
+    "sdk",
+    "typescript",
+    "node",
+    "bun",
+    "deno",
+    "edge",
+    "esm",
+    "cjs"
+  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/author/library.git"
+    "url": "git+https://github.com/isaced/tmdb-sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/author/library/issues"
+    "url": "https://github.com/isaced/tmdb-sdk/issues"
   },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@11.12.1",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      },
+      "default": "./dist/index.js"
+    },
     "./package.json": "./package.json"
   },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
+    "ci": "npm run typecheck && npm run test:coverage && npm run build",
     "release": "bumpp",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "npm run ci"
   },
   "devDependencies": {
     "@types/node": "^25.6.2",
+    "@vitest/coverage-v8": "^4.1.5",
     "@typescript/native-preview": "7.0.0-dev.20260509.2",
     "bumpp": "^11.1.0",
     "tsdown": "^0.22.0",
