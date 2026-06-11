@@ -78,7 +78,6 @@ export interface MovieDetails extends Omit<MovieSummary, 'genre_ids'> {
   genres: Genre[]
   homepage: string | null
   imdb_id: string | null
-  origin_country?: string[]
   production_companies: ProductionCompany[]
   production_countries: ProductionCountry[]
   revenue: number
