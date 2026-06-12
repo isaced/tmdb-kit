@@ -1,5 +1,12 @@
 # tmdb-kit
 
+[![npm version](https://img.shields.io/npm/v/tmdb-kit)](https://www.npmjs.com/package/tmdb-kit)
+[![CI](https://img.shields.io/github/actions/workflow/status/isaced/tmdb-kit/ci.yml?branch=main)](https://github.com/isaced/tmdb-kit/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/tmdb-kit)](https://github.com/isaced/tmdb-kit/blob/main/LICENSE)
+[![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+[![typescript](https://img.shields.io/badge/typescript-strict-blue)](https://www.typescriptlang.org)
+[![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/isaced/tmdb-kit/actions/workflows/ci.yml)
+
 A tiny, typed, zero-runtime-dependency TMDB SDK for Node.js, Bun, Deno, and edge runtimes.
 
 This package intentionally does not generate code from OpenAPI. It ships a small hand-designed API surface for common TMDB workflows, plus a typed `request<T>()` escape hatch for endpoints that are not wrapped yet.
@@ -10,7 +17,7 @@ This package intentionally does not generate code from OpenAPI. It ships a small
 - Built with tsdown and published as ESM + CommonJS.
 - Uses only Web standard APIs: `fetch`, `Headers`, `URL`, and `AbortSignal`.
 - Works in Node.js 18+, Bun, Deno, Cloudflare Workers, Vercel Edge, and other fetch-compatible runtimes.
-- Typed resources for movies, TV, search, trending, people, genres, configuration, credits, videos, and images.
+- Typed resources for movies, TV, search, trending, people, genres, configuration, and images.
 - Injectable `TMDBTransport` for tests, caching, and instrumentation — no need to mock `fetch` or `createTMDB` itself.
 - Image URL transforms (CDN / proxy / signed URLs) and search-result type guards.
 - High-coverage unit tests with mocked fetch; no real TMDB requests in tests.
@@ -116,7 +123,7 @@ import { createTMDB, type TMDBTransport } from 'tmdb-kit'
 
 const stub: TMDBTransport = {
   defaults: { imageBaseUrl: 'https://image.tmdb.org/t/p' },
-  get: async (path) => ({ results: [] }),
+  get: async (path, _options) => ({ results: [] }),
 }
 
 const tmdb = createTMDB({ accessToken: 'x', transport: stub })
@@ -300,7 +307,11 @@ without giving up forward-compatibility.
 ## Errors
 
 ```ts
-import { TMDBRateLimitError, TMDBResponseError } from 'tmdb-kit'
+import {
+  TMDBRateLimitError,
+  TMDBRequestError,
+  TMDBResponseError,
+} from 'tmdb-kit'
 
 try {
   await tmdb.movies.popular()
@@ -312,6 +323,10 @@ try {
     console.log('rate limited; retry in', error.retryAfter, 's')
   } else if (error instanceof TMDBResponseError) {
     console.log(error.status, error.statusCode, error.statusMessage)
+  } else if (error instanceof TMDBRequestError) {
+    // Thrown when a request fails before receiving a response (e.g. network
+    // error, no fetch implementation found, or invalid client configuration).
+    console.log('request error:', error.message)
   }
 }
 ```
