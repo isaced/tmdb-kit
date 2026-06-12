@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TMDBRequestError, TMDBResponseError, type FetchLike } from '../../src'
+import { TMDBRateLimitError, TMDBRequestError, TMDBResponseError, type FetchLike } from '../../src'
 import { TMDBHttpClient } from '../../src/http'
 import { expectNoQuery, expectRequest } from '../_support/assertions'
 import { createFetchMock, emptyResponse, textResponse } from '../_support/fetch'
@@ -245,5 +245,27 @@ describe('TMDBHttpClient', () => {
       statusCode: undefined,
       statusMessage: undefined,
     })
+  })
+
+  it('surfaces 429 responses as TMDBRateLimitError with the parsed Retry-After value', async () => {
+    const mock = createFetchMock({
+      body: { status_message: 'Too many requests', status_code: 25 },
+      headers: { 'retry-after': '7' },
+      status: 429,
+      statusText: 'Too Many Requests',
+    })
+    const http = new TMDBHttpClient({ accessToken: 'read-token', fetch: mock.fetch })
+
+    const error = (await http.get('/movie/popular').catch((value: unknown) => value)) as TMDBResponseError
+
+    expect(error).toBeInstanceOf(TMDBRateLimitError)
+    expect(error).toBeInstanceOf(TMDBResponseError)
+    expect(error.isRateLimit).toBe(true)
+    expect(error.message).toBe('Too many requests')
+    expect(error.status).toBe(429)
+    expect(error.statusCode).toBe(25)
+    if (error instanceof TMDBRateLimitError) {
+      expect(error.retryAfter).toBe(7)
+    }
   })
 })

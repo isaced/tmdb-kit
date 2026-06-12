@@ -263,16 +263,35 @@ const people = results.filter(isPersonSearchResult) // PersonMultiResult[]
 ## Errors
 
 ```ts
-import { TMDBResponseError } from 'tmdb-kit'
+import { TMDBRateLimitError, TMDBResponseError } from 'tmdb-kit'
 
 try {
   await tmdb.movies.popular()
 } catch (error) {
-  if (error instanceof TMDBResponseError) {
+  if (error instanceof TMDBRateLimitError) {
+    // 429 — TMDB asked the caller to back off. The SDK does NOT retry
+    // automatically; back off for `retryAfter` seconds (or use your own
+    // policy) and try again.
+    console.log('rate limited; retry in', error.retryAfter, 's')
+  } else if (error instanceof TMDBResponseError) {
     console.log(error.status, error.statusCode, error.statusMessage)
   }
 }
 ```
+
+`TMDBResponseError` exposes convenience getters for the most common
+status codes:
+
+| Getter | Status |
+| --- | --- |
+| `isUnauthorized` | 401 |
+| `isForbidden` | 403 |
+| `isNotFound` | 404 |
+| `isRateLimit` | 429 |
+| `isServerError` | 5xx |
+
+All errors are also instances of the base class `TMDBError`; use that
+when you want a single catch-all.
 
 ## Development
 
