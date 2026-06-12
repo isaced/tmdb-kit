@@ -382,6 +382,97 @@ export type ProfileSize = 'w45' | 'w185' | 'h632' | 'original' | (string & {})
 export type StillSize = 'w92' | 'w185' | 'w300' | 'original' | (string & {})
 export type ImageSize = BackdropSize | LogoSize | PosterSize | ProfileSize | StillSize
 
+/**
+ * Public set of image sizes TMDB currently documents. The SDK does not
+ * pin to a static copy of the TMDB docs — TMDB has added new sizes in
+ * the past (e.g. `h632` for profile) without notice — but exposing the
+ * canonical list lets callers:
+ *
+ * - iterate over the set to build a size picker
+ * - validate user-supplied sizes with `isKnownBackdropSize(...)` etc.
+ * - type a variable as a "known" size without giving up the
+ *   `(string & {})` escape hatch for forward-compatibility
+ *
+ * If TMDB publishes a new size, the SDK will still accept it at runtime
+ * (every helper is `(string & {})` permissive), but you will need to
+ * add the literal to these constants to get autocomplete on it.
+ */
+export const KNOWN_BACKDROP_SIZES = Object.freeze(['w300', 'w780', 'w1280', 'original'] as const)
+export const KNOWN_LOGO_SIZES = Object.freeze([
+  'w45',
+  'w92',
+  'w154',
+  'w185',
+  'w300',
+  'w500',
+  'original',
+] as const)
+export const KNOWN_POSTER_SIZES = Object.freeze([
+  'w92',
+  'w154',
+  'w185',
+  'w342',
+  'w500',
+  'w780',
+  'original',
+] as const)
+export const KNOWN_PROFILE_SIZES = Object.freeze(['w45', 'w185', 'h632', 'original'] as const)
+export const KNOWN_STILL_SIZES = Object.freeze(['w92', 'w185', 'w300', 'original'] as const)
+
+/** Union of every documented image size. */
+export const KNOWN_IMAGE_SIZES = Object.freeze([
+  ...KNOWN_BACKDROP_SIZES,
+  ...KNOWN_LOGO_SIZES,
+  ...KNOWN_POSTER_SIZES,
+  ...KNOWN_PROFILE_SIZES,
+  ...KNOWN_STILL_SIZES,
+] as const)
+
+export type KnownBackdropSize = (typeof KNOWN_BACKDROP_SIZES)[number]
+export type KnownLogoSize = (typeof KNOWN_LOGO_SIZES)[number]
+export type KnownPosterSize = (typeof KNOWN_POSTER_SIZES)[number]
+export type KnownProfileSize = (typeof KNOWN_PROFILE_SIZES)[number]
+export type KnownStillSize = (typeof KNOWN_STILL_SIZES)[number]
+export type KnownImageSize =
+  | KnownBackdropSize
+  | KnownLogoSize
+  | KnownPosterSize
+  | KnownProfileSize
+  | KnownStillSize
+
+/** O(1) membership check backed by a Set. */
+const KNOWN_BACKDROP_SET: ReadonlySet<string> = new Set(KNOWN_BACKDROP_SIZES)
+const KNOWN_LOGO_SET: ReadonlySet<string> = new Set(KNOWN_LOGO_SIZES)
+const KNOWN_POSTER_SET: ReadonlySet<string> = new Set(KNOWN_POSTER_SIZES)
+const KNOWN_PROFILE_SET: ReadonlySet<string> = new Set(KNOWN_PROFILE_SIZES)
+const KNOWN_STILL_SET: ReadonlySet<string> = new Set(KNOWN_STILL_SIZES)
+const KNOWN_IMAGE_SET: ReadonlySet<string> = new Set(KNOWN_IMAGE_SIZES)
+
+export function isKnownBackdropSize(value: string): value is KnownBackdropSize {
+  return KNOWN_BACKDROP_SET.has(value)
+}
+
+export function isKnownLogoSize(value: string): value is KnownLogoSize {
+  return KNOWN_LOGO_SET.has(value)
+}
+
+export function isKnownPosterSize(value: string): value is KnownPosterSize {
+  return KNOWN_POSTER_SET.has(value)
+}
+
+export function isKnownProfileSize(value: string): value is KnownProfileSize {
+  return KNOWN_PROFILE_SET.has(value)
+}
+
+export function isKnownStillSize(value: string): value is KnownStillSize {
+  return KNOWN_STILL_SET.has(value)
+}
+
+/** True if `value` is in any documented size set. */
+export function isKnownImageSize(value: string): value is KnownImageSize {
+  return KNOWN_IMAGE_SET.has(value)
+}
+
 export type MovieAppendToResponse =
   | 'account_states'
   | 'alternative_titles'

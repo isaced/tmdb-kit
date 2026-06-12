@@ -14,6 +14,20 @@ export {
   isTV,
   isTVSearchResult,
 } from './search-guards'
+export {
+  isKnownBackdropSize,
+  isKnownImageSize,
+  isKnownLogoSize,
+  isKnownPosterSize,
+  isKnownProfileSize,
+  isKnownStillSize,
+  KNOWN_BACKDROP_SIZES,
+  KNOWN_IMAGE_SIZES,
+  KNOWN_LOGO_SIZES,
+  KNOWN_POSTER_SIZES,
+  KNOWN_PROFILE_SIZES,
+  KNOWN_STILL_SIZES,
+} from './types'
 export type { ImageUrlTransform } from './resources/images'
 
 export type {
@@ -43,6 +57,12 @@ export type {
   ImagesResponse,
   ImageSize,
   JobDepartment,
+  KnownBackdropSize,
+  KnownImageSize,
+  KnownLogoSize,
+  KnownPosterSize,
+  KnownProfileSize,
+  KnownStillSize,
   Language,
   LanguageCode,
   LanguageOptions,

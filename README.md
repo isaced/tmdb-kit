@@ -260,6 +260,43 @@ const people = results.filter(isPersonSearchResult) // PersonMultiResult[]
   `search.people`) already return the narrowed result type, so the
   guards are only useful for `search.multi()` payloads.
 
+## Image Sizes
+
+The `ImageSize` type is intentionally permissive — TMDB has added new
+sizes in the past (e.g. `h632` for profile) without notice, and the SDK
+keeps the `(string & {})` escape hatch so any future size keeps
+working at runtime. If you need the canonical set of documented sizes,
+the SDK ships them as readonly constants:
+
+```ts
+import {
+  KNOWN_BACKDROP_SIZES,
+  KNOWN_LOGO_SIZES,
+  KNOWN_POSTER_SIZES,
+  KNOWN_PROFILE_SIZES,
+  KNOWN_STILL_SIZES,
+  KNOWN_IMAGE_SIZES,
+  isKnownBackdropSize,
+  isKnownImageSize,
+  // …plus one helper per type
+} from 'tmdb-kit'
+
+// Iterate to build a size picker
+for (const size of KNOWN_POSTER_SIZES) {
+  console.log(size) // 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original'
+}
+
+// Validate user-supplied sizes at runtime
+if (!isKnownPosterSize(userInput)) {
+  throw new Error(`Unknown TMDB poster size: ${userInput}`)
+}
+```
+
+`KnownBackdropSize` / `KnownPosterSize` / `KnownLogoSize` /
+`KnownProfileSize` / `KnownStillSize` / `KnownImageSize` are the
+matching TS literal-union types for callers that want strict typing
+without giving up forward-compatibility.
+
 ## Errors
 
 ```ts
