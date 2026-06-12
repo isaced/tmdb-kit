@@ -63,6 +63,7 @@
     "test:unit": "vitest run tests/unit",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "typecheck": "tsc --noEmit",
     "ci": "npm run typecheck && npm run test:coverage && npm run build",
     "release": "bumpp",
