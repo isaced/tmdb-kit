@@ -11,6 +11,8 @@ This package intentionally does not generate code from OpenAPI. It ships a small
 - Uses only Web standard APIs: `fetch`, `Headers`, `URL`, and `AbortSignal`.
 - Works in Node.js 18+, Bun, Deno, Cloudflare Workers, Vercel Edge, and other fetch-compatible runtimes.
 - Typed resources for movies, TV, search, trending, people, genres, configuration, credits, videos, and images.
+- Injectable `TMDBTransport` for tests, caching, and instrumentation — no need to mock `fetch` or `createTMDB` itself.
+- Image URL transforms (CDN / proxy / signed URLs) and search-result type guards.
 - High-coverage unit tests with mocked fetch; no real TMDB requests in tests.
 
 ## Install
@@ -68,6 +70,61 @@ createTMDB({ apiKey: 'tmdb-v3-api-key' })
 ```
 
 Exactly one of `accessToken` or `apiKey` is required.
+
+## Configuration
+
+The factory accepts a few options beyond authentication:
+
+```ts
+import { createTMDB } from 'tmdb-kit'
+
+const tmdb = createTMDB({
+  accessToken: 'tmdb-read-access-token',
+
+  // Defaults to https://api.themoviedb.org/3. Useful for tests or proxies.
+  baseUrl: 'https://api.themoviedb.org/3',
+
+  // Inject a fetch implementation. The SDK reads `globalThis.fetch` lazily
+  // on every request, so test-time mocks (vi.spyOn, etc.) are picked up
+  // automatically after the client has been constructed.
+  fetch: customFetch,
+
+  // Defaults applied to every request that supports them.
+  defaultLanguage: 'en-US',
+  defaultRegion: 'US',
+
+  // Custom image host. Defaults to https://image.tmdb.org/t/p.
+  imageBaseUrl: 'https://image.tmdb.org/t/p',
+
+  // Image URL transform applied by the ImagesHelper. See "Image URLs".
+  images: {
+    transform: (url) => url.replace('image.tmdb.org/t/p', 'img-proxy.example/tmdb'),
+  },
+
+  // Extra headers merged into every request before authentication.
+  headers: { 'X-Client': 'my-app' },
+})
+```
+
+### Injecting a custom transport
+
+For tests, caching, or instrumentation, you can swap the entire transport
+layer instead of mocking `fetch`:
+
+```ts
+import { createTMDB, type TMDBTransport } from 'tmdb-kit'
+
+const stub: TMDBTransport = {
+  defaults: { imageBaseUrl: 'https://image.tmdb.org/t/p' },
+  get: async (path) => ({ results: [] }),
+}
+
+const tmdb = createTMDB({ accessToken: 'x', transport: stub })
+```
+
+`transport.get()` is called for every resource and for the `request()`
+escape hatch, so a single stub covers the whole surface area.
+`TMDBTransport` is exported as part of the public API.
 
 ## Supported Resources
 
@@ -128,6 +185,79 @@ const response = await tmdb.request<{ results: unknown[] }>('/discover/movie', {
   },
 })
 ```
+
+## Image URLs
+
+`tmdb.images.url(path, size)` builds a fully-qualified image URL. The
+helper returns `null` for nullish paths so UI code can branch naturally:
+
+```ts
+const posterUrl = tmdb.images.url(movie.poster_path, 'w500')
+```
+
+### Routing images through a CDN or proxy
+
+Pass a `transform` callback to rewrite the resolved URL. The most common
+use case is pointing TMDB image requests at a self-hosted proxy:
+
+```ts
+const tmdb = createTMDB({
+  accessToken: 'x',
+  images: {
+    transform: (url) => url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb'),
+  },
+})
+
+tmdb.images.url('/abc.jpg', 'w500')
+// → 'https://img-proxy.example/tmdb/w500/abc.jpg'
+```
+
+You can also pass a one-off transform per call — useful for adding
+signed query parameters for selected sizes:
+
+```ts
+tmdb.images.url('/abc.jpg', 'original', {
+  transform: (url) => `${url}?signature=...`,
+})
+```
+
+The transform is never invoked for nullish paths, so `null` results stay
+`null`.
+
+`buildImageUrl(path, size, options)` is exported directly for callers
+that want to build URLs without a `TMDBClient` instance.
+
+## Search
+
+`search.multi()` returns a union of movie / TV / person results. Filter
+out media types you do not want and narrow the result type with the
+provided type guards:
+
+```ts
+import {
+  createTMDB,
+  isMovieSearchResult,
+  isTVSearchResult,
+  isPersonSearchResult,
+} from 'tmdb-kit'
+
+const { results } = await tmdb.search.multi('Inception', {
+  exclude: ['person'],
+})
+
+const movies = results.filter(isMovieSearchResult) // MovieMultiResult[]
+const tvShows = results.filter(isTVSearchResult) // TVMultiResult[]
+const people = results.filter(isPersonSearchResult) // PersonMultiResult[]
+```
+
+- `exclude` performs client-side filtering — the TMDB multi-search
+  endpoint has no server-side media_type filter. `total_results` reflects
+  the unfiltered payload; the filtered count is just `results.length`.
+- Short-name aliases `isMovie` / `isTV` / `isPerson` are also exported
+  for callers that prefer them.
+- The single-resource search methods (`search.movies`, `search.tv`,
+  `search.people`) already return the narrowed result type, so the
+  guards are only useful for `search.multi()` payloads.
 
 ## Errors
 
