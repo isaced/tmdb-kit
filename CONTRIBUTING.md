@@ -4,7 +4,7 @@ Thanks for your interest in contributing! This guide covers the basics to get yo
 
 ## Prerequisites
 
-- Bun 1.4+ (the published package still supports Node.js 18+)
+- Bun 1.4.4+ (the published package still supports Node.js 18+)
 
 ## Getting Started
 

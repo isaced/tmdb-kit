@@ -349,7 +349,7 @@ when you want a single catch-all.
 
 ## Development
 
-Requires [Bun](https://bun.sh) 1.4+ (the published package still runs on Node.js 18+).
+Requires [Bun](https://bun.sh) 1.4.4+ (the published package still runs on Node.js 18+).
 
 ```bash
 bun install
