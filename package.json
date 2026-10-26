@@ -1,7 +1,7 @@
 {
   "name": "tmdb-kit",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A tiny, typed, zero-runtime-dependency TMDB SDK and CLI for Node.js, Bun, Deno, and edge runtimes.",
   "author": "isaced",
   "license": "MIT",
