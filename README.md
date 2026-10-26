@@ -25,6 +25,7 @@ A minimal, fully typed SDK and read-only command-line interface (CLI) for The Mo
   - [Search](#search)
   - [Image sizes](#image-sizes)
   - [Errors](#errors)
+  - [Optional helpers](#optional-helpers)
 - [CLI](#cli)
   - [Credentials and config](#credentials-and-config)
   - [Commands](#commands)
@@ -292,6 +293,69 @@ try {
 | `isServerError`  | 5xx    |
 
 All errors extend `TMDBError`, which you can use as a single catch-all.
+
+### Optional helpers
+
+These helpers are opt-in and never change the default client behavior. They are exported from the package root and tree-shake out when unused.
+
+**Pagination**
+
+```ts
+import { paginate, paginateItems } from 'tmdb-kit'
+
+for await (const page of paginate((page) => tmdb.movies.popular({ page, region: 'CN' }))) {
+  console.log(page.page, page.results.length)
+}
+
+// Or iterate items directly.
+for await (const movie of paginateItems((page) => tmdb.movies.popular({ page }))) {
+  console.log(movie.title)
+}
+```
+
+`paginate` stops at `total_pages`, an empty page, `maxPages` (default 500), or an aborted signal.
+
+**Retry**
+
+```ts
+import { createTMDB, retry, TMDBHttpClient, withRetry } from 'tmdb-kit'
+
+// Wrap one call.
+const movie = await retry(() => tmdb.movies.details(550), { retries: 3 })
+
+// Or wrap the transport once.
+const http = new TMDBHttpClient({ accessToken: 'your_access_token_here' })
+const retrying = createTMDB({
+  accessToken: 'your_access_token_here',
+  transport: withRetry(http, { retries: 3 }),
+})
+```
+
+Retries 429 using `Retry-After`, retries 5xx and network failures with exponential backoff, and leaves other errors untouched. The SDK itself still never retries by default.
+
+**Timeout**
+
+```ts
+import { withTimeout } from 'tmdb-kit'
+
+const movie = await withTimeout(5_000, (signal) => tmdb.movies.details(550, { signal }))
+```
+
+Timeouts reject with `TMDBTimeoutError`. The task must forward the signal to the SDK.
+
+**Memory cache**
+
+```ts
+import { createTMDB, TMDBHttpClient, withMemoryCache } from 'tmdb-kit'
+
+const http = new TMDBHttpClient({ accessToken: 'your_access_token_here' })
+const cached = createTMDB({
+  accessToken: 'your_access_token_here',
+  transport: withMemoryCache(http, { ttlMs: 60_000, maxEntries: 200 }),
+})
+```
+
+The cache key includes the path, query, and headers, only successful responses are stored, and `clear()` invalidates every entry.
 
 ## CLI
 

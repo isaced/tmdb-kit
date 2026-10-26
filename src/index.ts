@@ -1,5 +1,25 @@
 export { createTMDB, TMDBClient, type TMDBFactoryOptions } from './client'
-export { TMDBError, TMDBRateLimitError, TMDBRequestError, TMDBResponseError } from './errors'
+export {
+  TMDBError,
+  TMDBRateLimitError,
+  TMDBRequestError,
+  TMDBResponseError,
+  TMDBTimeoutError,
+} from './errors'
+export { TMDBHttpClient } from './http'
+export {
+  withMemoryCache,
+  type MemoryCacheOptions,
+  type MemoryCacheTransport,
+} from './helpers/cache'
+export {
+  paginate,
+  paginateItems,
+  type PageFetcher,
+  type PaginateOptions,
+} from './helpers/pagination'
+export { retry, withRetry, type RetryInfo, type RetryOptions } from './helpers/retry'
+export { withTimeout, type TimeoutOptions } from './helpers/timeout'
 export { buildImageUrl } from './query'
 export {
   isMovie,

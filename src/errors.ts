@@ -32,6 +32,23 @@ export class TMDBRequestError extends TMDBError {
   }
 }
 
+/**
+ * Thrown when a request exceeds the timeout supplied to `withTimeout()`.
+ *
+ * The timeout helper aborts the request's AbortSignal and converts the
+ * resulting abort into this error so timeouts are distinguishable from
+ * caller-initiated cancellation.
+ */
+export class TMDBTimeoutError extends TMDBError {
+  readonly timeoutMs: number
+
+  constructor(timeoutMs: number, message = `TMDB request timed out after ${timeoutMs}ms`) {
+    super(message)
+    this.name = 'TMDBTimeoutError'
+    this.timeoutMs = timeoutMs
+  }
+}
+
 /** Thrown when TMDB returns a non-2xx response. */
 export class TMDBResponseError extends TMDBError {
   readonly body: JsonValue | undefined
@@ -94,7 +111,8 @@ export interface TMDBRateLimitErrorOptions extends TMDBResponseErrorOptions {
  *
  * The SDK does NOT retry automatically — that decision is left to the
  * caller, since retry policies vary widely. Inspect `retryAfter` to
- * implement your own backoff.
+ * implement your own backoff, or use the optional `retry()` / `withRetry()`
+ * helpers for a TMDB-aware default.
  */
 export class TMDBRateLimitError extends TMDBResponseError {
   readonly retryAfter: number
