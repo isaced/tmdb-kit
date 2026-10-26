@@ -14,6 +14,7 @@ A minimal, fully typed SDK and read-only command-line interface (CLI) for The Mo
 
 - [Features](#features)
 - [Install](#install)
+- [Agent skills](#agent-skills)
 - [SDK](#sdk)
   - [Create a client](#create-a-client)
   - [Authentication](#authentication)
@@ -64,6 +65,21 @@ npm install --global tmdb-kit
 ```
 
 The CLI is available as `tmdb`.
+
+## Agent skills
+
+Two [Agent Skills](https://agentskills.io) ship with this repository, so coding agents can use the SDK and the CLI without reading these docs first:
+
+| Skill                                          | Use it when                                                |
+| ---------------------------------------------- | ---------------------------------------------------------- |
+| [`tmdb-kit`](skills/tmdb-kit/SKILL.md)         | Writing code that calls the TMDB API through the SDK       |
+| [`tmdb-kit-cli`](skills/tmdb-kit-cli/SKILL.md) | Running the `tmdb` command for lookups and shell pipelines |
+
+Install them into your agent's skills directory with [skills.sh](https://skills.sh):
+
+```bash
+npx skills add isaced/tmdb-kit
+```
 
 ## SDK
 
