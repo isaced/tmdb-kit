@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs'
-import { Readable } from 'node:stream'
 import { runCommand } from 'citty'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { authCommand } from '../../../src/cli/commands/auth'
 import { readConfig, setConfigValue } from '../../../src/cli/config'
 import { movieDetails } from '../fixtures'
@@ -11,6 +10,7 @@ import {
   mockFetch,
   useCliTestEnv,
   withStdin,
+  withTTY,
 } from '../helpers'
 
 const readlineMocks = vi.hoisted(() => {
@@ -31,7 +31,14 @@ vi.mock('node:readline/promises', () => ({
 describe('auth command', () => {
   const env = useCliTestEnv()
 
-  it('validates and saves a token from stdin', async () => {
+  beforeEach(() => {
+    readlineMocks.question.mockReset()
+    readlineMocks.question.mockResolvedValue('tty-token')
+    readlineMocks.createInterface.mockClear()
+    readlineMocks.close.mockClear()
+  })
+
+  it('validates and saves a token from stdin with --force', async () => {
     setConfigValue('language', 'zh-CN')
     setConfigValue('apiKey', 'old-key')
     const { calls } = mockFetch(() => jsonResponse(movieDetails()))
@@ -39,7 +46,7 @@ describe('auth command', () => {
 
     await withStdin('new-token\n', async () => {
       await runCommand(authCommand, {
-        rawArgs: ['login', '--token-stdin'],
+        rawArgs: ['login', '--token-stdin', '--force'],
       })
     })
 
@@ -78,22 +85,64 @@ describe('auth command', () => {
     expect(output.stderr()).toContain('--token-stdin')
   })
 
-  it('prompts for a token when stdin is a TTY', async () => {
-    mockFetch(() => jsonResponse(movieDetails()))
-    const stdin = Readable.from([]) as Readable & { isTTY?: boolean }
-    stdin.isTTY = true
-    const descriptor = Object.getOwnPropertyDescriptor(process, 'stdin')!
-    Object.defineProperty(process, 'stdin', {
-      configurable: true,
-      value: stdin,
-    })
+  it('refuses to replace config credentials without --force in non-TTY mode', async () => {
+    setConfigValue('accessToken', 'old-token')
     const output = captureOutput()
 
-    try {
+    await withStdin('new-token\n', async () => {
+      await runCommand(authCommand, {
+        rawArgs: ['login', '--token-stdin'],
+      })
+    })
+
+    expect(process.exitCode).toBe(2)
+    expect(output.stderr()).toContain(
+      'Existing credentials found: config (accessToken)',
+    )
+    expect(output.stderr()).toContain('--force')
+    expect(readConfig().accessToken).toBe('old-token')
+  })
+
+  it('refuses to save a config token over environment credentials without --force', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'env-token'
+    const output = captureOutput()
+
+    await withStdin('new-token\n', async () => {
+      await runCommand(authCommand, {
+        rawArgs: ['login', '--token-stdin'],
+      })
+    })
+
+    expect(process.exitCode).toBe(2)
+    expect(output.stderr()).toContain(
+      'Existing credentials found: environment (TMDB_ACCESS_TOKEN)',
+    )
+    expect(output.stderr()).toContain('--force')
+    expect(readConfig().accessToken).toBeUndefined()
+  })
+
+  it('treats template placeholders as unconfigured', async () => {
+    setConfigValue('accessToken', 'YOUR_TMDB_ACCESS_TOKEN')
+    mockFetch(() => jsonResponse(movieDetails()))
+    captureOutput()
+
+    await withStdin('new-token\n', async () => {
+      await runCommand(authCommand, {
+        rawArgs: ['login', '--token-stdin'],
+      })
+    })
+
+    expect(process.exitCode).toBe(0)
+    expect(readConfig().accessToken).toBe('new-token')
+  })
+
+  it('prompts for a token when stdin is a TTY', async () => {
+    mockFetch(() => jsonResponse(movieDetails()))
+    const output = captureOutput()
+
+    await withTTY(async () => {
       await runCommand(authCommand, { rawArgs: ['login'] })
-    } finally {
-      Object.defineProperty(process, 'stdin', descriptor)
-    }
+    })
 
     expect(process.exitCode).toBe(0)
     expect(readlineMocks.question).toHaveBeenCalledWith('TMDB access token: ')
@@ -103,6 +152,62 @@ describe('auth command', () => {
     expect(readConfig().accessToken).toBe('tty-token')
   })
 
+  it('keeps config credentials when replacement is declined', async () => {
+    setConfigValue('accessToken', 'old-token')
+    readlineMocks.question.mockResolvedValueOnce('n')
+    const output = captureOutput()
+
+    await withTTY(async () => {
+      await runCommand(authCommand, { rawArgs: ['login'] })
+    })
+
+    expect(process.exitCode).toBe(0)
+    expect(readlineMocks.question).toHaveBeenCalledWith(
+      'Replace existing credentials? [y/N] ',
+    )
+    expect(output.stdout()).toContain(
+      'Existing credentials: config (accessToken, ••••oken).',
+    )
+    expect(output.stdout()).toContain('Kept existing credentials.')
+    expect(readConfig().accessToken).toBe('old-token')
+  })
+
+  it('replaces config credentials after confirmation', async () => {
+    setConfigValue('accessToken', 'old-token')
+    readlineMocks.question
+      .mockResolvedValueOnce('y')
+      .mockResolvedValueOnce('new-token')
+    mockFetch(() => jsonResponse(movieDetails()))
+    captureOutput()
+
+    await withTTY(async () => {
+      await runCommand(authCommand, { rawArgs: ['login'] })
+    })
+
+    expect(process.exitCode).toBe(0)
+    expect(readConfig().accessToken).toBe('new-token')
+  })
+
+  it('keeps environment credentials when saving a config token is declined', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'env-token'
+    readlineMocks.question.mockResolvedValueOnce('n')
+    const output = captureOutput()
+
+    await withTTY(async () => {
+      await runCommand(authCommand, { rawArgs: ['login'] })
+    })
+
+    expect(process.exitCode).toBe(0)
+    expect(readlineMocks.question).toHaveBeenCalledWith(
+      'Save a config token anyway? [y/N] ',
+    )
+    expect(output.stdout()).toContain(
+      'Credentials are currently provided by TMDB_ACCESS_TOKEN',
+    )
+    expect(output.stdout()).toContain('Kept existing credentials.')
+    expect(readConfig().accessToken).toBeUndefined()
+  })
+
   it('does not overwrite config when token validation fails', async () => {
     setConfigValue('accessToken', 'old-token')
     mockFetch(() => jsonResponse({ status_message: 'Invalid token' }, 401))
@@ -110,7 +215,7 @@ describe('auth command', () => {
 
     await withStdin('bad-token\n', async () => {
       await runCommand(authCommand, {
-        rawArgs: ['login', '--token-stdin'],
+        rawArgs: ['login', '--token-stdin', '--force'],
       })
     })
 
@@ -127,7 +232,7 @@ describe('auth command', () => {
 
     await withStdin('new-token\n', async () => {
       await runCommand(authCommand, {
-        rawArgs: ['login', '--token-stdin'],
+        rawArgs: ['login', '--token-stdin', '--force'],
       })
     })
 
@@ -143,7 +248,7 @@ describe('auth command', () => {
 
     await withStdin('new-token\n', async () => {
       await runCommand(authCommand, {
-        rawArgs: ['login', '--token-stdin'],
+        rawArgs: ['login', '--token-stdin', '--force'],
       })
     })
 
@@ -199,7 +304,8 @@ describe('auth command', () => {
     })
   })
 
-  it('explains how to set up missing credentials', async () => {
+  it('reports placeholder-only config as unconfigured', async () => {
+    setConfigValue('accessToken', 'YOUR_TMDB_ACCESS_TOKEN')
     const output = captureOutput()
 
     await runCommand(authCommand, { rawArgs: ['status'] })

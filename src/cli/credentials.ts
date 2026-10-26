@@ -1,4 +1,5 @@
 import { getConfigPath, readConfig, type CliConfig } from './config'
+import { isPlaceholderCredential } from './redact'
 
 export type CredentialSource = 'environment' | 'config' | 'none'
 export type CredentialField = 'accessToken' | 'apiKey'
@@ -15,8 +16,10 @@ export interface ResolvedCredentials {
 
 export function resolveCredentials(): ResolvedCredentials {
   const config = readConfig()
-  const envAccessToken = process.env.TMDB_ACCESS_TOKEN?.trim()
-  const envApiKey = process.env.TMDB_API_KEY?.trim()
+  const envAccessToken = usableCredential(process.env.TMDB_ACCESS_TOKEN)
+  const envApiKey = usableCredential(process.env.TMDB_API_KEY)
+  const configAccessToken = usableCredential(config.accessToken)
+  const configApiKey = usableCredential(config.apiKey)
 
   if (envAccessToken) {
     return {
@@ -36,18 +39,18 @@ export function resolveCredentials(): ResolvedCredentials {
       source: 'environment',
     }
   }
-  if (config.accessToken) {
+  if (configAccessToken) {
     return {
-      accessToken: config.accessToken,
+      accessToken: configAccessToken,
       config,
       configField: 'accessToken',
       envVar: null,
       source: 'config',
     }
   }
-  if (config.apiKey) {
+  if (configApiKey) {
     return {
-      apiKey: config.apiKey,
+      apiKey: configApiKey,
       config,
       configField: 'apiKey',
       envVar: null,
@@ -61,6 +64,14 @@ export function resolveCredentials(): ResolvedCredentials {
     envVar: null,
     source: 'none',
   }
+}
+
+function usableCredential(value: string | undefined): string | undefined {
+  const trimmed = value?.trim()
+  if (!trimmed || isPlaceholderCredential(trimmed)) {
+    return undefined
+  }
+  return trimmed
 }
 
 export function missingCredentialsMessage(): string {

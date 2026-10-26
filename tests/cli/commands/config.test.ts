@@ -62,6 +62,15 @@ describe('config command', () => {
     expect(output.stdout()).not.toContain('ghijkl')
   })
 
+  it('labels template placeholders', async () => {
+    setConfigValue('accessToken', 'YOUR_TMDB_ACCESS_TOKEN')
+
+    const output = captureOutput()
+    await runCommand(configCommand, { rawArgs: ['show'] })
+
+    expect(output.stdout()).toContain('accessToken: (placeholder)')
+  })
+
   it('masks short secrets completely', async () => {
     setConfigValue('accessToken', 'abc')
 

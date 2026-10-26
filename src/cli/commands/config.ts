@@ -11,7 +11,7 @@ import { CliError, runSafely } from '../errors'
 import { printJson } from '../format'
 import { jsonArg } from '../options'
 import { readSecret } from '../prompt'
-import { maskSecret } from '../redact'
+import { describeSecret } from '../redact'
 
 const CONFIG_KEY_ALIASES = {
   token: 'accessToken',
@@ -42,8 +42,8 @@ export const configCommand = defineCommand({
           const path = getConfigPath()
           const view = {
             path,
-            accessToken: maskSecret(config.accessToken),
-            apiKey: maskSecret(config.apiKey),
+            accessToken: describeSecret(config.accessToken),
+            apiKey: describeSecret(config.apiKey),
             language: config.language ?? null,
             region: config.region ?? null,
           }

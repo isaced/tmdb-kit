@@ -89,6 +89,22 @@ export async function withStdin(
   }
 }
 
+export async function withTTY(task: () => Promise<void>): Promise<void> {
+  const stdin = Readable.from([]) as Readable & { isTTY?: boolean }
+  stdin.isTTY = true
+  const descriptor = Object.getOwnPropertyDescriptor(process, 'stdin')!
+  Object.defineProperty(process, 'stdin', {
+    configurable: true,
+    value: stdin,
+  })
+
+  try {
+    await task()
+  } finally {
+    Object.defineProperty(process, 'stdin', descriptor)
+  }
+}
+
 export function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,

@@ -66,6 +66,41 @@ describe('credential resolution', () => {
     expect(credentials.apiKey).toBeUndefined()
   })
 
+  it('ignores template placeholders in the config file', () => {
+    setConfigValue('accessToken', 'YOUR_TMDB_ACCESS_TOKEN')
+    setConfigValue('apiKey', 'YOUR_TMDB_API_KEY')
+
+    expect(resolveCredentials().source).toBe('none')
+  })
+
+  it('ignores placeholder environment values', () => {
+    process.env.TMDB_ACCESS_TOKEN = 'YOUR_TMDB_ACCESS_TOKEN'
+    process.env.TMDB_API_KEY = 'YOUR_TMDB_API_KEY'
+
+    expect(resolveCredentials().source).toBe('none')
+  })
+
+  it('falls through a placeholder config token to a real apiKey', () => {
+    setConfigValue('accessToken', 'YOUR_TMDB_ACCESS_TOKEN')
+    setConfigValue('apiKey', 'config-key')
+
+    expect(resolveCredentials()).toMatchObject({
+      source: 'config',
+      configField: 'apiKey',
+      apiKey: 'config-key',
+    })
+  })
+
+  it('falls through a placeholder environment token to config credentials', () => {
+    process.env.TMDB_ACCESS_TOKEN = 'YOUR_TMDB_ACCESS_TOKEN'
+    setConfigValue('accessToken', 'config-token')
+
+    expect(resolveCredentials()).toMatchObject({
+      source: 'config',
+      accessToken: 'config-token',
+    })
+  })
+
   it('describes how to configure missing credentials', () => {
     const message = missingCredentialsMessage()
 

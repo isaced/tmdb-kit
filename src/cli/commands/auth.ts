@@ -6,8 +6,8 @@ import { resolveCredentials, type ResolvedCredentials } from '../credentials'
 import { CliError, errorMessage, exitCodeFor, runSafely } from '../errors'
 import { printJson } from '../format'
 import { jsonArg } from '../options'
-import { readSecret, readStdinSecret } from '../prompt'
-import { maskSecret } from '../redact'
+import { confirm, readSecret, readStdinSecret } from '../prompt'
+import { isPlaceholderCredential, maskSecret } from '../redact'
 
 export const authCommand = defineCommand({
   meta: {
@@ -25,9 +25,32 @@ export const authCommand = defineCommand({
           type: 'boolean',
           description: 'Read the token from stdin instead of prompting',
         },
+        force: {
+          type: 'boolean',
+          description: 'Replace existing credentials without confirmation',
+        },
       },
       async run({ args }) {
         await runSafely(async () => {
+          const existing = resolveCredentials()
+
+          if (!args.force && existing.source !== 'none') {
+            if (!process.stdin.isTTY) {
+              throw new CliError(existingCredentialsMessage(existing), 2)
+            }
+
+            process.stdout.write(`${describeExistingCredentials(existing)}\n`)
+            const question =
+              existing.source === 'environment'
+                ? 'Save a config token anyway? [y/N] '
+                : 'Replace existing credentials? [y/N] '
+
+            if (!(await confirm(question))) {
+              process.stdout.write('Kept existing credentials.\n')
+              return
+            }
+          }
+
           const token = args['token-stdin']
             ? await readStdinSecret()
             : await promptForToken()
@@ -73,9 +96,10 @@ export const authCommand = defineCommand({
             `Token validated.\nSaved accessToken to ${getConfigPath()}\n`,
           )
 
-          if (process.env.TMDB_ACCESS_TOKEN?.trim()) {
+          const effective = resolveCredentials()
+          if (effective.source === 'environment') {
             process.stdout.write(
-              'Note: TMDB_ACCESS_TOKEN is set and takes precedence over the config file.\n',
+              `Note: ${effective.envVar} is set and takes precedence over the config file.\n`,
             )
           }
         })
@@ -117,10 +141,14 @@ export const authCommand = defineCommand({
             `Region: ${view.region ?? '(not set)'}`,
           ]
 
-          if (
-            credentials.source === 'environment' &&
-            (credentials.config.accessToken || credentials.config.apiKey)
-          ) {
+          const hasConfigCredentials = Boolean(
+            (credentials.config.accessToken &&
+              !isPlaceholderCredential(credentials.config.accessToken)) ||
+              (credentials.config.apiKey &&
+                !isPlaceholderCredential(credentials.config.apiKey)),
+          )
+
+          if (credentials.source === 'environment' && hasConfigCredentials) {
             lines.push(
               'Note: config credentials are shadowed by environment variables.',
             )
@@ -156,10 +184,7 @@ export const authCommand = defineCommand({
             process.stdout.write('No saved API credentials found.\n')
           }
 
-          if (
-            process.env.TMDB_ACCESS_TOKEN?.trim() ||
-            process.env.TMDB_API_KEY?.trim()
-          ) {
+          if (resolveCredentials().source === 'environment') {
             process.stdout.write(
               'Environment credentials are still set and will continue to be used.\n',
             )
@@ -202,4 +227,38 @@ function describeSource(credentials: ResolvedCredentials): string {
     return `config (${credentials.configField})`
   }
   return 'none'
+}
+
+function describeExistingCredentials(
+  credentials: ResolvedCredentials,
+): string {
+  const secret =
+    maskSecret(credentials.accessToken ?? credentials.apiKey) ?? '(unknown)'
+
+  if (credentials.source === 'environment') {
+    return [
+      `Credentials are currently provided by ${credentials.envVar} (${secret}).`,
+      'A config token will not take effect while that environment variable is set.',
+    ].join('\n')
+  }
+
+  return `Existing credentials: config (${credentials.configField}, ${secret}).`
+}
+
+function existingCredentialsMessage(
+  credentials: ResolvedCredentials,
+): string {
+  const secret =
+    maskSecret(credentials.accessToken ?? credentials.apiKey) ?? '(unknown)'
+  const label =
+    credentials.source === 'environment'
+      ? `environment (${credentials.envVar})`
+      : `config (${credentials.configField})`
+
+  return [
+    `Existing credentials found: ${label} (${secret}).`,
+    credentials.source === 'environment'
+      ? 'Re-run with --force to save a config token anyway.'
+      : 'Re-run with --force to replace them.',
+  ].join('\n')
 }
