@@ -1,4 +1,4 @@
-import { createTMDB, TMDBClient } from '../../src'
+import { createTMDB, TMDBClient, type TMDBClientOptions, type TMDBTransport } from '../../src'
 
 // Automatically load .env on Node.js 20.12+ / 21.7+
 if (typeof process.loadEnvFile === 'function') {
@@ -10,23 +10,36 @@ if (typeof process.loadEnvFile === 'function') {
 }
 
 const envAccessToken = process.env.TMDB_ACCESS_TOKEN?.trim()
+const envApiKey = process.env.TMDB_API_KEY?.trim()
 export const apiEndpoint = process.env.TMDB_API_ENDPOINT?.trim()
 
-if (!envAccessToken) {
+if (!envAccessToken && !envApiKey) {
   throw new Error(
-    'Missing TMDB_ACCESS_TOKEN environment variable. ' +
-      'Please export it or add it to your .env file before running integration tests.',
+    'Missing TMDB credentials. Set TMDB_ACCESS_TOKEN (recommended) or TMDB_API_KEY ' +
+      'in the environment or in a .env file before running integration tests.',
   )
 }
 
-// Narrowed to a plain string after the guard above. We re-export it so
-// individual integration suites can reference the same token without having
-// to re-validate the environment.
-export const accessToken: string = envAccessToken
+// Narrowed to plain strings after the guard above. The exports let individual
+// suites skip auth-specific cases without re-validating the environment.
+export const accessToken = envAccessToken
+export const apiKey = envApiKey
 
-export function createRealTMDB(): TMDBClient {
-  return createTMDB({
-    accessToken,
+type RealTMDBOptions = Partial<Omit<TMDBClientOptions, 'accessToken' | 'apiKey' | 'baseUrl'>> & {
+  transport?: TMDBTransport
+}
+
+/**
+ * Create a client with the integration credentials and optional per-test
+ * overrides. Prefers the access token and falls back to the legacy v3 API key.
+ */
+export function createRealTMDB(options: RealTMDBOptions = {}): TMDBClient {
+  const common = {
     ...(apiEndpoint ? { baseUrl: apiEndpoint } : {}),
-  })
+    ...options,
+  }
+
+  return envAccessToken
+    ? createTMDB({ accessToken: envAccessToken, ...common })
+    : createTMDB({ apiKey: envApiKey as string, ...common })
 }

@@ -38,6 +38,19 @@ describe('TV API (integration)', () => {
     expect(Array.isArray(tv.genres)).toBe(true)
   })
 
+  it('paginates tv lists', async () => {
+    const result = await tmdb.tv.popular({ page: 2 })
+    expect(result.page).toBe(2)
+    expect(result.results.length).toBeGreaterThan(0)
+  })
+
+  it('supports append_to_response on tv details', async () => {
+    const tv = await tmdb.tv.details(1399, { appendToResponse: ['credits', 'videos'] })
+    expect(tv.id).toBe(1399)
+    expect(tv.credits).toBeDefined()
+    expect(tv.videos).toBeDefined()
+  })
+
   it('fetches tv credits', async () => {
     const credits = await tmdb.tv.credits(1399)
     expect(credits.id).toBe(1399)
@@ -50,6 +63,15 @@ describe('TV API (integration)', () => {
     expect(season.season_number).toBe(1)
     expect(Array.isArray(season.episodes)).toBe(true)
     expect(season.episodes.length).toBeGreaterThan(0)
+  })
+
+  it('supports append_to_response on season details', async () => {
+    const season = await tmdb.tv.seasonDetails(1399, 1, {
+      appendToResponse: ['credits', 'images'],
+    })
+    expect(season.season_number).toBe(1)
+    expect(season.credits).toBeDefined()
+    expect(season.images).toBeDefined()
   })
 
   it('fetches tv season zero (specials)', async () => {

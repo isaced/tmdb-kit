@@ -452,11 +452,13 @@ bun run test:coverage
 bun run build
 ```
 
-Run the integration suite with a real token:
+Run the integration suite with a real token. It exercises every SDK resource and the CLI against the live API:
 
 ```bash
 TMDB_ACCESS_TOKEN=your_access_token_here bun run test:integration
 ```
+
+Set `TMDB_API_ENDPOINT` to run the SDK suites against a compatible mirror. The `Integration` GitHub workflow runs the same suite nightly, on manual dispatch, and on pull requests that touch the SDK, CLI, or integration tests. Add a `TMDB_ACCESS_TOKEN` repository secret to enable it, and an optional `TMDB_API_KEY` secret to also cover legacy v3 key auth; fork and Dependabot pull requests skip the live job because repository secrets are not available to them.
 
 Build and run the CLI from source:
 

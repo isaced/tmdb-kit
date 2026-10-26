@@ -38,6 +38,19 @@ describe('Movies API (integration)', () => {
     expect(Array.isArray(movie.genres)).toBe(true)
   })
 
+  it('paginates movie lists', async () => {
+    const result = await tmdb.movies.popular({ page: 2 })
+    expect(result.page).toBe(2)
+    expect(result.results.length).toBeGreaterThan(0)
+  })
+
+  it('applies a per-call language override', async () => {
+    const movie = await tmdb.movies.details(550, { language: 'zh-CN' })
+    expect(movie.id).toBe(550)
+    // Fight Club's Simplified Chinese title proves the override reached TMDB.
+    expect(movie.title).toBe('搏击俱乐部')
+  })
+
   it('fetches movie credits', async () => {
     const credits = await tmdb.movies.credits(550)
     expect(credits.id).toBe(550)
