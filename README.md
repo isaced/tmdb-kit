@@ -15,7 +15,7 @@ A minimal, fully typed TMDB SDK with zero runtime dependencies. Built for Node.j
 - **Zero dependencies** — nothing to audit, nothing to conflict.
 - **Universal runtime** — uses only `fetch`, `Headers`, `URL`, and `AbortSignal`. Works on Node.js 18+, Bun, Deno, Cloudflare Workers, Vercel Edge, and any fetch-compatible environment.
 - **Strict TypeScript** — full type safety with autocomplete for request options, response shapes, image sizes, and error handling.
-- **ESM + CommonJS** — dual-format output via tsdown, ready for any module system.
+- **ESM + CommonJS** — dual-format output via Bun's bundler, ready for any module system.
 - **Typed resources** — first-class methods for movies, TV, search, trending, people, genres, configuration, and images.
 - **Injectable transport** — swap the HTTP layer for tests, caching, or instrumentation without mocking `fetch`.
 - **Image helpers** — build CDN / proxy / signed URLs with per-request transform overrides.
@@ -349,15 +349,17 @@ when you want a single catch-all.
 
 ## Development
 
+Requires [Bun](https://bun.sh) 1.4+ (the published package still runs on Node.js 18+).
+
 ```bash
-npm install
-npm run typecheck
-npm run test:coverage
-npm run build
+bun install
+bun run typecheck
+bun run test:coverage
+bun run build
 ```
 
 ## References
 
 - [TMDB authentication](https://developer.themoviedb.org/docs/authentication-application)
 - [TMDB API reference](https://developer.themoviedb.org/reference/intro/getting-started)
-- [tsdown output formats](https://tsdown.dev/options/output-format)
+- [Bun bundler docs](https://bun.com/docs/bundler)

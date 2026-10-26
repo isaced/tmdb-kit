@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'bun:test'
 import { createTMDB, type PersonCombinedCast, type SearchMultiResult } from '../../src'
 import {
   printCredits,

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { CliError } from '../../src/cli/errors'
 import {
   parseCommaList,
@@ -93,14 +93,14 @@ describe('CLI option parsing', () => {
   })
 
   it('parses movie list categories', () => {
-    for (const value of ['popular', 'top-rated', 'now-playing', 'upcoming']) {
+    for (const value of ['popular', 'top-rated', 'now-playing', 'upcoming'] as const) {
       expect(parseMovieListCategory(value)).toBe(value)
     }
     expect(() => parseMovieListCategory('airing-today')).toThrowError(CliError)
   })
 
   it('parses TV list categories', () => {
-    for (const value of ['popular', 'top-rated', 'airing-today', 'on-the-air']) {
+    for (const value of ['popular', 'top-rated', 'airing-today', 'on-the-air'] as const) {
       expect(parseTVListCategory(value)).toBe(value)
     }
     expect(() => parseTVListCategory('upcoming')).toThrowError(CliError)

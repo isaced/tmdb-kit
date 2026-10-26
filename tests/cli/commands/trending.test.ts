@@ -1,5 +1,5 @@
 import { runCommand } from 'citty'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { trendingCommand } from '../../../src/cli/commands/trending'
 import { multiSearchResponse } from '../fixtures'
 import { captureOutput, jsonResponse, mockFetch, useCliTestEnv } from '../helpers'

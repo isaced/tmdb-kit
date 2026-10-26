@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
-import { afterEach, beforeEach, vi } from 'vitest'
+import { afterEach, beforeEach, vi } from 'bun:test'
 
 const ENV_KEYS = [
   'APPDATA',
@@ -42,7 +42,6 @@ export function useCliTestEnv() {
 
     rmSync(dir, { recursive: true, force: true })
     vi.restoreAllMocks()
-    vi.unstubAllGlobals()
     process.exitCode = 0
   })
 
@@ -112,6 +111,16 @@ export function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
+export function mockPlatform(platform: string): void {
+  const spyOnAccessor = vi.spyOn as unknown as (
+    object: object,
+    key: string,
+    access: 'get' | 'set',
+  ) => { mockReturnValue(value: string): void }
+
+  spyOnAccessor(process, 'platform', 'get').mockReturnValue(platform)
+}
+
 export function mockFetch(handler: (url: URL) => Response | Promise<Response>) {
   const calls: URL[] = []
   const fetchMock = vi.fn(
@@ -128,6 +137,6 @@ export function mockFetch(handler: (url: URL) => Response | Promise<Response>) {
     },
   )
 
-  vi.stubGlobal('fetch', fetchMock)
+  vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock as unknown as typeof fetch)
   return { calls, fetchMock }
 }

@@ -1,5 +1,5 @@
 import { runCommand } from 'citty'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { configCommand } from '../../../src/cli/commands/config'
 import { readConfig, setConfigValue } from '../../../src/cli/config'
 import { movieDetails } from '../fixtures'

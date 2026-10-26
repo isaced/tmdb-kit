@@ -1,5 +1,5 @@
 import { runCommand } from 'citty'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { tvCommand } from '../../../src/cli/commands/tv'
 import {
   creditsResponse,

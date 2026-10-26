@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { TMDBRateLimitError, TMDBRequestError, TMDBResponseError, type FetchLike } from '../../src'
 import { TMDBHttpClient } from '../../src/http'
 import { expectNoQuery, expectRequest } from '../_support/assertions'

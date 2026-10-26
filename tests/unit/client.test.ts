@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'bun:test'
 import { createTMDB, TMDBClient, type TMDBRequestOptions, type TMDBTransport } from '../../src'
 import { expectRequest } from '../_support/assertions'
 import { createFetchMock } from '../_support/fetch'

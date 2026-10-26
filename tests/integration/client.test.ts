@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { createTMDB, TMDBResponseError, type TMDBTransport } from '../../src'
 import { accessToken, apiEndpoint, createRealTMDB } from './setup'
 
