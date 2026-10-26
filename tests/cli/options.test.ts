@@ -2,15 +2,23 @@ import { describe, expect, it } from 'bun:test'
 import { CliError } from '../../src/cli/errors'
 import {
   parseCommaList,
+  parseExternalId,
+  parseExternalSource,
   parseGenreType,
   parseGroupId,
   parseId,
+  parseIdFilter,
+  parseInteger,
   parseLimit,
   parseMovieListCategory,
+  parseMovieSortBy,
+  parseNumber,
   parsePage,
   parseSearchType,
   parseSeasonNumber,
   parseTVListCategory,
+  parseTVSortBy,
+  parseWatchMonetizationTypes,
   parseWindow,
 } from '../../src/cli/options'
 
@@ -114,5 +122,52 @@ describe('CLI option parsing', () => {
       expect(parseTVListCategory(value)).toBe(value)
     }
     expect(() => parseTVListCategory('upcoming')).toThrowError(CliError)
+  })
+
+  it('parses external ID sources and values', () => {
+    expect(parseExternalSource('imdb_id')).toBe('imdb_id')
+    expect(parseExternalSource('tvdb_id')).toBe('tvdb_id')
+    expect(() => parseExternalSource('not-a-source')).toThrowError(CliError)
+
+    expect(parseExternalId(' tt0137523 ')).toBe('tt0137523')
+    expect(() => parseExternalId('   ')).toThrowError(CliError)
+  })
+
+  it('parses watch monetization types', () => {
+    expect(parseWatchMonetizationTypes(undefined)).toBeUndefined()
+    expect(parseWatchMonetizationTypes(' , ')).toBeUndefined()
+    expect(parseWatchMonetizationTypes('flatrate, rent')).toEqual(['flatrate', 'rent'])
+    expect(() => parseWatchMonetizationTypes('flatrate,nope')).toThrowError(CliError)
+  })
+
+  it('parses discover sort values', () => {
+    expect(parseMovieSortBy(undefined)).toBeUndefined()
+    expect(parseMovieSortBy('popularity.desc')).toBe('popularity.desc')
+    expect(() => parseMovieSortBy('name.asc')).toThrowError(CliError)
+
+    expect(parseTVSortBy(undefined)).toBeUndefined()
+    expect(parseTVSortBy('first_air_date.desc')).toBe('first_air_date.desc')
+    expect(() => parseTVSortBy('revenue.desc')).toThrowError(CliError)
+  })
+
+  it('parses discover ID filters', () => {
+    expect(parseIdFilter(undefined)).toBeUndefined()
+    expect(parseIdFilter(' , ')).toBeUndefined()
+    expect(parseIdFilter('28')).toBe(28)
+    expect(parseIdFilter('28,12')).toEqual([28, 12])
+    expect(parseIdFilter('28|12')).toBe('28|12')
+    expect(() => parseIdFilter('abc')).toThrowError(CliError)
+    expect(() => parseIdFilter('28|abc')).toThrowError(CliError)
+    expect(() => parseIdFilter('0')).toThrowError(CliError)
+  })
+
+  it('parses numeric filters', () => {
+    expect(parseNumber(undefined, '--vote-average-gte')).toBeUndefined()
+    expect(parseNumber('7.5', '--vote-average-gte')).toBe(7.5)
+    expect(() => parseNumber('abc', '--vote-average-gte')).toThrowError(CliError)
+
+    expect(parseInteger(undefined, '--year')).toBeUndefined()
+    expect(parseInteger('2024', '--year')).toBe(2024)
+    expect(() => parseInteger('1.5', '--year')).toThrowError(CliError)
   })
 })

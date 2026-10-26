@@ -7,6 +7,7 @@ import {
   episodeDetails,
   episodeGroupDetails,
   episodeGroupsResponse,
+  externalIds,
   imagesResponse,
   pagedResponse,
   seasonDetails,
@@ -261,6 +262,26 @@ describe('tv command', () => {
     ]) {
       await runCommand(tvCommand, { rawArgs: [...args, '--json'] })
       expect(process.exitCode).toBe(0)
+    }
+  })
+
+  it('prints TV, season, and episode external IDs', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'token'
+    const { calls } = mockFetch(() => jsonResponse(externalIds()))
+    const output = captureOutput()
+
+    await runCommand(tvCommand, { rawArgs: ['external-ids', '1399'] })
+    await runCommand(tvCommand, { rawArgs: ['season-external-ids', '1399', '1'] })
+    await runCommand(tvCommand, { rawArgs: ['episode-external-ids', '1399', '1', '1'] })
+
+    expect(calls.map((call) => call.pathname)).toEqual([
+      '/3/tv/1399/external_ids',
+      '/3/tv/1399/season/1/external_ids',
+      '/3/tv/1399/season/1/episode/1/external_ids',
+    ])
+    expect(output.stdout()).toContain('IMDb: tt0137523')
+    for (const call of calls) {
+      expect(call.searchParams.has('language')).toBe(false)
     }
   })
 })

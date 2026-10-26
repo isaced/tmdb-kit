@@ -1,9 +1,13 @@
 import type {
   AggregateCreditsResponse,
+  CollectionDetails,
+  CollectionTranslationsResponse,
   CreditsResponse,
   EpisodeDetails,
   EpisodeGroupDetails,
   EpisodeGroupsResponse,
+  ExternalIds,
+  FindResponse,
   GenresResponse,
   ImageItem,
   ImagesResponse,
@@ -18,6 +22,8 @@ import type {
   TVSeasonDetails,
   TVSummary,
   VideosResponse,
+  WatchProviderListResponse,
+  WatchProvidersResponse,
 } from '../../src'
 
 export function pagedResponse<T>(
@@ -508,6 +514,145 @@ export const multiSearchResponse = {
       media_type: 'person',
     },
   ] as SearchMultiResult[],
+}
+
+export function externalIds(overrides: Partial<ExternalIds> = {}): ExternalIds {
+  return {
+    id: 550,
+    imdb_id: 'tt0137523',
+    tvdb_id: null,
+    ...overrides,
+  }
+}
+
+export function findResponse(overrides: Partial<FindResponse> = {}): FindResponse {
+  return {
+    movie_results: [
+      {
+        ...movieSummary({ id: 550, title: 'Fight Club' }),
+        media_type: 'movie' as const,
+      },
+    ],
+    person_results: [],
+    tv_episode_results: [],
+    tv_results: [],
+    tv_season_results: [],
+    ...overrides,
+  }
+}
+
+export function watchProvidersResponse(
+  overrides: Partial<WatchProvidersResponse> = {},
+): WatchProvidersResponse {
+  return {
+    id: 550,
+    results: {
+      GB: {
+        link: 'https://www.themoviedb.org/movie/550/watch?locale=GB',
+        flatrate: [
+          {
+            display_priority: 0,
+            logo_path: '/netflix.jpg',
+            provider_id: 8,
+            provider_name: 'Netflix',
+          },
+        ],
+      },
+      US: {
+        link: 'https://www.themoviedb.org/movie/550/watch?locale=US',
+        flatrate: [
+          {
+            display_priority: 0,
+            logo_path: '/netflix.jpg',
+            provider_id: 8,
+            provider_name: 'Netflix',
+          },
+        ],
+        rent: [
+          {
+            display_priority: 1,
+            logo_path: null,
+            provider_id: 2,
+            provider_name: 'Apple TV',
+          },
+        ],
+      },
+    },
+    ...overrides,
+  }
+}
+
+export function watchProviderListResponse(
+  overrides: Partial<WatchProviderListResponse> = {},
+): WatchProviderListResponse {
+  return {
+    results: [
+      {
+        display_priority: 0,
+        display_priorities: { GB: 1, US: 0 },
+        logo_path: '/netflix.jpg',
+        provider_id: 8,
+        provider_name: 'Netflix',
+      },
+      {
+        display_priority: 1,
+        display_priorities: { GB: 0, US: 1 },
+        logo_path: '/prime.jpg',
+        provider_id: 9,
+        provider_name: 'Prime Video',
+      },
+    ],
+    ...overrides,
+  }
+}
+
+export function collectionDetails(overrides: Partial<CollectionDetails> = {}): CollectionDetails {
+  return {
+    backdrop_path: '/collection-backdrop.jpg',
+    id: 10,
+    name: 'Star Wars Collection',
+    original_language: 'en',
+    original_name: 'Star Wars Collection',
+    overview: 'The Star Wars saga.',
+    parts: [
+      movieSummary({
+        id: 11,
+        original_title: 'Star Wars',
+        release_date: '1977-05-25',
+        title: 'Star Wars',
+      }),
+      movieSummary({
+        id: 12,
+        original_title: 'The Empire Strikes Back',
+        release_date: '1980-05-21',
+        title: 'The Empire Strikes Back',
+      }),
+    ],
+    poster_path: '/collection-poster.jpg',
+    ...overrides,
+  }
+}
+
+export function collectionTranslationsResponse(
+  overrides: Partial<CollectionTranslationsResponse> = {},
+): CollectionTranslationsResponse {
+  return {
+    id: 10,
+    translations: [
+      {
+        data: {
+          homepage: '',
+          overview: 'Die Star-Wars-Saga.',
+          title: 'Star Wars Collection',
+        },
+        english_name: 'German',
+        iso_3166_1: 'DE',
+        iso_639_1: 'de',
+        name: 'Deutsch',
+      },
+    ],
+    ...overrides,
+  }
 }
 
 function image(filePath: string, width: number, height: number): ImageItem {

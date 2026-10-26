@@ -10,9 +10,13 @@ describe('main command', () => {
 
     expect(usage).toContain(`tmdb v${pkg.version}`)
     expect(usage).toContain('search')
+    expect(usage).toContain('discover')
+    expect(usage).toContain('find')
     expect(usage).toContain('movie')
     expect(usage).toContain('tv')
     expect(usage).toContain('person')
+    expect(usage).toContain('collection')
+    expect(usage).toContain('providers')
     expect(usage).toContain('trending')
     expect(usage).toContain('genres')
     expect(usage).toContain('auth')

@@ -2,29 +2,39 @@ import { afterEach, describe, expect, it, vi } from 'bun:test'
 import { createTMDB, type PersonCombinedCast, type SearchMultiResult } from '../../src'
 import {
   printAggregateCredits,
+  printCollection,
+  printCollectionTranslations,
   printCredits,
   printEpisode,
   printEpisodeGroup,
   printEpisodeGroups,
+  printExternalIds,
+  printFindResults,
   printGenres,
   printImages,
   printJson,
   printMovie,
   printPerson,
   printPersonCredits,
+  printProviderList,
   printSearchResults,
   printSeason,
   printSeasonImages,
   printTV,
   printVideos,
+  printWatchProviders,
 } from '../../src/cli/format'
 import {
   aggregateCreditsResponse,
+  collectionDetails,
+  collectionTranslationsResponse,
   combinedCreditsResponse,
   creditsResponse,
   episodeDetails,
   episodeGroupDetails,
   episodeGroupsResponse,
+  externalIds,
+  findResponse,
   genresResponse,
   imagesResponse,
   movieDetails,
@@ -32,7 +42,10 @@ import {
   seasonDetails,
   seasonImagesResponse,
   tvDetails,
+  tvSummary,
   videosResponse,
+  watchProviderListResponse,
+  watchProvidersResponse,
 } from './fixtures'
 import { captureOutput } from './helpers'
 
@@ -468,5 +481,159 @@ describe('CLI output formatting', () => {
     printGenres(genresResponse({ genres: [] }))
 
     expect(output.stdout()).toBe('No genres.\n')
+  })
+})
+
+describe('CLI output formatting for new resources', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('prints external IDs and the empty state', () => {
+    const output = captureOutput()
+    printExternalIds(externalIds())
+
+    expect(output.stdout()).toContain('TMDB ID: 550')
+    expect(output.stdout()).toContain('IMDb: tt0137523')
+
+    const empty = captureOutput()
+    printExternalIds({ id: 1 })
+    expect(empty.stdout()).toBe('TMDB ID: 1\nNo external IDs.\n')
+  })
+
+  it('prints every find result section', () => {
+    const output = captureOutput()
+    printFindResults(
+      findResponse({
+        person_results: [
+          {
+            adult: false,
+            gender: 2,
+            id: 31,
+            known_for: [],
+            known_for_department: 'Acting',
+            media_type: 'person',
+            name: 'Tom Hanks',
+            popularity: 1,
+            profile_path: null,
+          },
+        ],
+        tv_episode_results: [
+          {
+            air_date: '2011-04-17',
+            episode_number: 1,
+            episode_type: 'standard',
+            id: 63056,
+            media_type: 'tv_episode',
+            name: 'Winter Is Coming',
+            overview: '',
+            production_code: '101',
+            runtime: 62,
+            season_number: 1,
+            show_id: 1399,
+            still_path: null,
+            vote_average: 8.1,
+            vote_count: 100,
+          },
+        ],
+        tv_results: [
+          {
+            ...tvSummary({ id: 1399, name: 'Game of Thrones' }),
+            media_type: 'tv',
+          },
+        ],
+        tv_season_results: [
+          {
+            air_date: '2011-04-17',
+            episode_count: 10,
+            id: 3624,
+            media_type: 'tv_season',
+            name: 'Season 1',
+            overview: '',
+            poster_path: null,
+            season_number: 1,
+            show_id: 1399,
+            vote_average: 8.3,
+          },
+        ],
+      }),
+    )
+
+    expect(output.stdout()).toContain('Movies:')
+    expect(output.stdout()).toContain('TV shows:')
+    expect(output.stdout()).toContain('People:')
+    expect(output.stdout()).toContain('TV episodes:')
+    expect(output.stdout()).toContain('TV seasons:')
+    expect(output.stdout()).toContain('S01E01 · Winter Is Coming')
+  })
+
+  it('prints no matches', () => {
+    const output = captureOutput()
+    printFindResults(findResponse({ movie_results: [] }))
+
+    expect(output.stdout()).toBe('No matches.\n')
+  })
+
+  it('prints collection details with a text limit', () => {
+    const tmdb = createTMDB({ accessToken: 'read-token' })
+    const output = captureOutput()
+    printCollection(collectionDetails(), tmdb, 1)
+
+    expect(output.stdout()).toContain('Star Wars Collection')
+    expect(output.stdout()).toContain('Parts (2):')
+    expect(output.stdout()).toContain('Star Wars (1977)')
+    expect(output.stdout()).toContain('… and 1 more')
+  })
+
+  it('prints a collection original name when it differs', () => {
+    const tmdb = createTMDB({ accessToken: 'read-token' })
+    const output = captureOutput()
+    printCollection(collectionDetails({ original_name: 'Star Wars Collection (Original)' }), tmdb)
+
+    expect(output.stdout()).toContain('Original name: Star Wars Collection (Original)')
+  })
+
+  it('prints collection translations and the empty state', () => {
+    const output = captureOutput()
+    printCollectionTranslations(collectionTranslationsResponse())
+
+    expect(output.stdout()).toContain('de-DE  German  Star Wars Collection')
+
+    const empty = captureOutput()
+    printCollectionTranslations({ id: 1, translations: [] })
+    expect(empty.stdout()).toBe('No translations.\n')
+  })
+
+  it('prints watch providers by region and lists regions', () => {
+    const output = captureOutput()
+    printWatchProviders(watchProvidersResponse(), 'us')
+
+    expect(output.stdout()).toContain('Watch providers for US')
+    expect(output.stdout()).toContain('Netflix')
+    expect(output.stdout()).toContain('Apple TV')
+    expect(output.stdout()).toContain('Source: JustWatch')
+
+    const missing = captureOutput()
+    printWatchProviders(watchProvidersResponse(), 'FR')
+    expect(missing.stdout()).toBe('No watch providers for FR.\n')
+
+    const regions = captureOutput()
+    printWatchProviders(watchProvidersResponse())
+    expect(regions.stdout()).toContain('Available regions (2): GB, US')
+
+    const empty = captureOutput()
+    printWatchProviders({ id: 1, results: {} })
+    expect(empty.stdout()).toBe('No watch providers.\n')
+  })
+
+  it('prints provider lists and the empty state', () => {
+    const output = captureOutput()
+    printProviderList(watchProviderListResponse())
+
+    expect(output.stdout()).toContain('8  Netflix')
+
+    const empty = captureOutput()
+    printProviderList({ results: [] })
+    expect(empty.stdout()).toBe('No providers.\n')
   })
 })

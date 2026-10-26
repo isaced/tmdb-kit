@@ -1,7 +1,7 @@
 import { runCommand } from 'citty'
 import { describe, expect, it } from 'bun:test'
 import { personCommand } from '../../../src/cli/commands/person'
-import { combinedCreditsResponse, personDetails } from '../fixtures'
+import { combinedCreditsResponse, externalIds, personDetails } from '../fixtures'
 import { captureOutput, jsonResponse, mockFetch, useCliTestEnv } from '../helpers'
 
 describe('person command', () => {
@@ -64,5 +64,17 @@ describe('person command', () => {
 
     expect(process.exitCode).toBe(2)
     expect(output.stderr()).toContain('Invalid person ID')
+  })
+
+  it('prints person external IDs', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'token'
+    const { calls } = mockFetch(() => jsonResponse(externalIds()))
+    const output = captureOutput()
+
+    await runCommand(personCommand, { rawArgs: ['external-ids', '31'] })
+
+    expect(calls[0]?.pathname).toBe('/3/person/31/external_ids')
+    expect(calls[0]?.searchParams.has('language')).toBe(false)
+    expect(output.stdout()).toContain('IMDb: tt0137523')
   })
 })

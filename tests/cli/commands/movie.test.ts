@@ -3,6 +3,7 @@ import { describe, expect, it } from 'bun:test'
 import { movieCommand } from '../../../src/cli/commands/movie'
 import {
   creditsResponse,
+  externalIds,
   imagesResponse,
   movieDetails,
   movieSummary,
@@ -170,5 +171,18 @@ describe('movie command', () => {
       await runCommand(movieCommand, { rawArgs: [...args, '--json'] })
       expect(process.exitCode).toBe(0)
     }
+  })
+
+  it('prints movie external IDs without a language query', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'token'
+    const { calls } = mockFetch(() => jsonResponse(externalIds()))
+    const output = captureOutput()
+
+    await runCommand(movieCommand, { rawArgs: ['external-ids', '550'] })
+
+    expect(process.exitCode).toBe(0)
+    expect(calls[0]?.pathname).toBe('/3/movie/550/external_ids')
+    expect(calls[0]?.searchParams.has('language')).toBe(false)
+    expect(output.stdout()).toContain('IMDb: tt0137523')
   })
 })

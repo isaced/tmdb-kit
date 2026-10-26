@@ -1,17 +1,24 @@
 import type {
   AggregateCreditsResponse,
+  CollectionDetails,
+  CollectionTranslationsResponse,
   Configuration,
   CreditsResponse,
   EpisodeDetails,
   EpisodeGroupDetails,
   EpisodeGroupsResponse,
+  ExternalIds,
+  FindResponse,
   GenresResponse,
   ImagesResponse,
+  MovieSummary,
   PagedResponse,
   PersonCombinedCreditsResponse,
   SeasonImagesResponse,
   TVSeasonDetails,
   VideosResponse,
+  WatchProviderListResponse,
+  WatchProvidersResponse,
 } from '../../src'
 
 export function paged<T>(results: T[] = []): PagedResponse<T> {
@@ -135,4 +142,109 @@ export const episodeGroupDetails: EpisodeGroupDetails = {
   name: 'Episode Group',
   network: null,
   type: 1,
+}
+
+const movieSummaryBase: MovieSummary = {
+  adult: false,
+  backdrop_path: null,
+  genre_ids: [18],
+  id: 550,
+  original_language: 'en',
+  original_title: 'Fight Club',
+  overview: '',
+  popularity: 1,
+  poster_path: null,
+  release_date: '1999-10-15',
+  title: 'Fight Club',
+  video: false,
+  vote_average: 8.4,
+  vote_count: 100,
+}
+
+export const externalIdsResponse: ExternalIds = {
+  id: 550,
+  imdb_id: 'tt0137523',
+  tvdb_id: null,
+}
+
+export const findResponse: FindResponse = {
+  movie_results: [{ ...movieSummaryBase, media_type: 'movie' }],
+  person_results: [],
+  tv_episode_results: [],
+  tv_results: [],
+  tv_season_results: [],
+}
+
+export const watchProvidersResponse: WatchProvidersResponse = {
+  id: 550,
+  results: {
+    US: {
+      link: 'https://www.themoviedb.org/movie/550/watch?locale=US',
+      flatrate: [
+        {
+          display_priority: 0,
+          logo_path: '/netflix.jpg',
+          provider_id: 8,
+          provider_name: 'Netflix',
+        },
+      ],
+      rent: [
+        {
+          display_priority: 1,
+          logo_path: null,
+          provider_id: 2,
+          provider_name: 'Apple TV',
+        },
+      ],
+    },
+  },
+}
+
+export const watchProviderListResponse: WatchProviderListResponse = {
+  results: [
+    {
+      display_priority: 0,
+      display_priorities: { US: 0, GB: 1 },
+      logo_path: '/netflix.jpg',
+      provider_id: 8,
+      provider_name: 'Netflix',
+    },
+  ],
+}
+
+export const collectionDetails: CollectionDetails = {
+  backdrop_path: '/collection-backdrop.jpg',
+  id: 10,
+  name: 'Star Wars Collection',
+  original_language: 'en',
+  original_name: 'Star Wars Collection',
+  overview: 'The Star Wars saga.',
+  parts: [
+    {
+      ...movieSummaryBase,
+      id: 11,
+      media_type: 'movie',
+      original_title: 'Star Wars',
+      release_date: '1977-05-25',
+      title: 'Star Wars',
+    },
+  ],
+  poster_path: '/collection-poster.jpg',
+}
+
+export const collectionTranslationsResponse: CollectionTranslationsResponse = {
+  id: 10,
+  translations: [
+    {
+      data: {
+        homepage: '',
+        overview: 'Die Star-Wars-Saga.',
+        title: 'Star Wars Collection',
+      },
+      english_name: 'German',
+      iso_3166_1: 'DE',
+      iso_639_1: 'de',
+      name: 'Deutsch',
+    },
+  ],
 }

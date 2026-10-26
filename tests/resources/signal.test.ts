@@ -20,6 +20,8 @@ describe('AbortSignal forwarding', () => {
     await tmdb.movies.recommendations(550, { signal })
     await tmdb.movies.similar(550, { signal })
     await tmdb.movies.videos(550, { signal })
+    await tmdb.movies.externalIds(550, { signal })
+    await tmdb.movies.watchProviders(550, { signal })
 
     // TV
     await tmdb.tv.popular({ signal })
@@ -41,11 +43,16 @@ describe('AbortSignal forwarding', () => {
     await tmdb.tv.aggregateCredits(1399, { signal })
     await tmdb.tv.episodeGroups(1399, { signal })
     await tmdb.tv.episodeGroup('group-1', { signal })
+    await tmdb.tv.externalIds(1399, { signal })
+    await tmdb.tv.seasonExternalIds(1399, 1, { signal })
+    await tmdb.tv.episodeExternalIds(1399, 1, 1, { signal })
+    await tmdb.tv.watchProviders(1399, { signal })
 
     // People
     await tmdb.people.popular({ signal })
     await tmdb.people.details(31, { signal })
     await tmdb.people.combinedCredits(31, { signal })
+    await tmdb.people.externalIds(31, { signal })
 
     // Search
     await tmdb.search.movies('Inception', { signal })
@@ -71,7 +78,23 @@ describe('AbortSignal forwarding', () => {
     await tmdb.configuration.primaryTranslations({ signal })
     await tmdb.configuration.timezones({ signal })
 
-    expect(mock.calls).toHaveLength(48)
+    // Discover
+    await tmdb.discover.movies({ signal })
+    await tmdb.discover.tv({ signal })
+
+    // Find
+    await tmdb.find.byExternalId('tt0137523', { source: 'imdb_id', signal })
+
+    // Collections
+    await tmdb.collections.details(10, { signal })
+    await tmdb.collections.images(10, { signal })
+    await tmdb.collections.translations(10, { signal })
+
+    // Watch provider reference lists
+    await tmdb.watchProviders.movies({ signal })
+    await tmdb.watchProviders.tv({ signal })
+
+    expect(mock.calls).toHaveLength(63)
     for (const call of mock.calls) {
       expect(call.signal).toBe(signal)
     }
