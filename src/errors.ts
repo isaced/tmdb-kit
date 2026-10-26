@@ -42,7 +42,7 @@ export class TMDBRequestError extends TMDBError {
 export class TMDBTimeoutError extends TMDBError {
   readonly timeoutMs: number
 
-  constructor(timeoutMs: number, message = `TMDB request timed out after ${timeoutMs}ms`) {
+  constructor(timeoutMs: number, message: string = `TMDB request timed out after ${timeoutMs}ms`) {
     super(message)
     this.name = 'TMDBTimeoutError'
     this.timeoutMs = timeoutMs
