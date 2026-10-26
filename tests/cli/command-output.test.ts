@@ -100,7 +100,7 @@ describe('command output', () => {
       { page: 1, total_pages: 3, total_results: 6, type: 'meta' },
       { type: 'item', index: 0, value: movieSummary() },
       { type: 'item', index: 1, value: movieSummary({ id: 2, title: 'Second' }) },
-      { type: 'summary', count: 2 },
+      { type: 'summary', count: 2, pages: 1 },
     ])
   })
 
@@ -176,6 +176,83 @@ describe('command output', () => {
     expect(calls).toHaveLength(0)
     expect(output.stderr()).toBe('--fields requires --format json or ndjson.\n')
     expect(process.exitCode).toBe(2)
+  })
+
+  it('follows pagination with --all', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    const { calls } = mockFetch((url) => {
+      const page = Number(url.searchParams.get('page') ?? '1')
+      return jsonResponse(
+        pagedResponse([movieSummary({ id: page })], {
+          page,
+          total_pages: 2,
+          total_results: 2,
+        }),
+      )
+    })
+
+    const output = captureOutput()
+    await runCommand(movieCommand, { rawArgs: ['list', '--format', 'ndjson', '--all'] })
+
+    expect(calls.map((url) => url.searchParams.get('page'))).toEqual(['1', '2'])
+
+    const records = output
+      .stdout()
+      .trimEnd()
+      .split('\n')
+      .map((line) => JSON.parse(line))
+
+    expect(
+      records.filter((record) => record.type === 'item').map((record) => record.value.id),
+    ).toEqual([1, 2])
+    expect(records.at(-1)).toEqual({ type: 'summary', count: 2, pages: 2 })
+  })
+
+  it('stops at --max-items', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    const { calls } = mockFetch((url) => {
+      const page = Number(url.searchParams.get('page') ?? '1')
+      return jsonResponse(
+        pagedResponse([movieSummary({ id: 1 }), movieSummary({ id: 2 })], {
+          page,
+          total_pages: 5,
+          total_results: 10,
+        }),
+      )
+    })
+
+    const output = captureOutput()
+    await runCommand(movieCommand, {
+      rawArgs: ['list', '--format', 'ndjson', '--all', '--max-items', '1'],
+    })
+
+    expect(calls).toHaveLength(1)
+    expect(output.stdout()).toContain('"count":1,"pages":1')
+  })
+
+  it('rejects --all on non-list commands', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    const { calls } = mockFetch(() => jsonResponse(movieDetails()))
+
+    const output = captureOutput()
+    await runCommand(movieCommand, { rawArgs: ['get', '693134', '--format', 'ndjson', '--all'] })
+
+    expect(calls).toHaveLength(0)
+    expect(JSON.parse(output.stderr())).toMatchObject({
+      kind: 'usage',
+      message: '--all is only supported by list commands.',
+    })
+  })
+
+  it('rejects --all without ndjson', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    const { calls } = mockFetch(() => jsonResponse(pagedResponse([movieSummary()])))
+
+    const output = captureOutput()
+    await runCommand(movieCommand, { rawArgs: ['list', '--all'] })
+
+    expect(calls).toHaveLength(0)
+    expect(output.stderr()).toBe('--all requires --format ndjson.\n')
   })
 
   it('rejects --json combined with --format ndjson', async () => {

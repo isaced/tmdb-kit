@@ -25,7 +25,8 @@ import type {
 } from '../index'
 import type { SearchType } from './options'
 
-type SearchResult = MovieSearchResult | TVSearchResult | PersonSearchResult | SearchMultiResult
+export type SearchResult =
+  MovieSearchResult | TVSearchResult | PersonSearchResult | SearchMultiResult
 
 export function printJson(value: unknown, compact = false): void {
   process.stdout.write(`${compact ? JSON.stringify(value) : JSON.stringify(value, null, 2)}\n`)

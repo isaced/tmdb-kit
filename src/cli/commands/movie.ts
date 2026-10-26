@@ -2,9 +2,10 @@ import { defineCommand } from 'citty'
 import type { MovieAppendToResponse } from '../../index'
 import { createClient } from '../client'
 import { printCredits, printImages, printMovie, printSearchResults, printVideos } from '../format'
-import { printResult, runSafely } from '../output'
+import { printPaged, printResult, runSafely } from '../output'
 import {
   commonArgs,
+  paginationArgs,
   parseCommaList,
   parseId,
   parseLimit,
@@ -25,6 +26,7 @@ export const movieCommand = defineCommand({
       },
       args: {
         ...commonArgs,
+        ...paginationArgs,
         category: {
           type: 'positional',
           description: 'popular, top-rated, now-playing, or upcoming',
@@ -40,22 +42,32 @@ export const movieCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(args, async (output) => {
-          const category = parseMovieListCategory(args.category)
-          const options = { page: parsePage(args.page), region: args.region }
-          const client = createClient({ language: args.lang })
+        await runSafely(
+          args,
+          async (output) => {
+            const category = parseMovieListCategory(args.category)
+            const params = { page: parsePage(args.page), region: args.region }
+            const client = createClient({ language: args.lang })
 
-          const response =
-            category === 'top-rated'
-              ? await client.movies.topRated(options)
-              : category === 'now-playing'
-                ? await client.movies.nowPlaying(options)
-                : category === 'upcoming'
-                  ? await client.movies.upcoming(options)
-                  : await client.movies.popular(options)
+            await printPaged({
+              fetchPage: (page) => {
+                const options = { ...params, page }
 
-          printResult(response, output, () => printSearchResults(response, 'movie'))
-        })
+                return category === 'top-rated'
+                  ? client.movies.topRated(options)
+                  : category === 'now-playing'
+                    ? client.movies.nowPlaying(options)
+                    : category === 'upcoming'
+                      ? client.movies.upcoming(options)
+                      : client.movies.popular(options)
+              },
+              output,
+              renderText: (response) => printSearchResults(response, 'movie'),
+              startPage: params.page,
+            })
+          },
+          { paginated: true },
+        )
       },
     }),
 
@@ -192,16 +204,25 @@ export const movieCommand = defineCommand({
           type: 'string',
           description: 'ISO 3166-1 region code',
         },
+        ...paginationArgs,
       },
       async run({ args }) {
-        await runSafely(args, async (output) => {
-          const id = parseId(args.id, 'movie ID')
-          const options = { page: parsePage(args.page), region: args.region }
-          const client = createClient({ language: args.lang })
-          const response = await client.movies.similar(id, options)
+        await runSafely(
+          args,
+          async (output) => {
+            const id = parseId(args.id, 'movie ID')
+            const params = { page: parsePage(args.page), region: args.region }
+            const client = createClient({ language: args.lang })
 
-          printResult(response, output, () => printSearchResults(response, 'movie'))
-        })
+            await printPaged({
+              fetchPage: (page) => client.movies.similar(id, { ...params, page }),
+              output,
+              renderText: (response) => printSearchResults(response, 'movie'),
+              startPage: params.page,
+            })
+          },
+          { paginated: true },
+        )
       },
     }),
 
@@ -225,16 +246,25 @@ export const movieCommand = defineCommand({
           type: 'string',
           description: 'ISO 3166-1 region code',
         },
+        ...paginationArgs,
       },
       async run({ args }) {
-        await runSafely(args, async (output) => {
-          const id = parseId(args.id, 'movie ID')
-          const options = { page: parsePage(args.page), region: args.region }
-          const client = createClient({ language: args.lang })
-          const response = await client.movies.recommendations(id, options)
+        await runSafely(
+          args,
+          async (output) => {
+            const id = parseId(args.id, 'movie ID')
+            const params = { page: parsePage(args.page), region: args.region }
+            const client = createClient({ language: args.lang })
 
-          printResult(response, output, () => printSearchResults(response, 'movie'))
-        })
+            await printPaged({
+              fetchPage: (page) => client.movies.recommendations(id, { ...params, page }),
+              output,
+              renderText: (response) => printSearchResults(response, 'movie'),
+              startPage: params.page,
+            })
+          },
+          { paginated: true },
+        )
       },
     }),
   },

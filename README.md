@@ -413,7 +413,7 @@ Use `--lang` to override the config language for a single command. `auth logout`
 
 ### Commands
 
-Every API command accepts `--lang`, `--format`, `--fields`, and `--compact`. Run `tmdb <command> --help` for the full option list.
+Every API command accepts `--lang`, `--format`, `--fields`, and `--compact`. Commands that return a paginated list also accept `--all` and `--max-items` with `--format ndjson`. Run `tmdb <command> --help` for the full option list.
 
 | Command                                          | Description                                                                       | Command options              |
 | ------------------------------------------------ | --------------------------------------------------------------------------------- | ---------------------------- |
@@ -467,6 +467,8 @@ Credential and config commands:
 | `--fields <list>`               | Comma-separated top-level fields to keep. Requires `--format json` or `ndjson`.     |
 | `--json`                        | Alias for `--format json`.                                                          |
 | `--compact`                     | Print JSON on a single line instead of pretty-printing it.                          |
+| `--all`                         | Follow pagination to the last page. List commands only; requires `ndjson`.          |
+| `--max-items <number>`          | Stop after this many items. List commands only; requires `ndjson`.                  |
 | `--lang <code>`                 | Language for this command. Defaults to config `language`, then `en-US`.             |
 | `--page <number>`               | Page number. Defaults to `1`.                                                       |
 | `--region <code>`               | Region for movie lists, similar, and recommendations. Defaults to config `region`.  |
@@ -499,10 +501,10 @@ tmdb movie get 550 --format json --compact   # single line, for line-oriented to
 ```json
 {"type":"meta","page":1,"total_pages":5,"total_results":100}
 {"type":"item","index":0,"value":{"id":550,"title":"Fight Club"}}
-{"type":"summary","count":20}
+{"type":"summary","count":20,"pages":1}
 ```
 
-`meta` is the response envelope without `results`, `index` is zero-based, and `summary` closes the stream. Every other response emits a single record:
+`meta` is the response envelope without `results`, `index` is zero-based, and `summary` closes the stream with the item count and pages read. Every other response emits a single record:
 
 <!-- prettier-ignore -->
 ```json
@@ -510,6 +512,16 @@ tmdb movie get 550 --format json --compact   # single line, for line-oriented to
 ```
 
 Because the stream is line-oriented, a missing `summary` line means the command failed; the reason is still on stderr as a single `{"type":"error",...}` record.
+
+#### Pagination
+
+List commands (`search`, `trending`, `movie list/similar/recommendations`, and `tv list/similar/recommendations`) accept `--all` to follow pagination from `--page` to the last page, and `--max-items` to stop early:
+
+```bash
+tmdb trending movie --format ndjson --all --max-items 100
+```
+
+`--max-items` caps the number of `item` records with or without `--all`. Both flags require `--format ndjson`, and `--all` may issue many requests: TMDB caps lists at 500 pages and the command stops at that limit.
 
 #### Selecting fields
 
