@@ -54,6 +54,14 @@ export function parseSeasonNumber(value: string): number {
   return season
 }
 
+export function parseGroupId(value: string): string {
+  const groupId = value.trim()
+  if (!/^[A-Za-z0-9_-]+$/.test(groupId)) {
+    throw new CliError('Invalid group ID: expected a non-empty identifier.', 2)
+  }
+  return groupId
+}
+
 export function parseLimit(value: string | undefined, fallback = 10): number {
   if (value === undefined || value === '') {
     return fallback

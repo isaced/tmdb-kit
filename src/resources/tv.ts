@@ -1,12 +1,25 @@
 import type { TMDBTransport } from '../http'
-import { toCommaList, toId, withLanguage, type QueryParams } from '../query'
+import {
+  toCommaList,
+  toGroupId,
+  toId,
+  toSeasonNumber,
+  withLanguage,
+  type QueryParams,
+} from '../query'
 import type {
+  AggregateCreditsResponse,
   CreditsResponse,
+  EpisodeDetails,
+  EpisodeDetailsOptions,
+  EpisodeGroupDetails,
+  EpisodeGroupsResponse,
   ImageQueryOptions,
   ImagesResponse,
   LanguageOptions,
   ListOptions,
   PagedResponse,
+  SeasonImagesResponse,
   TMDBObject,
   TVDetails,
   TVDetailsOptions,
@@ -113,7 +126,7 @@ export class TVResource {
     options: TVSeasonDetailsOptions = {},
   ): Promise<TVSeasonDetails & TAppend> {
     return this.#transport.get(
-      `/tv/${toId(seriesId, 'seriesId')}/season/${toId(seasonNumber, 'seasonNumber')}`,
+      `/tv/${toId(seriesId, 'seriesId')}/season/${toSeasonNumber(seasonNumber)}`,
       {
         query: withLanguage(this.#transport.defaults, {
           append_to_response: toCommaList(options.appendToResponse),
@@ -121,6 +134,111 @@ export class TVResource {
         }),
       },
     )
+  }
+
+  seasonCredits(
+    seriesId: number,
+    seasonNumber: number,
+    options: LanguageOptions = {},
+  ): Promise<CreditsResponse> {
+    return this.#transport.get(
+      `/tv/${toId(seriesId, 'seriesId')}/season/${toSeasonNumber(seasonNumber)}/credits`,
+      {
+        query: withLanguage(this.#transport.defaults, {
+          language: options.language,
+        }),
+      },
+    )
+  }
+
+  seasonAggregateCredits(
+    seriesId: number,
+    seasonNumber: number,
+    options: LanguageOptions = {},
+  ): Promise<AggregateCreditsResponse> {
+    return this.#transport.get(
+      `/tv/${toId(seriesId, 'seriesId')}/season/${toSeasonNumber(seasonNumber)}/aggregate_credits`,
+      {
+        query: withLanguage(this.#transport.defaults, {
+          language: options.language,
+        }),
+      },
+    )
+  }
+
+  seasonImages(
+    seriesId: number,
+    seasonNumber: number,
+    options: ImageQueryOptions = {},
+  ): Promise<SeasonImagesResponse> {
+    return this.#transport.get(
+      `/tv/${toId(seriesId, 'seriesId')}/season/${toSeasonNumber(seasonNumber)}/images`,
+      {
+        query: withLanguage(this.#transport.defaults, {
+          include_image_language: toCommaList(options.includeImageLanguage),
+          language: options.language,
+        }),
+      },
+    )
+  }
+
+  seasonVideos(
+    seriesId: number,
+    seasonNumber: number,
+    options: LanguageOptions = {},
+  ): Promise<VideosResponse> {
+    return this.#transport.get(
+      `/tv/${toId(seriesId, 'seriesId')}/season/${toSeasonNumber(seasonNumber)}/videos`,
+      {
+        query: withLanguage(this.#transport.defaults, {
+          language: options.language,
+        }),
+      },
+    )
+  }
+
+  episodeDetails<TAppend extends TMDBObject = TMDBObject>(
+    seriesId: number,
+    seasonNumber: number,
+    episodeNumber: number,
+    options: EpisodeDetailsOptions = {},
+  ): Promise<EpisodeDetails & TAppend> {
+    return this.#transport.get(
+      `/tv/${toId(seriesId, 'seriesId')}/season/${toSeasonNumber(seasonNumber)}/episode/${toId(episodeNumber, 'episodeNumber')}`,
+      {
+        query: withLanguage(this.#transport.defaults, {
+          append_to_response: toCommaList(options.appendToResponse),
+          language: options.language,
+        }),
+      },
+    )
+  }
+
+  aggregateCredits(
+    seriesId: number,
+    options: LanguageOptions = {},
+  ): Promise<AggregateCreditsResponse> {
+    return this.#transport.get(`/tv/${toId(seriesId, 'seriesId')}/aggregate_credits`, {
+      query: withLanguage(this.#transport.defaults, {
+        language: options.language,
+      }),
+    })
+  }
+
+  episodeGroups(seriesId: number, options: LanguageOptions = {}): Promise<EpisodeGroupsResponse> {
+    return this.#transport.get(`/tv/${toId(seriesId, 'seriesId')}/episode_groups`, {
+      query: withLanguage(this.#transport.defaults, {
+        language: options.language,
+      }),
+    })
+  }
+
+  episodeGroup(groupId: string, options: LanguageOptions = {}): Promise<EpisodeGroupDetails> {
+    return this.#transport.get(`/tv/episode_group/${toGroupId(groupId)}`, {
+      query: withLanguage(this.#transport.defaults, {
+        language: options.language,
+      }),
+    })
   }
 }
 

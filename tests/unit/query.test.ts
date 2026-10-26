@@ -5,8 +5,10 @@ import {
   buildImageUrl,
   normalizeBaseUrl,
   toCommaList,
+  toGroupId,
   toId,
   toSearchQuery,
+  toSeasonNumber,
   toTimeWindow,
   withLanguage,
   withListDefaults,
@@ -62,6 +64,24 @@ describe('query utilities', () => {
     expect(toId(550, 'movieId')).toBe('550')
     expect(() => toId(0, 'movieId')).toThrow(TMDBRequestError)
     expect(() => toId(1.5, 'movieId')).toThrow('movieId must be a positive integer')
+  })
+
+  it('validates season numbers and group ids for TV paths', () => {
+    expect(toSeasonNumber(0)).toBe('0')
+    expect(toSeasonNumber(3)).toBe('3')
+
+    for (const value of [-1, 1.5, Number.NaN]) {
+      expect(() => toSeasonNumber(value), String(value)).toThrow(
+        'seasonNumber must be a non-negative integer',
+      )
+    }
+
+    expect(toGroupId('abc123')).toBe('abc123')
+    expect(toGroupId(' group-1 ')).toBe('group-1')
+
+    for (const value of ['', '   ', '../admin', 'a/b']) {
+      expect(() => toGroupId(value), value).toThrow('groupId must be a non-empty identifier')
+    }
   })
 
   it('normalizes search queries and trending windows', () => {

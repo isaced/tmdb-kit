@@ -1,5 +1,9 @@
 import type {
+  AggregateCreditsResponse,
   CreditsResponse,
+  EpisodeDetails,
+  EpisodeGroupDetails,
+  EpisodeGroupsResponse,
   GenresResponse,
   ImageItem,
   ImagesResponse,
@@ -9,6 +13,7 @@ import type {
   PersonCombinedCreditsResponse,
   PersonDetails,
   SearchMultiResult,
+  SeasonImagesResponse,
   TVDetails,
   TVSeasonDetails,
   TVSummary,
@@ -282,6 +287,142 @@ export function seasonDetails(overrides: Partial<TVSeasonDetails> = {}): TVSeaso
     poster_path: '/season.jpg',
     season_number: 1,
     vote_average: 8.3,
+    ...overrides,
+  }
+}
+
+export function episodeDetails(overrides: Partial<EpisodeDetails> = {}): EpisodeDetails {
+  return {
+    air_date: '2011-04-17',
+    crew: [],
+    episode_number: 1,
+    episode_type: 'standard',
+    guest_stars: [],
+    id: 63056,
+    name: 'Winter Is Coming',
+    overview: 'Eddard Stark is...',
+    production_code: '101',
+    runtime: 62,
+    season_number: 1,
+    still_path: '/still.jpg',
+    vote_average: 7.9,
+    vote_count: 350,
+    ...overrides,
+  }
+}
+
+export function aggregateCreditsResponse(
+  overrides: Partial<AggregateCreditsResponse> = {},
+): AggregateCreditsResponse {
+  return {
+    id: 1399,
+    cast: [
+      {
+        adult: false,
+        gender: 1,
+        id: 1223786,
+        known_for_department: 'Acting',
+        name: 'Emilia Clarke',
+        order: 0,
+        original_name: 'Emilia Clarke',
+        popularity: 100,
+        profile_path: '/emilia.jpg',
+        roles: [
+          { credit_id: 'role-1', character: 'Daenerys Targaryen', episode_count: 10 },
+          { credit_id: 'role-2', character: 'Dany', episode_count: 2 },
+        ],
+        total_episode_count: 12,
+      },
+    ],
+    crew: [
+      {
+        adult: false,
+        department: 'Writing',
+        gender: 2,
+        id: 9813,
+        jobs: [
+          { credit_id: 'job-1', job: 'Writer', episode_count: 8 },
+          { credit_id: 'job-2', job: 'Director', episode_count: 2 },
+        ],
+        known_for_department: 'Writing',
+        name: 'David Benioff',
+        original_name: 'David Benioff',
+        popularity: 50,
+        profile_path: null,
+        total_episode_count: 10,
+      },
+    ],
+    ...overrides,
+  }
+}
+
+export function seasonImagesResponse(
+  overrides: Partial<SeasonImagesResponse> = {},
+): SeasonImagesResponse {
+  return {
+    id: 3624,
+    posters: [image('/season.jpg', 1000, 1500)],
+    ...overrides,
+  }
+}
+
+export function episodeGroupsResponse(
+  overrides: Partial<EpisodeGroupsResponse> = {},
+): EpisodeGroupsResponse {
+  return {
+    id: 1399,
+    results: [
+      {
+        description: 'Alternate ordering',
+        episode_count: 10,
+        group_count: 1,
+        id: 'group-1',
+        name: 'Story Arc',
+        network: null,
+        type: 4,
+      },
+    ],
+    ...overrides,
+  }
+}
+
+export function episodeGroupDetails(
+  overrides: Partial<EpisodeGroupDetails> = {},
+): EpisodeGroupDetails {
+  return {
+    description: 'Alternate ordering',
+    episode_count: 1,
+    group_count: 1,
+    groups: [
+      {
+        id: 'section-1',
+        name: 'Season 1',
+        order: 1,
+        locked: true,
+        episodes: [
+          {
+            air_date: '2011-04-17',
+            episode_number: 1,
+            episode_type: 'standard',
+            id: 63056,
+            name: 'Winter Is Coming',
+            order: 1,
+            overview: 'Eddard Stark is...',
+            production_code: '101',
+            runtime: 62,
+            season_number: 1,
+            show_id: 1399,
+            still_path: '/still.jpg',
+            vote_average: 7.9,
+            vote_count: 350,
+          },
+        ],
+      },
+    ],
+    id: 'group-1',
+    name: 'Story Arc',
+    network: null,
+    type: 4,
     ...overrides,
   }
 }

@@ -1,19 +1,25 @@
 import { defineCommand } from 'citty'
-import type { TVAppendToResponse } from '../../index'
+import type { EpisodeAppendToResponse, TVAppendToResponse } from '../../index'
 import { createClient } from '../client'
 import { runSafely } from '../errors'
 import {
+  printAggregateCredits,
   printCredits,
+  printEpisode,
+  printEpisodeGroup,
+  printEpisodeGroups,
   printImages,
   printJson,
   printSearchResults,
   printSeason,
+  printSeasonImages,
   printTV,
   printVideos,
 } from '../format'
 import {
   commonArgs,
   parseCommaList,
+  parseGroupId,
   parseId,
   parseLimit,
   parsePage,
@@ -291,6 +297,294 @@ export const tvCommand = defineCommand({
             printJson(season)
           } else {
             printSeason(season, client)
+          }
+        })
+      },
+    }),
+
+    episode: defineCommand({
+      meta: {
+        name: 'episode',
+        description: 'Show a TV episode',
+      },
+      args: {
+        ...commonArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB TV show ID',
+          required: true,
+        },
+        season: {
+          type: 'positional',
+          description: 'Season number (0 for specials)',
+          required: true,
+        },
+        episode: {
+          type: 'positional',
+          description: 'Episode number',
+          required: true,
+        },
+        append: {
+          type: 'string',
+          description: 'Comma-separated append_to_response values',
+        },
+      },
+      async run({ args }) {
+        await runSafely(async () => {
+          const id = parseId(args.id, 'TV show ID')
+          const seasonNumber = parseSeasonNumber(args.season)
+          const episodeNumber = parseId(args.episode, 'episode number')
+          const appendToResponse = parseCommaList(args.append) as
+            EpisodeAppendToResponse[] | undefined
+          const client = createClient({ language: args.lang })
+          const episode = await client.tv.episodeDetails(id, seasonNumber, episodeNumber, {
+            appendToResponse,
+          })
+
+          if (args.json) {
+            printJson(episode)
+          } else {
+            printEpisode(episode, client, id)
+          }
+        })
+      },
+    }),
+
+    'aggregate-credits': defineCommand({
+      meta: {
+        name: 'aggregate-credits',
+        description: 'Show aggregate cast and crew credits for a TV show',
+      },
+      args: {
+        ...commonArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB TV show ID',
+          required: true,
+        },
+        limit: {
+          type: 'string',
+          description: 'Maximum cast/crew rows (default: 10)',
+        },
+      },
+      async run({ args }) {
+        await runSafely(async () => {
+          const id = parseId(args.id, 'TV show ID')
+          const limit = parseLimit(args.limit)
+          const client = createClient({ language: args.lang })
+          const credits = await client.tv.aggregateCredits(id)
+
+          if (args.json) {
+            printJson(credits)
+          } else {
+            printAggregateCredits(credits, limit)
+          }
+        })
+      },
+    }),
+
+    'season-credits': defineCommand({
+      meta: {
+        name: 'season-credits',
+        description: 'Show cast and crew credits for a TV season',
+      },
+      args: {
+        ...commonArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB TV show ID',
+          required: true,
+        },
+        season: {
+          type: 'positional',
+          description: 'Season number (0 for specials)',
+          required: true,
+        },
+        limit: {
+          type: 'string',
+          description: 'Maximum cast/crew rows (default: 10)',
+        },
+      },
+      async run({ args }) {
+        await runSafely(async () => {
+          const id = parseId(args.id, 'TV show ID')
+          const seasonNumber = parseSeasonNumber(args.season)
+          const limit = parseLimit(args.limit)
+          const client = createClient({ language: args.lang })
+          const credits = await client.tv.seasonCredits(id, seasonNumber)
+
+          if (args.json) {
+            printJson(credits)
+          } else {
+            printCredits(credits, limit)
+          }
+        })
+      },
+    }),
+
+    'season-aggregate-credits': defineCommand({
+      meta: {
+        name: 'season-aggregate-credits',
+        description: 'Show aggregate cast and crew credits for a TV season',
+      },
+      args: {
+        ...commonArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB TV show ID',
+          required: true,
+        },
+        season: {
+          type: 'positional',
+          description: 'Season number (0 for specials)',
+          required: true,
+        },
+        limit: {
+          type: 'string',
+          description: 'Maximum cast/crew rows (default: 10)',
+        },
+      },
+      async run({ args }) {
+        await runSafely(async () => {
+          const id = parseId(args.id, 'TV show ID')
+          const seasonNumber = parseSeasonNumber(args.season)
+          const limit = parseLimit(args.limit)
+          const client = createClient({ language: args.lang })
+          const credits = await client.tv.seasonAggregateCredits(id, seasonNumber)
+
+          if (args.json) {
+            printJson(credits)
+          } else {
+            printAggregateCredits(credits, limit)
+          }
+        })
+      },
+    }),
+
+    'season-images': defineCommand({
+      meta: {
+        name: 'season-images',
+        description: 'Show TV season image URLs',
+      },
+      args: {
+        ...commonArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB TV show ID',
+          required: true,
+        },
+        season: {
+          type: 'positional',
+          description: 'Season number (0 for specials)',
+          required: true,
+        },
+        'image-language': {
+          type: 'string',
+          description: 'Comma-separated image language codes',
+        },
+      },
+      async run({ args }) {
+        await runSafely(async () => {
+          const id = parseId(args.id, 'TV show ID')
+          const seasonNumber = parseSeasonNumber(args.season)
+          const includeImageLanguage = parseCommaList(args['image-language'])
+          const client = createClient({ language: args.lang })
+          const images = await client.tv.seasonImages(id, seasonNumber, { includeImageLanguage })
+
+          if (args.json) {
+            printJson(images)
+          } else {
+            printSeasonImages(images, client)
+          }
+        })
+      },
+    }),
+
+    'season-videos': defineCommand({
+      meta: {
+        name: 'season-videos',
+        description: 'Show TV season videos and trailers',
+      },
+      args: {
+        ...commonArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB TV show ID',
+          required: true,
+        },
+        season: {
+          type: 'positional',
+          description: 'Season number (0 for specials)',
+          required: true,
+        },
+      },
+      async run({ args }) {
+        await runSafely(async () => {
+          const id = parseId(args.id, 'TV show ID')
+          const seasonNumber = parseSeasonNumber(args.season)
+          const client = createClient({ language: args.lang })
+          const videos = await client.tv.seasonVideos(id, seasonNumber)
+
+          if (args.json) {
+            printJson(videos)
+          } else {
+            printVideos(videos)
+          }
+        })
+      },
+    }),
+
+    'episode-groups': defineCommand({
+      meta: {
+        name: 'episode-groups',
+        description: 'List alternate episode groupings for a TV show',
+      },
+      args: {
+        ...commonArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB TV show ID',
+          required: true,
+        },
+      },
+      async run({ args }) {
+        await runSafely(async () => {
+          const id = parseId(args.id, 'TV show ID')
+          const client = createClient({ language: args.lang })
+          const groups = await client.tv.episodeGroups(id)
+
+          if (args.json) {
+            printJson(groups)
+          } else {
+            printEpisodeGroups(groups)
+          }
+        })
+      },
+    }),
+
+    'episode-group': defineCommand({
+      meta: {
+        name: 'episode-group',
+        description: 'Show an alternate episode group',
+      },
+      args: {
+        ...commonArgs,
+        'group-id': {
+          type: 'positional',
+          description: 'TMDB episode group ID',
+          required: true,
+        },
+      },
+      async run({ args }) {
+        await runSafely(async () => {
+          const groupId = parseGroupId(args['group-id'])
+          const client = createClient({ language: args.lang })
+          const group = await client.tv.episodeGroup(groupId)
+
+          if (args.json) {
+            printJson(group)
+          } else {
+            printEpisodeGroup(group)
           }
         })
       },

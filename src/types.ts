@@ -196,6 +196,115 @@ export interface TVSeasonDetailsOptions extends LanguageOptions {
   appendToResponse?: TVSeasonAppendToResponse | readonly TVSeasonAppendToResponse[]
 }
 
+/**
+ * Episode details endpoint payload. Unlike {@link EpisodeSummary}, the
+ * single-episode endpoint does not return `show_id`.
+ */
+export type EpisodeDetails = Omit<EpisodeSummary, 'show_id'>
+
+export type EpisodeAppendToResponse =
+  | 'account_states'
+  | 'credits'
+  | 'external_ids'
+  | 'images'
+  | 'translations'
+  | 'videos'
+  | (string & {})
+
+export interface EpisodeDetailsOptions extends LanguageOptions {
+  appendToResponse?: EpisodeAppendToResponse | readonly EpisodeAppendToResponse[]
+}
+
+export interface AggregateRole {
+  credit_id: string
+  character: string
+  episode_count: number
+}
+
+export interface AggregateJob {
+  credit_id: string
+  job: string
+  episode_count: number
+}
+
+export interface AggregateCastMember {
+  adult?: boolean
+  gender: number | null
+  id: number
+  known_for_department: string
+  name: string
+  order: number
+  original_name: string
+  popularity: number
+  profile_path: string | null
+  roles: AggregateRole[]
+  total_episode_count: number
+}
+
+export interface AggregateCrewMember {
+  adult?: boolean
+  department: string
+  gender: number | null
+  id: number
+  jobs: AggregateJob[]
+  known_for_department: string
+  name: string
+  original_name: string
+  popularity: number
+  profile_path: string | null
+  total_episode_count: number
+}
+
+export interface AggregateCreditsResponse {
+  id: number
+  cast: AggregateCastMember[]
+  crew: AggregateCrewMember[]
+}
+
+export interface EpisodeGroupSummary {
+  description: string
+  episode_count: number
+  group_count: number
+  id: string
+  name: string
+  network: Network | null
+  type: number
+}
+
+export interface EpisodeGroupsResponse {
+  id: number
+  results: EpisodeGroupSummary[]
+}
+
+export interface EpisodeGroupEpisode {
+  air_date: TMDBDateString | null
+  episode_number: number
+  episode_type: string
+  id: number
+  name: string
+  order: number
+  overview: string
+  production_code: string | null
+  runtime: number | null
+  season_number: number
+  show_id: number
+  still_path: string | null
+  vote_average: number
+  vote_count: number
+}
+
+export interface EpisodeGroup {
+  id: string
+  name: string
+  order: number
+  locked: boolean
+  episodes: EpisodeGroupEpisode[]
+}
+
+export interface EpisodeGroupDetails extends EpisodeGroupSummary {
+  groups: EpisodeGroup[]
+}
+
 export interface TVDetails extends Omit<TVSummary, 'genre_ids'> {
   created_by: CreatedBy[]
   episode_run_time: number[]
@@ -377,6 +486,11 @@ export interface ImagesResponse {
   id: number
   backdrops: ImageItem[]
   logos?: ImageItem[]
+  posters: ImageItem[]
+}
+
+export interface SeasonImagesResponse {
+  id: number
   posters: ImageItem[]
 }
 

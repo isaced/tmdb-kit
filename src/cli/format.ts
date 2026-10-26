@@ -1,5 +1,9 @@
 import type {
+  AggregateCreditsResponse,
   CreditsResponse,
+  EpisodeDetails,
+  EpisodeGroupDetails,
+  EpisodeGroupsResponse,
   GenresResponse,
   ImageItem,
   ImagesResponse,
@@ -12,6 +16,7 @@ import type {
   PersonDetails,
   PersonSearchResult,
   SearchMultiResult,
+  SeasonImagesResponse,
   TMDBClient,
   TVDetails,
   TVSearchResult,
@@ -177,11 +182,53 @@ export function printCredits(credits: CreditsResponse, limit = 10): void {
   writeLines(lines)
 }
 
+export function printAggregateCredits(credits: AggregateCreditsResponse, limit = 10): void {
+  const lines: string[] = []
+
+  if (credits.cast.length > 0) {
+    lines.push('Cast:')
+    for (const member of credits.cast.slice(0, limit)) {
+      const roles = member.roles
+        .map((role) => `${role.character} (${role.episode_count} eps)`)
+        .join(', ')
+      lines.push(`  ${member.name} as ${roles}  #${member.id}`)
+    }
+  }
+
+  if (credits.crew.length > 0) {
+    if (lines.length > 0) {
+      lines.push('')
+    }
+    lines.push('Crew:')
+    for (const member of credits.crew.slice(0, limit)) {
+      const jobs = member.jobs.map((job) => `${job.job} (${job.episode_count} eps)`).join(', ')
+      lines.push(`  ${member.name} — ${jobs} (${member.department})  #${member.id}`)
+    }
+  }
+
+  if (lines.length === 0) {
+    lines.push('No credits.')
+  }
+
+  writeLines(lines)
+}
+
 export function printImages(images: ImagesResponse, tmdb: TMDBClient): void {
   const lines: string[] = []
   appendImageSection(lines, 'Posters', images.posters, 'w500', tmdb)
   appendImageSection(lines, 'Backdrops', images.backdrops, 'w780', tmdb)
   appendImageSection(lines, 'Logos', images.logos ?? [], 'w300', tmdb)
+
+  if (lines.length === 0) {
+    lines.push('No images.')
+  }
+
+  writeLines(lines)
+}
+
+export function printSeasonImages(images: SeasonImagesResponse, tmdb: TMDBClient): void {
+  const lines: string[] = []
+  appendImageSection(lines, 'Posters', images.posters, 'w500', tmdb)
 
   if (lines.length === 0) {
     lines.push('No images.')
@@ -230,6 +277,68 @@ export function printSeason(season: TVSeasonDetails, tmdb: TMDBClient): void {
       lines.push(
         `  E${String(episode.episode_number).padStart(2, '0')}  ${episode.name}${airDate}${runtime}  ★ ${episode.vote_average.toFixed(1)}  #${episode.id}`,
       )
+    }
+  }
+
+  writeLines(lines)
+}
+
+export function printEpisode(episode: EpisodeDetails, tmdb: TMDBClient, seriesId: number): void {
+  const lines = [`${episodeCode(episode)} · ${episode.name}`]
+  const facts = [
+    episode.air_date,
+    episode.runtime ? `${episode.runtime} min` : undefined,
+    `★ ${episode.vote_average.toFixed(1)}/10 (${episode.vote_count} votes)`,
+  ].filter(Boolean)
+  lines.push(facts.join(' · '))
+
+  lines.push(
+    `TMDB: https://www.themoviedb.org/tv/${seriesId}/season/${episode.season_number}/episode/${episode.episode_number}`,
+  )
+
+  const still = tmdb.images.url(episode.still_path, 'w300')
+  if (still) {
+    lines.push(`Still: ${still}`)
+  }
+
+  if (episode.overview) {
+    lines.push('', episode.overview)
+  }
+
+  writeLines(lines)
+}
+
+export function printEpisodeGroups(response: EpisodeGroupsResponse): void {
+  if (response.results.length === 0) {
+    writeLines(['No episode groups.'])
+    return
+  }
+
+  writeLines(
+    response.results.map(
+      (group) =>
+        `${group.id}  ${group.name}  (${group.group_count} groups, ${group.episode_count} episodes)`,
+    ),
+  )
+}
+
+export function printEpisodeGroup(group: EpisodeGroupDetails): void {
+  const lines = [group.name]
+
+  if (group.description) {
+    lines.push(group.description)
+  }
+
+  if (group.groups.length === 0) {
+    lines.push('', 'No episodes.')
+    writeLines(lines)
+    return
+  }
+
+  for (const section of group.groups) {
+    lines.push('', section.name)
+    for (const episode of section.episodes) {
+      lines.push(`  ${episode.order}. ${episodeCode(episode)} · ${episode.name}  #${episode.id}`)
     }
   }
 
@@ -364,6 +473,10 @@ function creditYear(item: PersonCombinedCast | PersonCombinedCrew): string {
 
 function writeLines(lines: readonly string[]): void {
   process.stdout.write(`${lines.join('\n')}\n`)
+}
+
+function episodeCode(episode: { season_number: number; episode_number: number }): string {
+  return `S${String(episode.season_number).padStart(2, '0')}E${String(episode.episode_number).padStart(2, '0')}`
 }
 
 function formatSearchResult(result: SearchResult, index: number, fallbackType: SearchType): string {

@@ -1,10 +1,15 @@
 import type {
+  AggregateCreditsResponse,
   Configuration,
   CreditsResponse,
+  EpisodeDetails,
+  EpisodeGroupDetails,
+  EpisodeGroupsResponse,
   GenresResponse,
   ImagesResponse,
   PagedResponse,
   PersonCombinedCreditsResponse,
+  SeasonImagesResponse,
   TVSeasonDetails,
   VideosResponse,
 } from '../../src'
@@ -101,4 +106,33 @@ export const seasonDetails: TVSeasonDetails = {
   poster_path: '/kMTkQkQnFmHmBYyBz5dTFaXGkZg.jpg',
   season_number: 1,
   vote_average: 8.3,
+}
+
+export const episodeDetails: EpisodeDetails = seasonDetails.episodes[0]!
+
+export const aggregateCreditsResponse: AggregateCreditsResponse = {
+  cast: [],
+  crew: [],
+  id: 1399,
+}
+
+export const seasonImagesResponse: SeasonImagesResponse = {
+  id: 3624,
+  posters: [],
+}
+
+export const episodeGroupsResponse: EpisodeGroupsResponse = {
+  id: 1399,
+  results: [],
+}
+
+export const episodeGroupDetails: EpisodeGroupDetails = {
+  description: '',
+  episode_count: 0,
+  group_count: 0,
+  groups: [],
+  id: 'group-1',
+  name: 'Episode Group',
+  network: null,
+  type: 1,
 }

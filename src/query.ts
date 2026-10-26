@@ -98,6 +98,36 @@ export function toId(value: number, name: string): string {
 }
 
 /**
+ * Validate and convert a season number to a string for use in URL paths.
+ *
+ * Season `0` is valid and refers to specials.
+ *
+ * @throws {TMDBRequestError} If `value` is not a non-negative integer.
+ */
+export function toSeasonNumber(value: number): string {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new TMDBRequestError('seasonNumber must be a non-negative integer')
+  }
+
+  return String(value)
+}
+
+/**
+ * Validate and normalize a string identifier for use in URL paths.
+ *
+ * @throws {TMDBRequestError} If `value` is empty or contains non-identifier characters.
+ */
+export function toGroupId(value: string): string {
+  const groupId = value.trim()
+
+  if (!/^[A-Za-z0-9_-]+$/.test(groupId)) {
+    throw new TMDBRequestError('groupId must be a non-empty identifier')
+  }
+
+  return groupId
+}
+
+/**
  * Validate and trim a search query string.
  *
  * @throws {TMDBRequestError} If the query is empty after trimming.
