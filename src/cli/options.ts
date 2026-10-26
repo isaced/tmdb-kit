@@ -1,4 +1,11 @@
 import type { ArgsDef } from 'citty'
+import type {
+  DiscoverIdFilter,
+  DiscoverMovieSortBy,
+  DiscoverTVSortBy,
+  ExternalIdSource,
+  WatchMonetizationType,
+} from '../index'
 import { CliError } from './errors'
 
 export const jsonArg = {
@@ -165,4 +172,200 @@ export function parseTVListCategory(value: string): TVListCategory {
     )
   }
   return value as TVListCategory
+}
+
+export const EXTERNAL_ID_SOURCES = [
+  'imdb_id',
+  'freebase_mid',
+  'freebase_id',
+  'tvdb_id',
+  'tvrage_id',
+  'facebook_id',
+  'twitter_id',
+  'instagram_id',
+  'tiktok_id',
+  'youtube_id',
+  'wikidata_id',
+] as const satisfies readonly ExternalIdSource[]
+
+export function parseExternalSource(value: string): ExternalIdSource {
+  if (!(EXTERNAL_ID_SOURCES as readonly string[]).includes(value)) {
+    throw new CliError(
+      `Invalid --source "${value}". Expected one of: ${EXTERNAL_ID_SOURCES.join(', ')}.`,
+      2,
+    )
+  }
+  return value as ExternalIdSource
+}
+
+export function parseExternalId(value: string): string {
+  const externalId = value.trim()
+  if (externalId.length === 0) {
+    throw new CliError('External ID must not be empty.', 2)
+  }
+  return externalId
+}
+
+export const WATCH_MONETIZATION_TYPES = [
+  'flatrate',
+  'free',
+  'ads',
+  'rent',
+  'buy',
+] as const satisfies readonly WatchMonetizationType[]
+
+export function parseWatchMonetizationTypes(
+  value: string | undefined,
+): WatchMonetizationType[] | undefined {
+  if (value === undefined || value.trim() === '') {
+    return undefined
+  }
+
+  const values = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+  if (values.length === 0) {
+    return undefined
+  }
+
+  for (const item of values) {
+    if (!(WATCH_MONETIZATION_TYPES as readonly string[]).includes(item)) {
+      throw new CliError(
+        `Invalid --with-watch-monetization-types "${item}". Expected one of: ${WATCH_MONETIZATION_TYPES.join(', ')}.`,
+        2,
+      )
+    }
+  }
+
+  return values as WatchMonetizationType[]
+}
+
+export const MOVIE_SORT_BY = [
+  'popularity.asc',
+  'popularity.desc',
+  'revenue.asc',
+  'revenue.desc',
+  'primary_release_date.asc',
+  'primary_release_date.desc',
+  'original_title.asc',
+  'original_title.desc',
+  'title.asc',
+  'title.desc',
+  'vote_average.asc',
+  'vote_average.desc',
+  'vote_count.asc',
+  'vote_count.desc',
+] as const satisfies readonly DiscoverMovieSortBy[]
+
+export function parseMovieSortBy(value: string | undefined): DiscoverMovieSortBy | undefined {
+  if (value === undefined || value.trim() === '') {
+    return undefined
+  }
+  if (!(MOVIE_SORT_BY as readonly string[]).includes(value)) {
+    throw new CliError(
+      `Invalid --sort-by "${value}". Expected one of: ${MOVIE_SORT_BY.join(', ')}.`,
+      2,
+    )
+  }
+  return value as DiscoverMovieSortBy
+}
+
+export const TV_SORT_BY = [
+  'first_air_date.asc',
+  'first_air_date.desc',
+  'name.asc',
+  'name.desc',
+  'original_name.asc',
+  'original_name.desc',
+  'popularity.asc',
+  'popularity.desc',
+  'vote_average.asc',
+  'vote_average.desc',
+  'vote_count.asc',
+  'vote_count.desc',
+] as const satisfies readonly DiscoverTVSortBy[]
+
+export function parseTVSortBy(value: string | undefined): DiscoverTVSortBy | undefined {
+  if (value === undefined || value.trim() === '') {
+    return undefined
+  }
+  if (!(TV_SORT_BY as readonly string[]).includes(value)) {
+    throw new CliError(
+      `Invalid --sort-by "${value}". Expected one of: ${TV_SORT_BY.join(', ')}.`,
+      2,
+    )
+  }
+  return value as DiscoverTVSortBy
+}
+
+/**
+ * Parse a discover ID filter.
+ *
+ * Comma-separated values become an array (TMDB treats commas as AND).
+ * Pipe-separated values are validated and returned as a raw string so
+ * TMDB's OR syntax is preserved.
+ */
+export function parseIdFilter(value: string | undefined): DiscoverIdFilter | undefined {
+  if (value === undefined || value.trim() === '') {
+    return undefined
+  }
+
+  const trimmed = value.trim()
+
+  if (trimmed.includes('|')) {
+    const tokens = trimmed.split('|').map((item) => item.trim())
+    if (tokens.some((item) => !/^\d+$/.test(item))) {
+      throw new CliError(
+        `Invalid filter value "${value}": expected numeric IDs separated by commas or pipes.`,
+        2,
+      )
+    }
+    return tokens.join('|')
+  }
+
+  const tokens = trimmed
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+  const ids = tokens.map((item) => {
+    const id = Number(item)
+    if (!Number.isInteger(id) || id < 1) {
+      throw new CliError(
+        `Invalid filter value "${value}": expected positive integers separated by commas.`,
+        2,
+      )
+    }
+    return id
+  })
+
+  if (ids.length === 0) {
+    return undefined
+  }
+
+  return ids.length === 1 ? ids[0] : ids
+}
+
+export function parseNumber(value: string | undefined, label: string): number | undefined {
+  if (value === undefined || value.trim() === '') {
+    return undefined
+  }
+  const number = Number(value)
+  if (!Number.isFinite(number)) {
+    throw new CliError(`Invalid ${label} value: expected a number.`, 2)
+  }
+  return number
+}
+
+export function parseInteger(value: string | undefined, label: string): number | undefined {
+  if (value === undefined || value.trim() === '') {
+    return undefined
+  }
+  const number = Number(value)
+  if (!Number.isInteger(number)) {
+    throw new CliError(`Invalid ${label} value: expected an integer.`, 2)
+  }
+  return number
 }

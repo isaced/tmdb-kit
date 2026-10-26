@@ -1,9 +1,13 @@
 import type {
   AggregateCreditsResponse,
+  CollectionDetails,
+  CollectionTranslationsResponse,
   CreditsResponse,
   EpisodeDetails,
   EpisodeGroupDetails,
   EpisodeGroupsResponse,
+  ExternalIds,
+  FindResponse,
   GenresResponse,
   ImageItem,
   ImagesResponse,
@@ -22,6 +26,8 @@ import type {
   TVSearchResult,
   TVSeasonDetails,
   VideosResponse,
+  WatchProviderListResponse,
+  WatchProvidersResponse,
 } from '../index'
 import type { SearchType } from './options'
 
@@ -416,6 +422,205 @@ export function printGenres(response: GenresResponse): void {
   }
 
   writeLines(response.genres.map((genre) => `${genre.id}  ${genre.name}`))
+}
+
+const WATCH_PROVIDER_GROUPS = [
+  ['flatrate', 'Stream'],
+  ['free', 'Free'],
+  ['ads', 'Ads'],
+  ['rent', 'Rent'],
+  ['buy', 'Buy'],
+] as const
+
+export function printExternalIds(ids: ExternalIds): void {
+  const lines: string[] = [`TMDB ID: ${ids.id}`]
+  const fields: Array<[string, string | number | null | undefined]> = [
+    ['IMDb', ids.imdb_id],
+    ['TheTVDB', ids.tvdb_id],
+    ['TVRage', ids.tvrage_id],
+    ['Wikidata', ids.wikidata_id],
+    ['Facebook', ids.facebook_id],
+    ['Instagram', ids.instagram_id],
+    ['TikTok', ids.tiktok_id],
+    ['Twitter/X', ids.twitter_id],
+    ['YouTube', ids.youtube_id],
+    ['Freebase MID', ids.freebase_mid],
+    ['Freebase ID', ids.freebase_id],
+  ]
+
+  for (const [label, value] of fields) {
+    if (value !== undefined && value !== null && value !== '') {
+      lines.push(`${label}: ${value}`)
+    }
+  }
+
+  if (lines.length === 1) {
+    lines.push('No external IDs.')
+  }
+
+  writeLines(lines)
+}
+
+export function printFindResults(response: FindResponse): void {
+  const sections: Array<{ title: string; lines: string[] }> = []
+
+  if (response.movie_results.length > 0) {
+    sections.push({
+      title: 'Movies:',
+      lines: response.movie_results.map((movie, index) =>
+        formatSearchResult(movie, index, 'movie'),
+      ),
+    })
+  }
+
+  if (response.tv_results.length > 0) {
+    sections.push({
+      title: 'TV shows:',
+      lines: response.tv_results.map((tv, index) => formatSearchResult(tv, index, 'tv')),
+    })
+  }
+
+  if (response.person_results.length > 0) {
+    sections.push({
+      title: 'People:',
+      lines: response.person_results.map((person, index) =>
+        formatSearchResult(person, index, 'person'),
+      ),
+    })
+  }
+
+  if (response.tv_episode_results.length > 0) {
+    sections.push({
+      title: 'TV episodes:',
+      lines: response.tv_episode_results.map((episode, index) => {
+        const airDate = episode.air_date ? ` ${episode.air_date}` : ''
+        return `  ${String(index + 1).padStart(2)}. ${episodeCode(episode)} · ${episode.name}${airDate}  #${episode.id}`
+      }),
+    })
+  }
+
+  if (response.tv_season_results.length > 0) {
+    sections.push({
+      title: 'TV seasons:',
+      lines: response.tv_season_results.map((season, index) => {
+        const airDate = season.air_date ? ` (${season.air_date.slice(0, 4)})` : ''
+        return `  ${String(index + 1).padStart(2)}. S${String(season.season_number).padStart(2, '0')} · ${season.name}${airDate} · ${season.episode_count} episodes  #${season.id}`
+      }),
+    })
+  }
+
+  if (sections.length === 0) {
+    writeLines(['No matches.'])
+    return
+  }
+
+  const lines: string[] = []
+  for (const section of sections) {
+    if (lines.length > 0) {
+      lines.push('')
+    }
+    lines.push(section.title, ...section.lines)
+  }
+  writeLines(lines)
+}
+
+export function printCollection(collection: CollectionDetails, tmdb: TMDBClient, limit = 10): void {
+  const lines = [collection.name]
+
+  if (collection.original_name !== collection.name) {
+    lines.push(`Original name: ${collection.original_name}`)
+  }
+
+  lines.push(`TMDB: https://www.themoviedb.org/collection/${collection.id}`)
+
+  const poster = tmdb.images.url(collection.poster_path, 'w500')
+  if (poster) {
+    lines.push(`Poster: ${poster}`)
+  }
+
+  const backdrop = tmdb.images.url(collection.backdrop_path, 'w780')
+  if (backdrop) {
+    lines.push(`Backdrop: ${backdrop}`)
+  }
+
+  if (collection.overview) {
+    lines.push('', collection.overview)
+  }
+
+  if (collection.parts.length > 0) {
+    lines.push('', `Parts (${collection.parts.length}):`)
+    for (const part of collection.parts.slice(0, limit)) {
+      const year = part.release_date ? ` (${part.release_date.slice(0, 4)})` : ''
+      lines.push(`  ${part.title}${year}  #${part.id}`)
+    }
+    if (collection.parts.length > limit) {
+      lines.push(`  … and ${collection.parts.length - limit} more`)
+    }
+  }
+
+  writeLines(lines)
+}
+
+export function printCollectionTranslations(response: CollectionTranslationsResponse): void {
+  if (response.translations.length === 0) {
+    writeLines(['No translations.'])
+    return
+  }
+
+  writeLines(
+    response.translations.map((translation) => {
+      const title = translation.data.title || translation.name
+      return `${translation.iso_639_1}-${translation.iso_3166_1}  ${translation.english_name}  ${title}`
+    }),
+  )
+}
+
+export function printWatchProviders(response: WatchProvidersResponse, region?: string): void {
+  if (region) {
+    const code = region.toUpperCase()
+    const entry = response.results[code]
+
+    if (!entry) {
+      writeLines([`No watch providers for ${code}.`])
+      return
+    }
+
+    const lines = [`Watch providers for ${code}`, `Link: ${entry.link}`]
+    for (const [key, label] of WATCH_PROVIDER_GROUPS) {
+      const providers = entry[key]
+      if (providers && providers.length > 0) {
+        lines.push('', `${label}:`)
+        for (const provider of providers) {
+          lines.push(`  ${provider.provider_name}  #${provider.provider_id}`)
+        }
+      }
+    }
+    lines.push('', 'Source: JustWatch')
+    writeLines(lines)
+    return
+  }
+
+  const regions = Object.keys(response.results).sort()
+  if (regions.length === 0) {
+    writeLines(['No watch providers.'])
+    return
+  }
+
+  writeLines([
+    `Available regions (${regions.length}): ${regions.join(', ')}`,
+    'Use --region <code> to show providers for one region.',
+  ])
+}
+
+export function printProviderList(response: WatchProviderListResponse): void {
+  if (response.results.length === 0) {
+    writeLines(['No providers.'])
+    return
+  }
+
+  writeLines(
+    response.results.map((provider) => `${provider.provider_id}  ${provider.provider_name}`),
+  )
 }
 
 function appendImageSection(
