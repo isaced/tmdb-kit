@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'bun:test'
 import { createTMDB, type PersonCombinedCast, type SearchMultiResult } from '../../src'
 import {
+  printAggregateCredits,
   printCredits,
+  printEpisode,
+  printEpisodeGroup,
+  printEpisodeGroups,
   printGenres,
   printImages,
   printJson,
@@ -10,17 +14,23 @@ import {
   printPersonCredits,
   printSearchResults,
   printSeason,
+  printSeasonImages,
   printTV,
   printVideos,
 } from '../../src/cli/format'
 import {
+  aggregateCreditsResponse,
   combinedCreditsResponse,
   creditsResponse,
+  episodeDetails,
+  episodeGroupDetails,
+  episodeGroupsResponse,
   genresResponse,
   imagesResponse,
   movieDetails,
   personDetails,
   seasonDetails,
+  seasonImagesResponse,
   tvDetails,
   videosResponse,
 } from './fixtures'
@@ -283,6 +293,98 @@ describe('CLI output formatting', () => {
     expect(output.stdout()).toContain('Episodes: 0')
     expect(output.stdout()).not.toContain('E01')
     expect(output.stdout()).not.toContain('Poster:')
+  })
+
+  it('prints an episode with air date, still, and overview', () => {
+    const output = captureOutput()
+    const tmdb = createTMDB({ accessToken: 'token' })
+
+    printEpisode(episodeDetails(), tmdb)
+
+    expect(output.stdout()).toContain('S01E01 · Winter Is Coming')
+    expect(output.stdout()).toContain('2011-04-17 · 62 min · ★ 7.9/10 (350 votes)')
+    expect(output.stdout()).toContain('TMDB: https://www.themoviedb.org/tv/1399/season/1/episode/1')
+    expect(output.stdout()).toContain('Still: https://image.tmdb.org/t/p/w300/still.jpg')
+    expect(output.stdout()).toContain('Eddard Stark is...')
+  })
+
+  it('omits optional episode fields when they are empty', () => {
+    const output = captureOutput()
+    const tmdb = createTMDB({ accessToken: 'token' })
+
+    printEpisode(
+      episodeDetails({ air_date: null, runtime: null, still_path: null, overview: '' }),
+      tmdb,
+    )
+
+    expect(output.stdout()).not.toContain('62 min')
+    expect(output.stdout()).not.toContain('Still:')
+    expect(output.stdout()).not.toContain('Eddard Stark')
+    expect(output.stdout()).toContain('★ 7.9/10')
+  })
+
+  it('prints aggregate credits with multiple roles and jobs', () => {
+    const output = captureOutput()
+    printAggregateCredits(aggregateCreditsResponse(), 1)
+
+    expect(output.stdout()).toContain('Cast:')
+    expect(output.stdout()).toContain(
+      'Emilia Clarke as Daenerys Targaryen (10 eps), Dany (2 eps)  #1223786',
+    )
+    expect(output.stdout()).toContain('Crew:')
+    expect(output.stdout()).toContain(
+      'David Benioff — Writer (8 eps), Director (2 eps) (Writing)  #9813',
+    )
+  })
+
+  it('prints an empty aggregate credits message', () => {
+    const output = captureOutput()
+    printAggregateCredits(aggregateCreditsResponse({ cast: [], crew: [] }))
+
+    expect(output.stdout()).toBe('No credits.\n')
+  })
+
+  it('prints season poster images', () => {
+    const output = captureOutput()
+    const tmdb = createTMDB({ accessToken: 'token' })
+
+    printSeasonImages(seasonImagesResponse(), tmdb)
+
+    expect(output.stdout()).toContain(
+      'Posters:\n  https://image.tmdb.org/t/p/w500/season.jpg  (1000x1500)',
+    )
+
+    const empty = captureOutput()
+    printSeasonImages(seasonImagesResponse({ posters: [] }), tmdb)
+    expect(empty.stdout()).toBe('No images.\n')
+  })
+
+  it('prints episode groups and empty results', () => {
+    const output = captureOutput()
+    printEpisodeGroups(episodeGroupsResponse())
+
+    expect(output.stdout()).toBe('group-1  Story Arc  (1 groups, 10 episodes)\n')
+
+    const empty = captureOutput()
+    printEpisodeGroups(episodeGroupsResponse({ results: [] }))
+    expect(empty.stdout()).toBe('No episode groups.\n')
+  })
+
+  it('prints episode group sections and episodes', () => {
+    const output = captureOutput()
+    printEpisodeGroup(episodeGroupDetails())
+
+    expect(output.stdout()).toContain('Story Arc')
+    expect(output.stdout()).toContain('Alternate ordering')
+    expect(output.stdout()).toContain('Season 1')
+    expect(output.stdout()).toContain('  1. S01E01 · Winter Is Coming  #63056')
+  })
+
+  it('prints an empty episode group message', () => {
+    const output = captureOutput()
+    printEpisodeGroup(episodeGroupDetails({ description: '', groups: [] }))
+
+    expect(output.stdout()).toBe('Story Arc\n\nNo episodes.\n')
   })
 
   it('prints person details', () => {

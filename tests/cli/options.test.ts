@@ -3,6 +3,7 @@ import { CliError } from '../../src/cli/errors'
 import {
   parseCommaList,
   parseGenreType,
+  parseGroupId,
   parseId,
   parseLimit,
   parseMovieListCategory,
@@ -60,6 +61,15 @@ describe('CLI option parsing', () => {
 
     for (const value of ['-1', '1.5', 'abc']) {
       expect(() => parseSeasonNumber(value), value).toThrowError(CliError)
+    }
+  })
+
+  it('parses episode group IDs', () => {
+    expect(parseGroupId('group-1')).toBe('group-1')
+    expect(parseGroupId(' abc123 ')).toBe('abc123')
+
+    for (const value of ['', '   ', '../admin']) {
+      expect(() => parseGroupId(value), value).toThrowError(CliError)
     }
   })
 

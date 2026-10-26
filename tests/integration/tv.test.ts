@@ -52,6 +52,55 @@ describe('TV API (integration)', () => {
     expect(season.episodes.length).toBeGreaterThan(0)
   })
 
+  it('fetches tv season zero (specials)', async () => {
+    const season = await tmdb.tv.seasonDetails(1399, 0)
+    expect(season.season_number).toBe(0)
+  })
+
+  it('fetches tv episode details', async () => {
+    const episode = await tmdb.tv.episodeDetails(1399, 1, 1)
+    expect(episode.id).toBeGreaterThan(0)
+    expect(episode.name).toBeTruthy()
+    expect(episode.season_number).toBe(1)
+    expect(episode.episode_number).toBe(1)
+  })
+
+  it('fetches aggregate credits', async () => {
+    const credits = await tmdb.tv.aggregateCredits(1399)
+    expect(credits.id).toBe(1399)
+    expect(Array.isArray(credits.cast)).toBe(true)
+    expect(Array.isArray(credits.crew)).toBe(true)
+  })
+
+  it('fetches season credits', async () => {
+    const credits = await tmdb.tv.seasonCredits(1399, 1)
+    expect(Array.isArray(credits.cast)).toBe(true)
+
+    const aggregate = await tmdb.tv.seasonAggregateCredits(1399, 1)
+    expect(Array.isArray(aggregate.cast)).toBe(true)
+  })
+
+  it('fetches season images and videos', async () => {
+    const images = await tmdb.tv.seasonImages(1399, 1)
+    expect(Array.isArray(images.posters)).toBe(true)
+
+    const videos = await tmdb.tv.seasonVideos(1399, 1)
+    expect(Array.isArray(videos.results)).toBe(true)
+  })
+
+  it('fetches episode groups', async () => {
+    const groups = await tmdb.tv.episodeGroups(1399)
+    expect(groups.id).toBe(1399)
+    expect(Array.isArray(groups.results)).toBe(true)
+
+    const summary = groups.results[0]
+    if (summary) {
+      const group = await tmdb.tv.episodeGroup(1399, summary.id)
+      expect(group.id).toBe(summary.id)
+      expect(Array.isArray(group.groups)).toBe(true)
+    }
+  })
+
   it('fetches tv images', async () => {
     const images = await tmdb.tv.images(1399)
     expect(images.id).toBe(1399)
