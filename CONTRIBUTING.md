@@ -39,6 +39,7 @@ src/
   http.ts            # HTTP transport, auth, and request logic
   query.ts           # URL building and query helpers
   errors.ts          # Error classes (TMDBError, TMDBResponseError, etc.)
+  helpers/           # Optional pagination, retry, timeout, and cache helpers
   search-guards.ts   # Type guards for search.multi() results
   types.ts           # All TypeScript types and known-size constants
   index.ts           # Public API re-exports
@@ -58,9 +59,9 @@ tests/
 
 ## Testing
 
-- **Unit tests** (`tests/unit/`): mock `fetch` via `TMDBTransport` stubs. No real network calls.
+- **Unit tests** (`tests/unit/`): cover pure helpers, the HTTP transport, and the client facade with mocked `fetch` or `TMDBTransport` stubs. No real network calls.
 - **Resource tests** (`tests/resources/`): same mock pattern, focused on resource methods.
-- **Integration tests** (`tests/integration/`): hit the live TMDB API. Require `TMDB_ACCESS_TOKEN` (or `TMDB_API_KEY` for legacy v3 auth). Run with `bun run test:integration`. The suite covers the SDK resources and the CLI entry point, and runs in CI through the `Integration` workflow (nightly, manual dispatch, and same-repo pull requests). Configure the `TMDB_ACCESS_TOKEN` repository secret to enable it; add `TMDB_API_KEY` to also cover legacy key auth.
+- **Integration tests** (`tests/integration/`): hit the live TMDB API. Require `TMDB_ACCESS_TOKEN` (or `TMDB_API_KEY` for legacy v3 auth). Run with `bun run test:integration`. The suite covers the SDK resources, the optional helpers, and the CLI entry point, and runs in CI through the `Integration` workflow (nightly, manual dispatch, and same-repo pull requests). Configure the `TMDB_ACCESS_TOKEN` repository secret to enable it; add `TMDB_API_KEY` to also cover legacy key auth.
 
 All tests must pass with 100% line coverage before submitting a PR.
 

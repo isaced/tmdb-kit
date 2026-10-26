@@ -24,6 +24,8 @@ interface CacheEntry {
  * Only successful responses are cached. The key includes the path, sorted
  * query parameters, and sorted headers, so language, region, and header
  * variants never collide. Signals are intentionally excluded from the key.
+ * Use one cache per client or credential: authentication is not part of the
+ * key.
  *
  * ```ts
  * const http = new TMDBHttpClient({ accessToken })

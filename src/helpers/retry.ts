@@ -83,6 +83,9 @@ export async function retry<T>(task: () => Promise<T>, options: RetryOptions = {
  * const http = new TMDBHttpClient({ accessToken })
  * const tmdb = createTMDB({ transport: withRetry(http, { retries: 3 }) })
  * ```
+ *
+ * A wrapper-level `signal` and a per-request `signal` are combined, so
+ * aborting either cancels the call. Extra transport members are preserved.
  */
 export function withRetry<T extends TMDBTransport>(transport: T, options: RetryOptions = {}): T {
   return {
