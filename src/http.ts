@@ -161,7 +161,9 @@ export class TMDBHttpClient implements TMDBTransport {
     const globalFetch = globalThis.fetch
 
     if (typeof globalFetch !== 'function') {
-      throw new TMDBRequestError('No fetch implementation found. Pass options.fetch in this runtime.')
+      throw new TMDBRequestError(
+        'No fetch implementation found. Pass options.fetch in this runtime.',
+      )
     }
 
     return globalFetch.bind(globalThis)

@@ -69,7 +69,9 @@ describe('query utilities', () => {
     expect(() => toSearchQuery('   ')).toThrow('search query must not be empty')
     expect(toTimeWindow('day')).toBe('day')
     expect(toTimeWindow('week')).toBe('week')
-    expect(() => toTimeWindow('month' as never)).toThrow('timeWindow must be either "day" or "week"')
+    expect(() => toTimeWindow('month' as never)).toThrow(
+      'timeWindow must be either "day" or "week"',
+    )
   })
 
   it('builds image URLs without forcing callers to branch on null paths', () => {
@@ -85,7 +87,8 @@ describe('query utilities', () => {
   })
 
   it('runs buildImageUrl through a transform callback so callers can route via proxies or CDNs', () => {
-    const proxy = (url: string) => url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb')
+    const proxy = (url: string) =>
+      url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb')
 
     expect(buildImageUrl('/poster.jpg', 'w500', { transform: proxy })).toBe(
       'https://img-proxy.example/tmdb/w500/poster.jpg',

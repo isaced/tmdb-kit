@@ -71,10 +71,7 @@ export function captureOutput() {
   }
 }
 
-export async function withStdin(
-  input: string,
-  task: () => Promise<void>,
-): Promise<void> {
+export async function withStdin(input: string, task: () => Promise<void>): Promise<void> {
   const descriptor = Object.getOwnPropertyDescriptor(process, 'stdin')!
   Object.defineProperty(process, 'stdin', {
     configurable: true,
@@ -123,19 +120,13 @@ export function mockPlatform(platform: string): void {
 
 export function mockFetch(handler: (url: URL) => Response | Promise<Response>) {
   const calls: URL[] = []
-  const fetchMock = vi.fn(
-    async (input: string | URL | Request, _init?: RequestInit) => {
-      const url = new URL(
-        typeof input === 'string'
-          ? input
-          : input instanceof URL
-            ? input.toString()
-            : input.url,
-      )
-      calls.push(url)
-      return handler(url)
-    },
-  )
+  const fetchMock = vi.fn(async (input: string | URL | Request, _init?: RequestInit) => {
+    const url = new URL(
+      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url,
+    )
+    calls.push(url)
+    return handler(url)
+  })
 
   vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock as unknown as typeof fetch)
   return { calls, fetchMock }

@@ -2,13 +2,7 @@ import { defineCommand } from 'citty'
 import { createClient } from '../client'
 import { runSafely } from '../errors'
 import { printJson, printSearchResults } from '../format'
-import {
-  commonArgs,
-  parsePage,
-  parseSearchType,
-  parseWindow,
-  TRENDING_WINDOWS,
-} from '../options'
+import { commonArgs, parsePage, parseSearchType, parseWindow, TRENDING_WINDOWS } from '../options'
 
 export const trendingCommand = defineCommand({
   meta: {

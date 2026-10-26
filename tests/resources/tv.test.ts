@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'bun:test'
 import { createTMDB } from '../../src'
 import { expectPaths, expectRequest } from '../_support/assertions'
-import { creditsResponse, imagesResponse, paged, seasonDetails, tvDetails, videosResponse } from '../_support/fixtures'
+import {
+  creditsResponse,
+  imagesResponse,
+  paged,
+  seasonDetails,
+  tvDetails,
+  videosResponse,
+} from '../_support/fixtures'
 import { createFetchMock } from '../_support/fetch'
 
 describe('TVResource', () => {
@@ -106,19 +113,13 @@ describe('TVResource', () => {
   })
 
   it('maps season details endpoint', async () => {
-    const mock = createFetchMock(
-      { body: seasonDetails },
-      { body: seasonDetails },
-    )
+    const mock = createFetchMock({ body: seasonDetails }, { body: seasonDetails })
     const tmdb = createTMDB({ accessToken: 'read-token', fetch: mock.fetch })
 
     await tmdb.tv.seasonDetails(1399, 1)
     await tmdb.tv.seasonDetails(1399, 1, { appendToResponse: 'credits', language: 'zh-CN' })
 
-    expectPaths(mock.calls, [
-      '/3/tv/1399/season/1',
-      '/3/tv/1399/season/1',
-    ])
+    expectPaths(mock.calls, ['/3/tv/1399/season/1', '/3/tv/1399/season/1'])
     expectRequest(mock.calls[0]!, {
       path: '/3/tv/1399/season/1',
       query: {},

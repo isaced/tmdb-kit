@@ -40,10 +40,7 @@ describe('CLI output formatting', () => {
 
   it('prints an empty search response', () => {
     const output = captureOutput()
-    printSearchResults(
-      { page: 1, total_pages: 0, total_results: 0, results: [] },
-      'all',
-    )
+    printSearchResults({ page: 1, total_pages: 0, total_results: 0, results: [] }, 'all')
 
     expect(output.stdout()).toContain('Page 1/0 · 0 results')
     expect(output.stdout()).toContain('No results.')
@@ -73,10 +70,7 @@ describe('CLI output formatting', () => {
       },
     ] as SearchMultiResult[]
 
-    printSearchResults(
-      { page: 1, total_pages: 2, total_results: 3, results },
-      'all',
-    )
+    printSearchResults({ page: 1, total_pages: 2, total_results: 3, results }, 'all')
 
     expect(output.stdout()).toContain(' 1. Dune: Part Two (2024)  ★ 8.2  movie  1')
     expect(output.stdout()).toContain(' 2. Dark (2017)  ★ 8.4  tv  2')
@@ -94,10 +88,7 @@ describe('CLI output formatting', () => {
       },
     ] as SearchMultiResult[]
 
-    printSearchResults(
-      { page: 1, total_pages: 1, total_results: 1, results },
-      'movie',
-    )
+    printSearchResults({ page: 1, total_pages: 1, total_results: 1, results }, 'movie')
 
     expect(output.stdout()).toContain(' 1. Unknown  movie  4')
     expect(output.stdout()).not.toContain('★')
@@ -115,12 +106,8 @@ describe('CLI output formatting', () => {
     expect(output.stdout()).toContain('Released · 166 min · ★ 8.2/10 (5432 votes)')
     expect(output.stdout()).toContain('Genres: Science Fiction, Adventure')
     expect(output.stdout()).toContain('https://www.themoviedb.org/movie/693134')
-    expect(output.stdout()).toContain(
-      'Poster: https://image.tmdb.org/t/p/w500/poster.jpg',
-    )
-    expect(output.stdout()).toContain(
-      'Backdrop: https://image.tmdb.org/t/p/w780/backdrop.jpg',
-    )
+    expect(output.stdout()).toContain('Poster: https://image.tmdb.org/t/p/w500/poster.jpg')
+    expect(output.stdout()).toContain('Backdrop: https://image.tmdb.org/t/p/w780/backdrop.jpg')
     expect(output.stdout()).toContain('Homepage: https://www.dunemovie.com')
     expect(output.stdout()).toContain('Paul Atreides unites with Chani.')
   })
@@ -161,19 +148,13 @@ describe('CLI output formatting', () => {
 
     expect(output.stdout()).toContain('Game of Thrones (2011)')
     expect(output.stdout()).toContain('Winter is coming.')
-    expect(output.stdout()).toContain(
-      'Ended · 8 seasons · 73 episodes · ★ 8.4/10 (20000 votes)',
-    )
+    expect(output.stdout()).toContain('Ended · 8 seasons · 73 episodes · ★ 8.4/10 (20000 votes)')
     expect(output.stdout()).toContain('Genres: Drama')
     expect(output.stdout()).toContain('Networks: HBO')
     expect(output.stdout()).toContain('Created by: David Benioff')
     expect(output.stdout()).toContain('https://www.themoviedb.org/tv/1399')
-    expect(output.stdout()).toContain(
-      'Poster: https://image.tmdb.org/t/p/w500/poster.jpg',
-    )
-    expect(output.stdout()).toContain(
-      'Backdrop: https://image.tmdb.org/t/p/w780/backdrop.jpg',
-    )
+    expect(output.stdout()).toContain('Poster: https://image.tmdb.org/t/p/w500/poster.jpg')
+    expect(output.stdout()).toContain('Backdrop: https://image.tmdb.org/t/p/w780/backdrop.jpg')
     expect(output.stdout()).toContain('Homepage: https://www.hbo.com/game-of-thrones')
     expect(output.stdout()).toContain('  1. Season 1 (2011) · 10 episodes')
   })
@@ -184,9 +165,7 @@ describe('CLI output formatting', () => {
 
     printTV(tvDetails({ original_name: 'Game of Thrones (Original)' }), tmdb)
 
-    expect(output.stdout()).toContain(
-      'Original name: Game of Thrones (Original)',
-    )
+    expect(output.stdout()).toContain('Original name: Game of Thrones (Original)')
   })
 
   it('omits optional TV fields when they are empty', () => {
@@ -291,22 +270,15 @@ describe('CLI output formatting', () => {
     expect(output.stdout()).toContain('Season 1 (2011)')
     expect(output.stdout()).toContain('Episodes: 1 · ★ 8.3/10')
     expect(output.stdout()).toContain('Trouble is brewing')
-    expect(output.stdout()).toContain(
-      'Poster: https://image.tmdb.org/t/p/w500/season.jpg',
-    )
-    expect(output.stdout()).toContain(
-      'E01  Winter Is Coming 2011-04-17 · 62 min  ★ 7.9  #10',
-    )
+    expect(output.stdout()).toContain('Poster: https://image.tmdb.org/t/p/w500/season.jpg')
+    expect(output.stdout()).toContain('E01  Winter Is Coming 2011-04-17 · 62 min  ★ 7.9  #10')
   })
 
   it('prints an empty season', () => {
     const output = captureOutput()
     const tmdb = createTMDB({ accessToken: 'token' })
 
-    printSeason(
-      seasonDetails({ episodes: [], overview: '', poster_path: null }),
-      tmdb,
-    )
+    printSeason(seasonDetails({ episodes: [], overview: '', poster_path: null }), tmdb)
 
     expect(output.stdout()).toContain('Episodes: 0')
     expect(output.stdout()).not.toContain('E01')
@@ -324,9 +296,7 @@ describe('CLI output formatting', () => {
     expect(output.stdout()).toContain('Acting · Born: 1956-07-09')
     expect(output.stdout()).toContain('From: Concord, California, USA')
     expect(output.stdout()).toContain('https://www.themoviedb.org/person/31')
-    expect(output.stdout()).toContain(
-      'Profile: https://image.tmdb.org/t/p/h632/profile.jpg',
-    )
+    expect(output.stdout()).toContain('Profile: https://image.tmdb.org/t/p/h632/profile.jpg')
     expect(output.stdout()).toContain('IMDb: https://www.imdb.com/name/nm0000158')
     expect(output.stdout()).toContain('A prolific actor.')
   })
@@ -360,17 +330,11 @@ describe('CLI output formatting', () => {
     printPersonCredits(combinedCreditsResponse(), 2)
 
     expect(output.stdout()).toContain('Cast:')
-    expect(output.stdout()).toContain(
-      ' 2024  Dune: Part Two as Paul Atreides  (movie, 1)',
-    )
-    expect(output.stdout()).toContain(
-      ' 2017  Dark as Jonas Kahnwald · 26 eps  (tv, 2)',
-    )
+    expect(output.stdout()).toContain(' 2024  Dune: Part Two as Paul Atreides  (movie, 1)')
+    expect(output.stdout()).toContain(' 2017  Dark as Jonas Kahnwald · 26 eps  (tv, 2)')
     expect(output.stdout()).not.toContain('Forrest Gump')
     expect(output.stdout()).toContain('Crew:')
-    expect(output.stdout()).toContain(
-      ' 2024  Dune: Part Two — Director (Directing)  (movie, 1)',
-    )
+    expect(output.stdout()).toContain(' 2024  Dune: Part Two — Director (Directing)  (movie, 1)')
   })
 
   it('prints unknown credit dates and empty combined credits', () => {

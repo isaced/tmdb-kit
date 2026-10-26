@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  describeSecret,
-  isPlaceholderCredential,
-  maskSecret,
-} from '../../src/cli/redact'
+import { describeSecret, isPlaceholderCredential, maskSecret } from '../../src/cli/redact'
 
 describe('credential redaction', () => {
   it('detects template placeholders', () => {

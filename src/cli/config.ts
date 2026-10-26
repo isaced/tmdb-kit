@@ -100,10 +100,7 @@ export function writeConfig(config: CliConfig): void {
   }
 }
 
-function readStringField(
-  record: Record<string, unknown>,
-  key: string,
-): string | undefined {
+function readStringField(record: Record<string, unknown>, key: string): string | undefined {
   const value = record[key]
   if (value === undefined) {
     return undefined
@@ -115,12 +112,7 @@ function readStringField(
 }
 
 function isNotFound(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    error.code === 'ENOENT'
-  )
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT'
 }
 
 function messageOf(error: unknown): string {

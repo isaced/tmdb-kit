@@ -21,11 +21,7 @@ describe('PeopleResource', () => {
     await tmdb.people.details(31, { language: 'ja-JP' })
     await tmdb.people.combinedCredits(31, { language: 'ja-JP' })
 
-    expectPaths(mock.calls, [
-      '/3/person/popular',
-      '/3/person/31',
-      '/3/person/31/combined_credits',
-    ])
+    expectPaths(mock.calls, ['/3/person/popular', '/3/person/31', '/3/person/31/combined_credits'])
     expectRequest(mock.calls[0]!, {
       path: '/3/person/popular',
       query: {
@@ -52,9 +48,7 @@ describe('PeopleResource', () => {
     const tmdb = createTMDB({ accessToken: 'read-token', fetch: mock.fetch })
 
     expect(() => tmdb.people.details(-1)).toThrow('personId must be a positive integer')
-    expect(() => tmdb.people.combinedCredits(-1)).toThrow(
-      'personId must be a positive integer',
-    )
+    expect(() => tmdb.people.combinedCredits(-1)).toThrow('personId must be a positive integer')
     expect(mock.calls).toHaveLength(0)
   })
 })

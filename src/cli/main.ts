@@ -1,10 +1,4 @@
-import {
-  defineCommand,
-  renderUsage,
-  runMain,
-  type ArgsDef,
-  type CommandDef,
-} from 'citty'
+import { defineCommand, renderUsage, runMain, type ArgsDef, type CommandDef } from 'citty'
 import { CLI_VERSION, mainCommand } from './command'
 import { AUTHENTICATION_HELP } from './help'
 
@@ -18,8 +12,7 @@ async function showFullUsage<T extends ArgsDef = ArgsDef>(
 
   if (!parent || !path || path.length === 0) {
     const usage = await renderUsage(cmd)
-    const authentication =
-      cmd === mainCommand ? `\n\n${AUTHENTICATION_HELP}` : ''
+    const authentication = cmd === mainCommand ? `\n\n${AUTHENTICATION_HELP}` : ''
     process.stdout.write(`${usage}${authentication}\n`)
     return
   }

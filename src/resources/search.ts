@@ -23,7 +23,10 @@ export class SearchResource {
     this.#transport = transport
   }
 
-  movies(query: string, options: MovieSearchOptions = {}): Promise<PagedResponse<MovieSearchResult>> {
+  movies(
+    query: string,
+    options: MovieSearchOptions = {},
+  ): Promise<PagedResponse<MovieSearchResult>> {
     return this.#transport.get('/search/movie', {
       query: movieSearchQuery(this.#transport, query, options),
     })
@@ -35,7 +38,10 @@ export class SearchResource {
     })
   }
 
-  people(query: string, options: MultiSearchOptions = {}): Promise<PagedResponse<PersonSearchResult>> {
+  people(
+    query: string,
+    options: MultiSearchOptions = {},
+  ): Promise<PagedResponse<PersonSearchResult>> {
     return this.#transport.get('/search/person', {
       query: commonSearchQuery(this.#transport, query, options),
     })

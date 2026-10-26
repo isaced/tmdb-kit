@@ -48,7 +48,9 @@ describe('TrendingResource', () => {
     const mock = createFetchMock()
     const tmdb = createTMDB({ accessToken: 'read-token', fetch: mock.fetch })
 
-    expect(() => tmdb.trending.all('month' as never)).toThrow('timeWindow must be either "day" or "week"')
+    expect(() => tmdb.trending.all('month' as never)).toThrow(
+      'timeWindow must be either "day" or "week"',
+    )
     expect(mock.calls).toHaveLength(0)
   })
 })

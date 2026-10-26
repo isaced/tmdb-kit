@@ -54,7 +54,10 @@ export function createFetchMock(...responses: Array<MockFetchResponse | Response
   }
 }
 
-export function jsonResponse(body: unknown, init: Omit<MockFetchResponse, 'body'> = {}): MockFetchResponse {
+export function jsonResponse(
+  body: unknown,
+  init: Omit<MockFetchResponse, 'body'> = {},
+): MockFetchResponse {
   return {
     ...init,
     body,

@@ -244,12 +244,7 @@ out media types you do not want and narrow the result type with the
 provided type guards:
 
 ```ts
-import {
-  createTMDB,
-  isMovieSearchResult,
-  isTVSearchResult,
-  isPersonSearchResult,
-} from 'tmdb-kit'
+import { createTMDB, isMovieSearchResult, isTVSearchResult, isPersonSearchResult } from 'tmdb-kit'
 
 const { results } = await tmdb.search.multi('Inception', {
   exclude: ['person'],
@@ -309,11 +304,7 @@ without giving up forward-compatibility.
 ## Errors
 
 ```ts
-import {
-  TMDBRateLimitError,
-  TMDBRequestError,
-  TMDBResponseError,
-} from 'tmdb-kit'
+import { TMDBRateLimitError, TMDBRequestError, TMDBResponseError } from 'tmdb-kit'
 
 try {
   await tmdb.movies.popular()
@@ -336,13 +327,13 @@ try {
 `TMDBResponseError` exposes convenience getters for the most common
 status codes:
 
-| Getter | Status |
-| --- | --- |
-| `isUnauthorized` | 401 |
-| `isForbidden` | 403 |
-| `isNotFound` | 404 |
-| `isRateLimit` | 429 |
-| `isServerError` | 5xx |
+| Getter           | Status |
+| ---------------- | ------ |
+| `isUnauthorized` | 401    |
+| `isForbidden`    | 403    |
+| `isNotFound`     | 404    |
+| `isRateLimit`    | 429    |
+| `isServerError`  | 5xx    |
 
 All errors are also instances of the base class `TMDBError`; use that
 when you want a single catch-all.
@@ -353,6 +344,7 @@ Requires [Bun](https://bun.sh) 1.4.4+ (the published package still runs on Node.
 
 ```bash
 bun install
+bun run format
 bun run typecheck
 bun run test:coverage
 bun run build

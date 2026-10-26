@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { setConfigValue } from '../../src/cli/config'
-import {
-  missingCredentialsMessage,
-  resolveCredentials,
-} from '../../src/cli/credentials'
+import { missingCredentialsMessage, resolveCredentials } from '../../src/cli/credentials'
 import { useCliTestEnv } from './helpers'
 
 describe('credential resolution', () => {

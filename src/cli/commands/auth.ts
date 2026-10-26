@@ -2,10 +2,7 @@ import { existsSync } from 'node:fs'
 import { defineCommand } from 'citty'
 import { createTMDB, TMDBResponseError } from '../../index'
 import { getConfigPath, readConfig, writeConfig } from '../config'
-import {
-  detectCredential,
-  unrecognizedCredentialMessage,
-} from '../credential-format'
+import { detectCredential, unrecognizedCredentialMessage } from '../credential-format'
 import { resolveCredentials, type ResolvedCredentials } from '../credentials'
 import { CliError, errorMessage, exitCodeFor, runSafely } from '../errors'
 import { printJson } from '../format'
@@ -55,9 +52,7 @@ export const authCommand = defineCommand({
             }
           }
 
-          const input = args['token-stdin']
-            ? await readStdinSecret()
-            : await promptForCredential()
+          const input = args['token-stdin'] ? await readStdinSecret() : await promptForCredential()
 
           if (!input) {
             throw new CliError('Credential must not be empty.', 2)
@@ -163,14 +158,11 @@ export const authCommand = defineCommand({
           const hasConfigCredentials = Boolean(
             (credentials.config.accessToken &&
               !isPlaceholderCredential(credentials.config.accessToken)) ||
-              (credentials.config.apiKey &&
-                !isPlaceholderCredential(credentials.config.apiKey)),
+            (credentials.config.apiKey && !isPlaceholderCredential(credentials.config.apiKey)),
           )
 
           if (credentials.source === 'environment' && hasConfigCredentials) {
-            lines.push(
-              'Note: config credentials are shadowed by environment variables.',
-            )
+            lines.push('Note: config credentials are shadowed by environment variables.')
           }
 
           if (credentials.source === 'none') {
@@ -196,9 +188,7 @@ export const authCommand = defineCommand({
             delete config.accessToken
             delete config.apiKey
             writeConfig(config)
-            process.stdout.write(
-              `Removed API credentials from ${getConfigPath()}\n`,
-            )
+            process.stdout.write(`Removed API credentials from ${getConfigPath()}\n`)
           } else {
             process.stdout.write('No saved API credentials found.\n')
           }
@@ -248,11 +238,8 @@ function describeSource(credentials: ResolvedCredentials): string {
   return 'none'
 }
 
-function describeExistingCredentials(
-  credentials: ResolvedCredentials,
-): string {
-  const secret =
-    maskSecret(credentials.accessToken ?? credentials.apiKey) ?? '(unknown)'
+function describeExistingCredentials(credentials: ResolvedCredentials): string {
+  const secret = maskSecret(credentials.accessToken ?? credentials.apiKey) ?? '(unknown)'
 
   if (credentials.source === 'environment') {
     return [
@@ -264,11 +251,8 @@ function describeExistingCredentials(
   return `Existing credentials: config (${credentials.configField}, ${secret}).`
 }
 
-function existingCredentialsMessage(
-  credentials: ResolvedCredentials,
-): string {
-  const secret =
-    maskSecret(credentials.accessToken ?? credentials.apiKey) ?? '(unknown)'
+function existingCredentialsMessage(credentials: ResolvedCredentials): string {
+  const secret = maskSecret(credentials.accessToken ?? credentials.apiKey) ?? '(unknown)'
   const label =
     credentials.source === 'environment'
       ? `environment (${credentials.envVar})`

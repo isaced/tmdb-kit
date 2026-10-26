@@ -81,13 +81,19 @@ export class TVResource {
     })
   }
 
-  recommendations(seriesId: number, options: Omit<ListOptions, 'region'> = {}): Promise<PagedResponse<TVSummary>> {
+  recommendations(
+    seriesId: number,
+    options: Omit<ListOptions, 'region'> = {},
+  ): Promise<PagedResponse<TVSummary>> {
     return this.#transport.get(`/tv/${toId(seriesId, 'seriesId')}/recommendations`, {
       query: tvListQuery(this.#transport, options),
     })
   }
 
-  similar(seriesId: number, options: Omit<ListOptions, 'region'> = {}): Promise<PagedResponse<TVSummary>> {
+  similar(
+    seriesId: number,
+    options: Omit<ListOptions, 'region'> = {},
+  ): Promise<PagedResponse<TVSummary>> {
     return this.#transport.get(`/tv/${toId(seriesId, 'seriesId')}/similar`, {
       query: tvListQuery(this.#transport, options),
     })
@@ -119,10 +125,7 @@ export class TVResource {
 }
 
 /** Build query parameters for TV list endpoints. */
-function tvListQuery(
-  transport: TMDBTransport,
-  options: Omit<ListOptions, 'region'>,
-): QueryParams {
+function tvListQuery(transport: TMDBTransport, options: Omit<ListOptions, 'region'>): QueryParams {
   return withLanguage(transport.defaults, {
     language: options.language,
     page: options.page,

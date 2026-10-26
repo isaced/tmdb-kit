@@ -19,7 +19,15 @@ describe('known image-size constants', () => {
     // We assert against snapshots rather than types so that any
     // accidental change to a public constant is caught by CI.
     expect([...KNOWN_BACKDROP_SIZES]).toEqual(['w300', 'w780', 'w1280', 'original'])
-    expect([...KNOWN_LOGO_SIZES]).toEqual(['w45', 'w92', 'w154', 'w185', 'w300', 'w500', 'original'])
+    expect([...KNOWN_LOGO_SIZES]).toEqual([
+      'w45',
+      'w92',
+      'w154',
+      'w185',
+      'w300',
+      'w500',
+      'original',
+    ])
     expect([...KNOWN_POSTER_SIZES]).toEqual([
       'w92',
       'w154',

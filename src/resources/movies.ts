@@ -78,7 +78,10 @@ export class MoviesResource {
     })
   }
 
-  recommendations(movieId: number, options: ListOptions = {}): Promise<PagedResponse<MovieSummary>> {
+  recommendations(
+    movieId: number,
+    options: ListOptions = {},
+  ): Promise<PagedResponse<MovieSummary>> {
     return this.#transport.get(`/movie/${toId(movieId, 'movieId')}/recommendations`, {
       query: movieListQuery(this.#transport, options),
     })

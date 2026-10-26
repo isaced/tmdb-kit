@@ -2,12 +2,7 @@ import { defineCommand } from 'citty'
 import { createClient } from '../client'
 import { CliError, runSafely } from '../errors'
 import { printJson, printSearchResults } from '../format'
-import {
-  commonArgs,
-  parsePage,
-  parseSearchType,
-  SEARCH_TYPES,
-} from '../options'
+import { commonArgs, parsePage, parseSearchType, SEARCH_TYPES } from '../options'
 
 export const searchCommand = defineCommand({
   meta: {

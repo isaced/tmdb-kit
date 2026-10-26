@@ -21,8 +21,7 @@ export const genresCommand = defineCommand({
     await runSafely(async () => {
       const type = parseGenreType(args.type)
       const client = createClient({ language: args.lang })
-      const response =
-        type === 'tv' ? await client.genres.tv() : await client.genres.movies()
+      const response = type === 'tv' ? await client.genres.tv() : await client.genres.movies()
 
       if (args.json) {
         printJson(response)

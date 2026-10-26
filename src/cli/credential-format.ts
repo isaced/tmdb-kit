@@ -5,8 +5,7 @@ export interface DetectedCredential {
   value: string
 }
 
-const ACCESS_TOKEN_PATTERN =
-  /^eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
+const ACCESS_TOKEN_PATTERN = /^eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 const API_KEY_PATTERN = /^[a-fA-F0-9]{32}$/
 
 export function detectCredential(input: string): DetectedCredential | undefined {

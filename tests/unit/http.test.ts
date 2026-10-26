@@ -115,19 +115,21 @@ describe('TMDBHttpClient', () => {
   })
 
   it('validates auth configuration before any request is sent', () => {
-    expect(() =>
-      new TMDBHttpClient({
-        accessToken: '',
-        fetch: createFetchMock().fetch,
-      }),
+    expect(
+      () =>
+        new TMDBHttpClient({
+          accessToken: '',
+          fetch: createFetchMock().fetch,
+        }),
     ).toThrow('Provide exactly one of accessToken or apiKey')
 
-    expect(() =>
-      new TMDBHttpClient({
-        accessToken: 'token',
-        apiKey: 'key',
-        fetch: createFetchMock().fetch,
-      } as never),
+    expect(
+      () =>
+        new TMDBHttpClient({
+          accessToken: 'token',
+          apiKey: 'key',
+          fetch: createFetchMock().fetch,
+        } as never),
     ).toThrow('Provide exactly one of accessToken or apiKey')
   })
 
@@ -227,10 +229,12 @@ describe('TMDBHttpClient', () => {
   })
 
   it('falls back to HTTP status text for non-TMDB error bodies', async () => {
-    const mock = createFetchMock(textResponse('upstream failed', {
-      status: 502,
-      statusText: 'Bad Gateway',
-    }))
+    const mock = createFetchMock(
+      textResponse('upstream failed', {
+        status: 502,
+        statusText: 'Bad Gateway',
+      }),
+    )
     const http = new TMDBHttpClient({
       accessToken: 'read-token',
       fetch: mock.fetch,
@@ -256,7 +260,9 @@ describe('TMDBHttpClient', () => {
     })
     const http = new TMDBHttpClient({ accessToken: 'read-token', fetch: mock.fetch })
 
-    const error = (await http.get('/movie/popular').catch((value: unknown) => value)) as TMDBResponseError
+    const error = (await http
+      .get('/movie/popular')
+      .catch((value: unknown) => value)) as TMDBResponseError
 
     expect(error).toBeInstanceOf(TMDBRateLimitError)
     expect(error).toBeInstanceOf(TMDBResponseError)

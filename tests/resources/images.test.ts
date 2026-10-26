@@ -10,7 +10,9 @@ describe('ImagesHelper', () => {
       imageBaseUrl: 'https://images.example/t/p/',
     })
 
-    expect(tmdb.images.url('/poster.jpg', 'w500')).toBe('https://images.example/t/p/w500/poster.jpg')
+    expect(tmdb.images.url('/poster.jpg', 'w500')).toBe(
+      'https://images.example/t/p/w500/poster.jpg',
+    )
     expect(tmdb.images.url(null, 'w500')).toBeNull()
   })
 
@@ -19,12 +21,17 @@ describe('ImagesHelper', () => {
       accessToken: 'read-token',
       fetch: createFetchMock().fetch,
       images: {
-        transform: (url) => url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb'),
+        transform: (url) =>
+          url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb'),
       },
     })
 
-    expect(tmdb.images.url('/poster.jpg', 'w500')).toBe('https://img-proxy.example/tmdb/w500/poster.jpg')
-    expect(tmdb.images.url('/still.jpg', 'w300')).toBe('https://img-proxy.example/tmdb/w300/still.jpg')
+    expect(tmdb.images.url('/poster.jpg', 'w500')).toBe(
+      'https://img-proxy.example/tmdb/w500/poster.jpg',
+    )
+    expect(tmdb.images.url('/still.jpg', 'w300')).toBe(
+      'https://img-proxy.example/tmdb/w300/still.jpg',
+    )
   })
 
   it('lets a single call override the global transform without mutating it', () => {
@@ -32,7 +39,8 @@ describe('ImagesHelper', () => {
       accessToken: 'read-token',
       fetch: createFetchMock().fetch,
       images: {
-        transform: (url) => url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb'),
+        transform: (url) =>
+          url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb'),
       },
     })
 
@@ -43,7 +51,9 @@ describe('ImagesHelper', () => {
     ).toBe('https://image.tmdb.org/t/p/w500/poster.jpg?signed=abc')
 
     // Global transform is unaffected by the per-call override.
-    expect(tmdb.images.url('/poster.jpg', 'w500')).toBe('https://img-proxy.example/tmdb/w500/poster.jpg')
+    expect(tmdb.images.url('/poster.jpg', 'w500')).toBe(
+      'https://img-proxy.example/tmdb/w500/poster.jpg',
+    )
   })
 
   it('keeps the original behaviour when no transform is configured', () => {
@@ -52,6 +62,8 @@ describe('ImagesHelper', () => {
       fetch: createFetchMock().fetch,
     })
 
-    expect(tmdb.images.url('/poster.jpg', 'w500')).toBe('https://image.tmdb.org/t/p/w500/poster.jpg')
+    expect(tmdb.images.url('/poster.jpg', 'w500')).toBe(
+      'https://image.tmdb.org/t/p/w500/poster.jpg',
+    )
   })
 })

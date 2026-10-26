@@ -24,7 +24,8 @@ describe('Images helper (integration)', () => {
       accessToken,
       ...(apiEndpoint ? { baseUrl: apiEndpoint } : {}),
       images: {
-        transform: (url) => url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb'),
+        transform: (url) =>
+          url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb'),
       },
     })
 
@@ -41,7 +42,8 @@ describe('Images helper (integration)', () => {
       accessToken,
       ...(apiEndpoint ? { baseUrl: apiEndpoint } : {}),
       images: {
-        transform: (url) => url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb'),
+        transform: (url) =>
+          url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb'),
       },
     })
 
