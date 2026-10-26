@@ -1,6 +1,7 @@
 import type { TMDBTransport } from '../http'
 import {
   toCommaList,
+  toEpisodeNumber,
   toGroupId,
   toId,
   toSeasonNumber,
@@ -14,11 +15,13 @@ import type {
   EpisodeDetailsOptions,
   EpisodeGroupDetails,
   EpisodeGroupsResponse,
+  ExternalIds,
   ImageQueryOptions,
   ImagesResponse,
   LanguageOptions,
   ListOptions,
   PagedResponse,
+  RequestOptions,
   SeasonImagesResponse,
   TMDBObject,
   TVDetails,
@@ -27,6 +30,7 @@ import type {
   TVSeasonDetailsOptions,
   TVSummary,
   VideosResponse,
+  WatchProvidersResponse,
 } from '../types'
 
 /**
@@ -256,6 +260,41 @@ export class TVResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
+    })
+  }
+
+  externalIds(seriesId: number, options: RequestOptions = {}): Promise<ExternalIds> {
+    return this.#transport.get(`/tv/${toId(seriesId, 'seriesId')}/external_ids`, {
+      signal: options.signal,
+    })
+  }
+
+  seasonExternalIds(
+    seriesId: number,
+    seasonNumber: number,
+    options: RequestOptions = {},
+  ): Promise<ExternalIds> {
+    return this.#transport.get(
+      `/tv/${toId(seriesId, 'seriesId')}/season/${toSeasonNumber(seasonNumber)}/external_ids`,
+      { signal: options.signal },
+    )
+  }
+
+  episodeExternalIds(
+    seriesId: number,
+    seasonNumber: number,
+    episodeNumber: number,
+    options: RequestOptions = {},
+  ): Promise<ExternalIds> {
+    return this.#transport.get(
+      `/tv/${toId(seriesId, 'seriesId')}/season/${toSeasonNumber(seasonNumber)}/episode/${toEpisodeNumber(episodeNumber)}/external_ids`,
+      { signal: options.signal },
+    )
+  }
+
+  watchProviders(seriesId: number, options: RequestOptions = {}): Promise<WatchProvidersResponse> {
+    return this.#transport.get(`/tv/${toId(seriesId, 'seriesId')}/watch/providers`, {
       signal: options.signal,
     })
   }

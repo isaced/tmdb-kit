@@ -2,6 +2,7 @@ import type { TMDBTransport } from '../http'
 import { toCommaList, toId, withLanguage, withListDefaults, type QueryParams } from '../query'
 import type {
   CreditsResponse,
+  ExternalIds,
   ImageQueryOptions,
   ImagesResponse,
   LanguageOptions,
@@ -10,8 +11,10 @@ import type {
   MovieDetailsOptions,
   MovieSummary,
   PagedResponse,
+  RequestOptions,
   TMDBObject,
   VideosResponse,
+  WatchProvidersResponse,
 } from '../types'
 
 /**
@@ -108,6 +111,18 @@ export class MoviesResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
+    })
+  }
+
+  externalIds(movieId: number, options: RequestOptions = {}): Promise<ExternalIds> {
+    return this.#transport.get(`/movie/${toId(movieId, 'movieId')}/external_ids`, {
+      signal: options.signal,
+    })
+  }
+
+  watchProviders(movieId: number, options: RequestOptions = {}): Promise<WatchProvidersResponse> {
+    return this.#transport.get(`/movie/${toId(movieId, 'movieId')}/watch/providers`, {
       signal: options.signal,
     })
   }

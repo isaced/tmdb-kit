@@ -1,12 +1,14 @@
 import type { TMDBTransport } from '../http'
 import { toId, withLanguage, type QueryParams } from '../query'
 import type {
+  ExternalIds,
   LanguageOptions,
   ListOptions,
   PagedResponse,
   PersonCombinedCreditsResponse,
   PersonDetails,
   PersonSummary,
+  RequestOptions,
 } from '../types'
 
 /**
@@ -45,6 +47,12 @@ export class PeopleResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
+    })
+  }
+
+  externalIds(personId: number, options: RequestOptions = {}): Promise<ExternalIds> {
+    return this.#transport.get(`/person/${toId(personId, 'personId')}/external_ids`, {
       signal: options.signal,
     })
   }
