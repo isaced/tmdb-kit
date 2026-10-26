@@ -20,20 +20,13 @@ import type {
 } from '../index'
 import type { SearchType } from './options'
 
-type SearchResult =
-  | MovieSearchResult
-  | TVSearchResult
-  | PersonSearchResult
-  | SearchMultiResult
+type SearchResult = MovieSearchResult | TVSearchResult | PersonSearchResult | SearchMultiResult
 
 export function printJson(value: unknown): void {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`)
 }
 
-export function printSearchResults(
-  response: PagedResponse<SearchResult>,
-  type: SearchType,
-): void {
+export function printSearchResults(response: PagedResponse<SearchResult>, type: SearchType): void {
   const lines = [
     `Page ${response.page}/${response.total_pages} · ${response.total_results} results`,
   ]
@@ -173,9 +166,7 @@ export function printCredits(credits: CreditsResponse, limit = 10): void {
     }
     lines.push('Crew:')
     for (const member of credits.crew.slice(0, limit)) {
-      lines.push(
-        `  ${member.name} — ${member.job} (${member.department})  #${member.id}`,
-      )
+      lines.push(`  ${member.name} — ${member.job} (${member.department})  #${member.id}`)
     }
   }
 
@@ -279,10 +270,7 @@ export function printPerson(person: PersonDetails, tmdb: TMDBClient): void {
   writeLines(lines)
 }
 
-export function printPersonCredits(
-  credits: PersonCombinedCreditsResponse,
-  limit = 10,
-): void {
+export function printPersonCredits(credits: PersonCombinedCreditsResponse, limit = 10): void {
   const lines: string[] = []
   const cast = [...credits.cast].sort(byCreditDate)
   const crew = [...credits.crew].sort(byCreditDate)
@@ -346,9 +334,7 @@ function appendImageSection(
 function formatCombinedCast(item: PersonCombinedCast): string {
   const character = item.character ? ` as ${item.character}` : ''
   const episodes =
-    item.media_type === 'tv' && item.episode_count
-      ? ` · ${item.episode_count} eps`
-      : ''
+    item.media_type === 'tv' && item.episode_count ? ` · ${item.episode_count} eps` : ''
   return `  ${creditYear(item)}  ${creditTitle(item)}${character}${episodes}  (${item.media_type}, ${item.id})`
 }
 
@@ -380,11 +366,7 @@ function writeLines(lines: readonly string[]): void {
   process.stdout.write(`${lines.join('\n')}\n`)
 }
 
-function formatSearchResult(
-  result: SearchResult,
-  index: number,
-  fallbackType: SearchType,
-): string {
+function formatSearchResult(result: SearchResult, index: number, fallbackType: SearchType): string {
   const title = 'title' in result ? result.title : result.name
   const date =
     'release_date' in result
@@ -393,8 +375,7 @@ function formatSearchResult(
         ? result.first_air_date
         : ''
   const year = date ? ` (${date.slice(0, 4)})` : ''
-  const mediaType =
-    'media_type' in result && result.media_type ? result.media_type : fallbackType
+  const mediaType = 'media_type' in result && result.media_type ? result.media_type : fallbackType
   const score =
     'vote_average' in result && result.vote_average > 0
       ? `  ★ ${result.vote_average.toFixed(1)}`

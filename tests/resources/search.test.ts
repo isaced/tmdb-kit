@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'bun:test'
-import { createTMDB, isMovie, isMovieSearchResult, isPerson, isPersonSearchResult, isTV, isTVSearchResult } from '../../src'
+import {
+  createTMDB,
+  isMovie,
+  isMovieSearchResult,
+  isPerson,
+  isPersonSearchResult,
+  isTV,
+  isTVSearchResult,
+} from '../../src'
 import { expectPaths, expectRequest } from '../_support/assertions'
 import { paged } from '../_support/fixtures'
 import { createFetchMock } from '../_support/fetch'
@@ -37,11 +45,7 @@ describe('SearchResource', () => {
   })
 
   it('maps tv, people, and multi search endpoints', async () => {
-    const mock = createFetchMock(
-      { body: paged() },
-      { body: paged() },
-      { body: paged() },
-    )
+    const mock = createFetchMock({ body: paged() }, { body: paged() }, { body: paged() })
     const tmdb = createTMDB({ accessToken: 'read-token', fetch: mock.fetch })
 
     await tmdb.search.tv('Dark', {
@@ -53,11 +57,7 @@ describe('SearchResource', () => {
     await tmdb.search.people('Sofia Coppola', { includeAdult: false })
     await tmdb.search.multi('Tom Hardy')
 
-    expectPaths(mock.calls, [
-      '/3/search/tv',
-      '/3/search/person',
-      '/3/search/multi',
-    ])
+    expectPaths(mock.calls, ['/3/search/tv', '/3/search/person', '/3/search/multi'])
     expectRequest(mock.calls[0]!, {
       path: '/3/search/tv',
       query: {
@@ -179,9 +179,19 @@ describe('search type guards', () => {
   // Minimal fixtures — the guards only read `media_type`. Cast to the union
   // so TS does not require every MovieSummary / TVSummary / PersonSummary
   // field. The runtime behavior is what we are asserting here.
-  const movie = { id: 1, media_type: 'movie' as const, title: 'Inception' } as unknown as Parameters<typeof isMovieSearchResult>[0]
-  const tv = { id: 2, media_type: 'tv' as const, name: 'Dark' } as unknown as Parameters<typeof isTVSearchResult>[0]
-  const person = { id: 3, media_type: 'person' as const, name: 'Tom Hardy' } as unknown as Parameters<typeof isPersonSearchResult>[0]
+  const movie = {
+    id: 1,
+    media_type: 'movie' as const,
+    title: 'Inception',
+  } as unknown as Parameters<typeof isMovieSearchResult>[0]
+  const tv = { id: 2, media_type: 'tv' as const, name: 'Dark' } as unknown as Parameters<
+    typeof isTVSearchResult
+  >[0]
+  const person = {
+    id: 3,
+    media_type: 'person' as const,
+    name: 'Tom Hardy',
+  } as unknown as Parameters<typeof isPersonSearchResult>[0]
 
   // The short-name guards (isMovie/isTV/isPerson) accept the same
   // SearchMultiResult union as the long-name variants, so the same

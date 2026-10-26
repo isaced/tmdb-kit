@@ -1,7 +1,4 @@
-const PLACEHOLDER_CREDENTIALS = new Set([
-  'YOUR_TMDB_ACCESS_TOKEN',
-  'YOUR_TMDB_API_KEY',
-])
+const PLACEHOLDER_CREDENTIALS = new Set(['YOUR_TMDB_ACCESS_TOKEN', 'YOUR_TMDB_API_KEY'])
 
 export function isPlaceholderCredential(value: string | undefined): boolean {
   return value !== undefined && PLACEHOLDER_CREDENTIALS.has(value.trim())

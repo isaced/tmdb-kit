@@ -10,8 +10,7 @@ export function createClient(options: ClientOptions = {}): TMDBClient {
   const credentials = resolveCredentials()
   const common = {
     baseUrl: process.env.TMDB_BASE_URL,
-    defaultLanguage:
-      options.language ?? credentials.config.language ?? 'en-US',
+    defaultLanguage: options.language ?? credentials.config.language ?? 'en-US',
     defaultRegion: credentials.config.region,
   }
 

@@ -422,8 +422,10 @@ export interface GenresResponse {
 }
 
 export type BackdropSize = 'w300' | 'w780' | 'w1280' | 'original' | (string & {})
-export type LogoSize = 'w45' | 'w92' | 'w154' | 'w185' | 'w300' | 'w500' | 'original' | (string & {})
-export type PosterSize = 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original' | (string & {})
+export type LogoSize =
+  'w45' | 'w92' | 'w154' | 'w185' | 'w300' | 'w500' | 'original' | (string & {})
+export type PosterSize =
+  'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original' | (string & {})
 export type ProfileSize = 'w45' | 'w185' | 'h632' | 'original' | (string & {})
 export type StillSize = 'w92' | 'w185' | 'w300' | 'original' | (string & {})
 export type ImageSize = BackdropSize | LogoSize | PosterSize | ProfileSize | StillSize
@@ -443,17 +445,15 @@ export type ImageSize = BackdropSize | LogoSize | PosterSize | ProfileSize | Sti
  * (every helper is `(string & {})` permissive), but you will need to
  * add the literal to these constants to get autocomplete on it.
  */
-export const KNOWN_BACKDROP_SIZES: readonly ['w300', 'w780', 'w1280', 'original'] = Object.freeze(['w300', 'w780', 'w1280', 'original'] as const)
-export const KNOWN_LOGO_SIZES: readonly ['w45', 'w92', 'w154', 'w185', 'w300', 'w500', 'original'] = Object.freeze([
-  'w45',
-  'w92',
-  'w154',
-  'w185',
+export const KNOWN_BACKDROP_SIZES: readonly ['w300', 'w780', 'w1280', 'original'] = Object.freeze([
   'w300',
-  'w500',
+  'w780',
+  'w1280',
   'original',
 ] as const)
-export const KNOWN_POSTER_SIZES: readonly ['w92', 'w154', 'w185', 'w342', 'w500', 'w780', 'original'] = Object.freeze([
+export const KNOWN_LOGO_SIZES: readonly ['w45', 'w92', 'w154', 'w185', 'w300', 'w500', 'original'] =
+  Object.freeze(['w45', 'w92', 'w154', 'w185', 'w300', 'w500', 'original'] as const)
+export const KNOWN_POSTER_SIZES: readonly [
   'w92',
   'w154',
   'w185',
@@ -461,9 +461,19 @@ export const KNOWN_POSTER_SIZES: readonly ['w92', 'w154', 'w185', 'w342', 'w500'
   'w500',
   'w780',
   'original',
+] = Object.freeze(['w92', 'w154', 'w185', 'w342', 'w500', 'w780', 'original'] as const)
+export const KNOWN_PROFILE_SIZES: readonly ['w45', 'w185', 'h632', 'original'] = Object.freeze([
+  'w45',
+  'w185',
+  'h632',
+  'original',
 ] as const)
-export const KNOWN_PROFILE_SIZES: readonly ['w45', 'w185', 'h632', 'original'] = Object.freeze(['w45', 'w185', 'h632', 'original'] as const)
-export const KNOWN_STILL_SIZES: readonly ['w92', 'w185', 'w300', 'original'] = Object.freeze(['w92', 'w185', 'w300', 'original'] as const)
+export const KNOWN_STILL_SIZES: readonly ['w92', 'w185', 'w300', 'original'] = Object.freeze([
+  'w92',
+  'w185',
+  'w300',
+  'original',
+] as const)
 
 export type KnownBackdropSize = (typeof KNOWN_BACKDROP_SIZES)[number]
 export type KnownLogoSize = (typeof KNOWN_LOGO_SIZES)[number]
@@ -471,11 +481,7 @@ export type KnownPosterSize = (typeof KNOWN_POSTER_SIZES)[number]
 export type KnownProfileSize = (typeof KNOWN_PROFILE_SIZES)[number]
 export type KnownStillSize = (typeof KNOWN_STILL_SIZES)[number]
 export type KnownImageSize =
-  | KnownBackdropSize
-  | KnownLogoSize
-  | KnownPosterSize
-  | KnownProfileSize
-  | KnownStillSize
+  KnownBackdropSize | KnownLogoSize | KnownPosterSize | KnownProfileSize | KnownStillSize
 
 /** Union of every documented image size. */
 export const KNOWN_IMAGE_SIZES: readonly KnownImageSize[] = Object.freeze([

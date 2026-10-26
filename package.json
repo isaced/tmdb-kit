@@ -72,7 +72,9 @@
     "test:coverage": "bun test --isolate --coverage tests/unit tests/resources tests/cli",
     "test:integration": "bun test --isolate tests/integration",
     "typecheck": "bun check",
-    "ci": "bun run typecheck && bun run test:coverage && bun run build",
+    "format": "bun fmt",
+    "format:check": "bun fmt --check",
+    "ci": "bun run format:check && bun run typecheck && bun run test:coverage && bun run build",
     "release": "bumpp",
     "prepublishOnly": "bun run ci"
   },

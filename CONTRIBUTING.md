@@ -17,16 +17,19 @@ bun install
 ## Development Workflow
 
 ```bash
+bun run format         # format the repository with bun fmt
 bun run typecheck      # type-check without emitting
 bun run test:coverage  # run tests with coverage
 bun run build          # build ESM + CJS output and type declarations
 ```
 
-Or run all three at once:
+Or run everything at once (format check + typecheck + coverage + build):
 
 ```bash
 bun run ci
 ```
+
+Formatting is enforced in CI. Run `bun run format` before committing, or use `bun fmt --staged` in a pre-commit hook.
 
 ## Project Structure
 
@@ -66,6 +69,7 @@ All tests must pass with 100% line coverage before submitting a PR.
 - Strict TypeScript — no `any`, no implicit `undefined`.
 - No runtime dependencies.
 - Prefer Web standard APIs over Node.js-specific ones.
+- Run `bun run format`; formatting options live in `[fmt]` in `bunfig.toml`.
 - Keep resource classes small and explicit — one method per TMDB endpoint.
 - Follow existing naming conventions for types, functions, and files.
 

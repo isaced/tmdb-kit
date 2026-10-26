@@ -1,8 +1,4 @@
-import {
-  TMDBRateLimitError,
-  TMDBRequestError,
-  TMDBResponseError,
-} from '../index'
+import { TMDBRateLimitError, TMDBRequestError, TMDBResponseError } from '../index'
 
 export class CliError extends Error {
   readonly exitCode: number

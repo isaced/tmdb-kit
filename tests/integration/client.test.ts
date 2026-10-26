@@ -67,9 +67,7 @@ describe('Client configuration on the live API (integration)', () => {
 describe('Error paths on the live API (integration)', () => {
   it('exposes isNotFound for missing movies and includes the original URL', async () => {
     const tmdb = createRealTMDB()
-    const error = await tmdb.movies
-      .details(99999999)
-      .catch((value: unknown) => value)
+    const error = await tmdb.movies.details(99999999).catch((value: unknown) => value)
 
     expect(error).toBeInstanceOf(TMDBResponseError)
     if (!(error instanceof TMDBResponseError)) return
@@ -86,7 +84,9 @@ describe('Error paths on the live API (integration)', () => {
     // for unknown tokens and that would not exercise the 401 path.
     if (apiEndpoint) {
       // eslint-disable-next-line no-console
-      console.warn('Skipping: TMDB_API_ENDPOINT is set; the 401 contract test requires the canonical host')
+      console.warn(
+        'Skipping: TMDB_API_ENDPOINT is set; the 401 contract test requires the canonical host',
+      )
       return
     }
 

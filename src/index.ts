@@ -1,10 +1,5 @@
 export { createTMDB, TMDBClient, type TMDBFactoryOptions } from './client'
-export {
-  TMDBError,
-  TMDBRateLimitError,
-  TMDBRequestError,
-  TMDBResponseError,
-} from './errors'
+export { TMDBError, TMDBRateLimitError, TMDBRequestError, TMDBResponseError } from './errors'
 export { buildImageUrl } from './query'
 export {
   isMovie,

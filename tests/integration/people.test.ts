@@ -32,8 +32,6 @@ describe('People API (integration)', () => {
   it('rejects invalid person ids before a request is made', () => {
     expect(() => tmdb.people.details(0)).toThrow('personId must be a positive integer')
     expect(() => tmdb.people.details(-5)).toThrow('personId must be a positive integer')
-    expect(() => tmdb.people.combinedCredits(0)).toThrow(
-      'personId must be a positive integer',
-    )
+    expect(() => tmdb.people.combinedCredits(0)).toThrow('personId must be a positive integer')
   })
 })

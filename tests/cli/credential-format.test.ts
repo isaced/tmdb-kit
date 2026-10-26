@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  detectCredential,
-  unrecognizedCredentialMessage,
-} from '../../src/cli/credential-format'
+import { detectCredential, unrecognizedCredentialMessage } from '../../src/cli/credential-format'
 
-const ACCESS_TOKEN =
-  'eyJhbGciOiJIUzI1NiJ9.eyJzY29wZXMiOlsiYXBpX3JlYWQiXX0.signature'
+const ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJzY29wZXMiOlsiYXBpX3JlYWQiXX0.signature'
 const API_KEY = '0123456789abcdef0123456789abcdef'
 
 describe('credential format detection', () => {

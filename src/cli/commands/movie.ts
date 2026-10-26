@@ -92,8 +92,7 @@ export const movieCommand = defineCommand({
           const id = parseId(args.id, 'movie ID')
           const client = createClient({ language: args.lang })
           const appendToResponse = parseCommaList(args.append) as
-            | MovieAppendToResponse[]
-            | undefined
+            MovieAppendToResponse[] | undefined
 
           const movie = await client.movies.details(id, { appendToResponse })
 

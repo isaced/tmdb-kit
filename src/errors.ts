@@ -113,9 +113,7 @@ export class TMDBRateLimitError extends TMDBResponseError {
  * a generic {@link TMDBResponseError}. The error message is extracted from
  * the TMDB `status_message` field when available.
  */
-export function createResponseError(
-  options: TMDBResponseErrorOptions,
-): TMDBResponseError {
+export function createResponseError(options: TMDBResponseErrorOptions): TMDBResponseError {
   const body = isErrorResponseBody(options.body) ? options.body : undefined
   const message = body?.status_message ?? `${options.status} ${options.statusText}`.trim()
 

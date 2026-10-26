@@ -90,7 +90,9 @@ describe('TMDBClient facade', () => {
       imageBaseUrl: 'https://images.example/t/p/',
     })
 
-    expect(tmdb.images.url('/profile.png', 'h632')).toBe('https://images.example/t/p/h632/profile.png')
+    expect(tmdb.images.url('/profile.png', 'h632')).toBe(
+      'https://images.example/t/p/h632/profile.png',
+    )
   })
 
   it('accepts a custom transport and routes every resource through it (no fetch involved)', async () => {
@@ -133,7 +135,9 @@ describe('TMDBClient facade', () => {
     const { transport } = createTransportMock<unknown>()
     const tmdb = createTMDB({ accessToken: 'read-token', transport })
 
-    expect(tmdb.images.url('/poster.jpg', 'w500')).toBe('https://image.tmdb.org/t/p/w500/poster.jpg')
+    expect(tmdb.images.url('/poster.jpg', 'w500')).toBe(
+      'https://image.tmdb.org/t/p/w500/poster.jpg',
+    )
   })
 
   it('falls back to the built-in HTTP transport when no custom transport is given', async () => {

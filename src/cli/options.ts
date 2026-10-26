@@ -21,10 +21,7 @@ export type SearchType = (typeof SEARCH_TYPES)[number]
 
 export function parseSearchType(value: string): SearchType {
   if (!(SEARCH_TYPES as readonly string[]).includes(value)) {
-    throw new CliError(
-      `Invalid --type "${value}". Expected one of: ${SEARCH_TYPES.join(', ')}.`,
-      2,
-    )
+    throw new CliError(`Invalid --type "${value}". Expected one of: ${SEARCH_TYPES.join(', ')}.`, 2)
   }
   return value as SearchType
 }
@@ -99,20 +96,12 @@ export type GenreType = (typeof GENRE_TYPES)[number]
 
 export function parseGenreType(value: string): GenreType {
   if (!(GENRE_TYPES as readonly string[]).includes(value)) {
-    throw new CliError(
-      `Invalid --type "${value}". Expected one of: ${GENRE_TYPES.join(', ')}.`,
-      2,
-    )
+    throw new CliError(`Invalid --type "${value}". Expected one of: ${GENRE_TYPES.join(', ')}.`, 2)
   }
   return value as GenreType
 }
 
-export const MOVIE_LIST_CATEGORIES = [
-  'popular',
-  'top-rated',
-  'now-playing',
-  'upcoming',
-] as const
+export const MOVIE_LIST_CATEGORIES = ['popular', 'top-rated', 'now-playing', 'upcoming'] as const
 export type MovieListCategory = (typeof MOVIE_LIST_CATEGORIES)[number]
 
 export function parseMovieListCategory(value: string): MovieListCategory {
@@ -125,12 +114,7 @@ export function parseMovieListCategory(value: string): MovieListCategory {
   return value as MovieListCategory
 }
 
-export const TV_LIST_CATEGORIES = [
-  'popular',
-  'top-rated',
-  'airing-today',
-  'on-the-air',
-] as const
+export const TV_LIST_CATEGORIES = ['popular', 'top-rated', 'airing-today', 'on-the-air'] as const
 export type TVListCategory = (typeof TV_LIST_CATEGORIES)[number]
 
 export function parseTVListCategory(value: string): TVListCategory {

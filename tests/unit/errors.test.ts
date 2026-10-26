@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'bun:test'
+import { TMDBError, TMDBRateLimitError, TMDBRequestError, TMDBResponseError } from '../../src'
 import {
-  TMDBError,
-  TMDBRateLimitError,
-  TMDBRequestError,
-  TMDBResponseError,
-} from '../../src'
-import { createResponseError, parseRetryAfter, type TMDBResponseErrorOptions } from '../../src/errors'
+  createResponseError,
+  parseRetryAfter,
+  type TMDBResponseErrorOptions,
+} from '../../src/errors'
 
 function makeError(overrides: Partial<TMDBResponseErrorOptions>): TMDBResponseError {
   return createResponseError({

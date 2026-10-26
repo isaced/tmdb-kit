@@ -13,10 +13,8 @@ import {
   withTTY,
 } from '../helpers'
 
-const ACCESS_TOKEN =
-  'eyJhbGciOiJIUzI1NiJ9.eyJzY29wZXMiOlsiYXBpX3JlYWQiXX0.test-signature'
-const OTHER_ACCESS_TOKEN =
-  'eyJhbGciOiJIUzI1NiJ9.eyJzY29wZXMiOlsiYXBpX3JlYWQiXX0.other-signature'
+const ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJzY29wZXMiOlsiYXBpX3JlYWQiXX0.test-signature'
+const OTHER_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJzY29wZXMiOlsiYXBpX3JlYWQiXX0.other-signature'
 const API_KEY = '0123456789abcdef0123456789abcdef'
 
 const question = vi.fn(async () => 'tty-token')
@@ -134,9 +132,7 @@ describe('auth command', () => {
     })
 
     expect(process.exitCode).toBe(2)
-    expect(output.stderr()).toContain(
-      'Existing credentials found: config (accessToken)',
-    )
+    expect(output.stderr()).toContain('Existing credentials found: config (accessToken)')
     expect(output.stderr()).toContain('--force')
     expect(readConfig().accessToken).toBe(ACCESS_TOKEN)
   })
@@ -152,9 +148,7 @@ describe('auth command', () => {
     })
 
     expect(process.exitCode).toBe(2)
-    expect(output.stderr()).toContain(
-      'Existing credentials found: environment (TMDB_ACCESS_TOKEN)',
-    )
+    expect(output.stderr()).toContain('Existing credentials found: environment (TMDB_ACCESS_TOKEN)')
     expect(output.stderr()).toContain('--force')
     expect(readConfig().accessToken).toBeUndefined()
   })
@@ -203,21 +197,15 @@ describe('auth command', () => {
     })
 
     expect(process.exitCode).toBe(0)
-    expect(readlineMocks.question).toHaveBeenCalledWith(
-      'Replace existing credentials? [y/N] ',
-    )
-    expect(output.stdout()).toContain(
-      'Existing credentials: config (accessToken, ••••ture).',
-    )
+    expect(readlineMocks.question).toHaveBeenCalledWith('Replace existing credentials? [y/N] ')
+    expect(output.stdout()).toContain('Existing credentials: config (accessToken, ••••ture).')
     expect(output.stdout()).toContain('Kept existing credentials.')
     expect(readConfig().accessToken).toBe(ACCESS_TOKEN)
   })
 
   it('replaces config credentials after confirmation', async () => {
     setConfigValue('accessToken', ACCESS_TOKEN)
-    readlineMocks.question
-      .mockResolvedValueOnce('y')
-      .mockResolvedValueOnce(OTHER_ACCESS_TOKEN)
+    readlineMocks.question.mockResolvedValueOnce('y').mockResolvedValueOnce(OTHER_ACCESS_TOKEN)
     mockFetch(() => jsonResponse(movieDetails()))
     captureOutput()
 
@@ -239,12 +227,8 @@ describe('auth command', () => {
     })
 
     expect(process.exitCode).toBe(0)
-    expect(readlineMocks.question).toHaveBeenCalledWith(
-      'Save a config token anyway? [y/N] ',
-    )
-    expect(output.stdout()).toContain(
-      'Credentials are currently provided by TMDB_ACCESS_TOKEN',
-    )
+    expect(readlineMocks.question).toHaveBeenCalledWith('Save a config token anyway? [y/N] ')
+    expect(output.stdout()).toContain('Credentials are currently provided by TMDB_ACCESS_TOKEN')
     expect(output.stdout()).toContain('Kept existing credentials.')
     expect(readConfig().accessToken).toBeUndefined()
   })
@@ -293,9 +277,7 @@ describe('auth command', () => {
       })
     })
 
-    expect(output.stdout()).toContain(
-      'TMDB_ACCESS_TOKEN is set and takes precedence',
-    )
+    expect(output.stdout()).toContain('TMDB_ACCESS_TOKEN is set and takes precedence')
     expect(readConfig().accessToken).toBe(OTHER_ACCESS_TOKEN)
   })
 
@@ -306,9 +288,7 @@ describe('auth command', () => {
 
     await runCommand(authCommand, { rawArgs: ['status'] })
 
-    expect(output.stdout()).toContain(
-      'Credential source: environment (TMDB_ACCESS_TOKEN)',
-    )
+    expect(output.stdout()).toContain('Credential source: environment (TMDB_ACCESS_TOKEN)')
     expect(output.stdout()).toContain('Token: ••••ture')
     expect(output.stdout()).toContain('shadowed by environment variables')
   })
@@ -319,9 +299,7 @@ describe('auth command', () => {
 
     await runCommand(authCommand, { rawArgs: ['status'] })
 
-    expect(output.stdout()).toContain(
-      'Credential source: config (accessToken)',
-    )
+    expect(output.stdout()).toContain('Credential source: config (accessToken)')
     expect(output.stdout()).toContain('Token: ••••ture')
   })
 
@@ -399,9 +377,7 @@ describe('auth command', () => {
     await runCommand(authCommand, { rawArgs: ['logout'] })
 
     expect(output.stdout()).toContain('Removed API credentials')
-    expect(output.stdout()).toContain(
-      'Environment credentials are still set',
-    )
+    expect(output.stdout()).toContain('Environment credentials are still set')
     expect(readConfig().accessToken).toBeUndefined()
   })
 })

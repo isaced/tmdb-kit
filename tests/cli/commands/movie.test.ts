@@ -73,9 +73,7 @@ describe('movie command', () => {
 
   it('lists every movie category with page and region options', async () => {
     process.env.TMDB_ACCESS_TOKEN = 'token'
-    const { calls } = mockFetch(() =>
-      jsonResponse(pagedResponse([movieSummary()])),
-    )
+    const { calls } = mockFetch(() => jsonResponse(pagedResponse([movieSummary()])))
     captureOutput()
 
     for (const args of [
@@ -140,9 +138,7 @@ describe('movie command', () => {
 
   it('lists similar and recommended movies', async () => {
     process.env.TMDB_ACCESS_TOKEN = 'token'
-    const { calls } = mockFetch(() =>
-      jsonResponse(pagedResponse([movieSummary()])),
-    )
+    const { calls } = mockFetch(() => jsonResponse(pagedResponse([movieSummary()])))
     captureOutput()
 
     await runCommand(movieCommand, {

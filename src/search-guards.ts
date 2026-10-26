@@ -15,41 +15,23 @@ import type {
  * TMDB, so this check is safe at runtime and produces a strictly typed
  * MovieSummary on the narrowed branch.
  */
-export function isMovieSearchResult(
-  result: SearchMultiResult,
-): result is MovieMultiResult
-export function isMovieSearchResult(
-  result: unknown,
-): result is MovieMultiResult
-export function isMovieSearchResult(
-  result: unknown,
-): result is MovieMultiResult {
+export function isMovieSearchResult(result: SearchMultiResult): result is MovieMultiResult
+export function isMovieSearchResult(result: unknown): result is MovieMultiResult
+export function isMovieSearchResult(result: unknown): result is MovieMultiResult {
   return isObjectWithMediaType(result, 'movie')
 }
 
 /** Type guard that narrows a `search.multi()` result to a TV entry. */
-export function isTVSearchResult(
-  result: SearchMultiResult,
-): result is TVMultiResult
-export function isTVSearchResult(
-  result: unknown,
-): result is TVMultiResult
-export function isTVSearchResult(
-  result: unknown,
-): result is TVMultiResult {
+export function isTVSearchResult(result: SearchMultiResult): result is TVMultiResult
+export function isTVSearchResult(result: unknown): result is TVMultiResult
+export function isTVSearchResult(result: unknown): result is TVMultiResult {
   return isObjectWithMediaType(result, 'tv')
 }
 
 /** Type guard that narrows a `search.multi()` result to a person entry. */
-export function isPersonSearchResult(
-  result: SearchMultiResult,
-): result is PersonMultiResult
-export function isPersonSearchResult(
-  result: unknown,
-): result is PersonMultiResult
-export function isPersonSearchResult(
-  result: unknown,
-): result is PersonMultiResult {
+export function isPersonSearchResult(result: SearchMultiResult): result is PersonMultiResult
+export function isPersonSearchResult(result: unknown): result is PersonMultiResult
+export function isPersonSearchResult(result: unknown): result is PersonMultiResult {
   return isObjectWithMediaType(result, 'person')
 }
 
@@ -66,8 +48,7 @@ export function isMovie(result: unknown): result is MovieMultiResult {
 }
 
 /** Type guard that narrows a search result to a TV entry. */
-export function isTV(
-  result: TVSearchResult | SearchMultiResult): result is TVMultiResult
+export function isTV(result: TVSearchResult | SearchMultiResult): result is TVMultiResult
 export function isTV(result: SearchMultiResult): result is TVMultiResult
 export function isTV(result: unknown): result is TVMultiResult
 export function isTV(result: unknown): result is TVMultiResult {
@@ -76,7 +57,8 @@ export function isTV(result: unknown): result is TVMultiResult {
 
 /** Type guard that narrows a search result to a person entry. */
 export function isPerson(
-  result: PersonSearchResult | SearchMultiResult): result is PersonMultiResult
+  result: PersonSearchResult | SearchMultiResult,
+): result is PersonMultiResult
 export function isPerson(result: SearchMultiResult): result is PersonMultiResult
 export function isPerson(result: unknown): result is PersonMultiResult
 export function isPerson(result: unknown): result is PersonMultiResult {
@@ -84,10 +66,7 @@ export function isPerson(result: unknown): result is PersonMultiResult {
 }
 
 /** Internal helper: check if a value is an object with a matching `media_type` field. */
-function isObjectWithMediaType(
-  value: unknown,
-  mediaType: 'movie' | 'tv' | 'person',
-): boolean {
+function isObjectWithMediaType(value: unknown, mediaType: 'movie' | 'tv' | 'person'): boolean {
   return (
     typeof value === 'object' &&
     value !== null &&

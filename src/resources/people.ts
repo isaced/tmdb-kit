@@ -39,14 +39,11 @@ export class PeopleResource {
     personId: number,
     options: LanguageOptions = {},
   ): Promise<PersonCombinedCreditsResponse> {
-    return this.#transport.get(
-      `/person/${toId(personId, 'personId')}/combined_credits`,
-      {
-        query: withLanguage(this.#transport.defaults, {
-          language: options.language,
-        }),
-      },
-    )
+    return this.#transport.get(`/person/${toId(personId, 'personId')}/combined_credits`, {
+      query: withLanguage(this.#transport.defaults, {
+        language: options.language,
+      }),
+    })
   }
 }
 

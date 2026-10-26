@@ -3,13 +3,7 @@ import { describe, expect, it } from 'bun:test'
 import { configCommand } from '../../../src/cli/commands/config'
 import { readConfig, setConfigValue } from '../../../src/cli/config'
 import { movieDetails } from '../fixtures'
-import {
-  captureOutput,
-  jsonResponse,
-  mockFetch,
-  useCliTestEnv,
-  withStdin,
-} from '../helpers'
+import { captureOutput, jsonResponse, mockFetch, useCliTestEnv, withStdin } from '../helpers'
 
 describe('config command', () => {
   const env = useCliTestEnv()

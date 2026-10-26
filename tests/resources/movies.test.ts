@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'bun:test'
 import { createTMDB } from '../../src'
 import { expectPaths, expectRequest } from '../_support/assertions'
-import { creditsResponse, imagesResponse, movieDetails, paged, videosResponse } from '../_support/fixtures'
+import {
+  creditsResponse,
+  imagesResponse,
+  movieDetails,
+  paged,
+  videosResponse,
+} from '../_support/fixtures'
 import { createFetchMock } from '../_support/fetch'
 
 describe('MoviesResource', () => {

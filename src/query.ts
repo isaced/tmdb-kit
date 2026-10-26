@@ -47,10 +47,7 @@ export function appendQuery(url: URL, query: QueryParams): void {
  * If `query.language` is set it takes precedence; otherwise the client's
  * default language is used.
  */
-export function withLanguage(
-  defaults: QueryDefaults,
-  query: QueryParams,
-): QueryParams {
+export function withLanguage(defaults: QueryDefaults, query: QueryParams): QueryParams {
   const language = typeof query.language === 'string' ? query.language : defaults.language
 
   return {
@@ -64,10 +61,7 @@ export function withLanguage(
  *
  * Combines {@link withLanguage} with region fallback from client defaults.
  */
-export function withListDefaults(
-  defaults: QueryDefaults,
-  query: QueryParams,
-): QueryParams {
+export function withListDefaults(defaults: QueryDefaults, query: QueryParams): QueryParams {
   const region = typeof query.region === 'string' ? query.region : defaults.region
 
   return {

@@ -89,9 +89,7 @@ export const tvCommand = defineCommand({
         await runSafely(async () => {
           const id = parseId(args.id, 'TV show ID')
           const client = createClient({ language: args.lang })
-          const appendToResponse = parseCommaList(args.append) as
-            | TVAppendToResponse[]
-            | undefined
+          const appendToResponse = parseCommaList(args.append) as TVAppendToResponse[] | undefined
 
           const tv = await client.tv.details(id, { appendToResponse })
 

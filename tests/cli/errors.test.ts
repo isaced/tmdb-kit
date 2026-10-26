@@ -1,12 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'bun:test'
 import { TMDBRequestError, TMDBResponseError } from '../../src'
 import { createResponseError } from '../../src/errors'
-import {
-  CliError,
-  errorMessage,
-  exitCodeFor,
-  runSafely,
-} from '../../src/cli/errors'
+import { CliError, errorMessage, exitCodeFor, runSafely } from '../../src/cli/errors'
 import { captureOutput } from './helpers'
 
 function responseError(status: number, retryAfter?: string) {
@@ -65,9 +60,7 @@ describe('CLI errors', () => {
 
   it('formats TMDB response and rate limit errors', () => {
     expect(errorMessage(responseError(404))).toContain('TMDB request failed (404)')
-    expect(errorMessage(responseError(401))).toContain(
-      'TMDB rejected the credentials (HTTP 401)',
-    )
+    expect(errorMessage(responseError(401))).toContain('TMDB rejected the credentials (HTTP 401)')
     expect(errorMessage(responseError(401))).toContain('tmdb auth login')
     expect(errorMessage(responseError(403))).toContain('tmdb auth login')
     expect(errorMessage(responseError(429, '7'))).toBe(

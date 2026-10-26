@@ -4,3 +4,8 @@ coverageReporter = ["text", "lcov"]
 coverageThreshold = { lines = 0.95, functions = 0.95 }
 # coverageSkipTestFiles only skips test files by name, so test helpers would otherwise join the total.
 coveragePathIgnorePatterns = ["src/cli/main.ts", "tests/**"]
+
+[fmt]
+printWidth = 100
+semi = false
+singleQuote = true

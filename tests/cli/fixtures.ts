@@ -172,9 +172,7 @@ export function personDetails(overrides: Partial<PersonDetails> = {}): PersonDet
   }
 }
 
-export function creditsResponse(
-  overrides: Partial<CreditsResponse> = {},
-): CreditsResponse {
+export function creditsResponse(overrides: Partial<CreditsResponse> = {}): CreditsResponse {
   return {
     id: 1,
     cast: [
@@ -212,9 +210,7 @@ export function creditsResponse(
   }
 }
 
-export function imagesResponse(
-  overrides: Partial<ImagesResponse> = {},
-): ImagesResponse {
+export function imagesResponse(overrides: Partial<ImagesResponse> = {}): ImagesResponse {
   return {
     id: 1,
     posters: [image('/poster.jpg', 1000, 1500)],
@@ -224,9 +220,7 @@ export function imagesResponse(
   }
 }
 
-export function videosResponse(
-  overrides: Partial<VideosResponse> = {},
-): VideosResponse {
+export function videosResponse(overrides: Partial<VideosResponse> = {}): VideosResponse {
   return {
     id: 1,
     results: [
@@ -259,9 +253,7 @@ export function videosResponse(
   }
 }
 
-export function seasonDetails(
-  overrides: Partial<TVSeasonDetails> = {},
-): TVSeasonDetails {
+export function seasonDetails(overrides: Partial<TVSeasonDetails> = {}): TVSeasonDetails {
   return {
     _id: 'season-1',
     air_date: '2011-04-17',
@@ -340,9 +332,7 @@ export function combinedCreditsResponse(
   }
 }
 
-export function genresResponse(
-  overrides: Partial<GenresResponse> = {},
-): GenresResponse {
+export function genresResponse(overrides: Partial<GenresResponse> = {}): GenresResponse {
   return {
     genres: [
       { id: 28, name: 'Action' },

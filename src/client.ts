@@ -1,4 +1,9 @@
-import { TMDBHttpClient, type TMDBClientOptions, type TMDBRequestOptions, type TMDBTransport } from './http'
+import {
+  TMDBHttpClient,
+  type TMDBClientOptions,
+  type TMDBRequestOptions,
+  type TMDBTransport,
+} from './http'
 import { ConfigurationResource } from './resources/configuration'
 import { GenresResource } from './resources/genres'
 import { ImagesHelper } from './resources/images'
@@ -44,7 +49,8 @@ export class TMDBClient {
     // global images.transform option; otherwise read it back from the HTTP
     // client after it has been constructed.
     const fallbackTransform = images?.transform
-    const builtInClient = transport === undefined ? new TMDBHttpClient({ ...httpOptions, images }) : undefined
+    const builtInClient =
+      transport === undefined ? new TMDBHttpClient({ ...httpOptions, images }) : undefined
     this.#transport = builtInClient ?? (transport as TMDBTransport)
 
     this.configuration = new ConfigurationResource(this.#transport)

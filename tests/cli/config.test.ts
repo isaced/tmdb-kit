@@ -1,19 +1,8 @@
-import {
-  existsSync,
-  mkdirSync,
-  statSync,
-  unlinkSync,
-  writeFileSync,
-} from 'node:fs'
+import { existsSync, mkdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { describe, expect, it, vi } from 'bun:test'
-import {
-  getConfigPath,
-  readConfig,
-  setConfigValue,
-  unsetConfigValue,
-} from '../../src/cli/config'
+import { getConfigPath, readConfig, setConfigValue, unsetConfigValue } from '../../src/cli/config'
 import { CliError } from '../../src/cli/errors'
 import { mockPlatform, useCliTestEnv } from './helpers'
 
@@ -119,9 +108,7 @@ describe('CLI config', () => {
     writeFileSync(tempPath, '', { mode: 0o400 })
 
     try {
-      expect(() => setConfigValue('language', 'zh-CN')).toThrowError(
-        /Failed to write config file/,
-      )
+      expect(() => setConfigValue('language', 'zh-CN')).toThrowError(/Failed to write config file/)
       expect(existsSync(tempPath)).toBe(false)
     } finally {
       if (existsSync(tempPath)) {
