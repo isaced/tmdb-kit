@@ -70,10 +70,10 @@ The CLI is available as `tmdb`.
 
 Two [Agent Skills](https://agentskills.io) ship with this repository, so coding agents can use the SDK and the CLI without reading these docs first:
 
-| Skill                                          | Use it when                                                |
-| ---------------------------------------------- | ---------------------------------------------------------- |
-| [`tmdb-kit`](skills/tmdb-kit/SKILL.md)         | Writing code that calls the TMDB API through the SDK       |
-| [`tmdb-kit-cli`](skills/tmdb-kit-cli/SKILL.md) | Running the `tmdb` command for lookups and shell pipelines |
+| Skill                                          | Use it when                                                | Example prompt                                      |
+| ---------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------- |
+| [`tmdb-kit`](skills/tmdb-kit/SKILL.md)         | Writing code that calls the TMDB API through the SDK       | "Build a movie page that shows the top-billed cast" |
+| [`tmdb-kit-cli`](skills/tmdb-kit-cli/SKILL.md) | Running the `tmdb` command for lookups and shell pipelines | "What's trending on TMDB this week?"                |
 
 Install them into your agent's skills directory with [skills.sh](https://skills.sh):
 
