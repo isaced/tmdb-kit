@@ -528,7 +528,7 @@ bun run test:coverage
 bun run build
 ```
 
-Run the integration suite with a real token. It exercises every SDK resource and the CLI against the live API:
+Run the integration suite with a real token. It exercises every SDK resource, the optional helpers, and the CLI against the live API:
 
 ```bash
 TMDB_ACCESS_TOKEN=your_access_token_here bun run test:integration

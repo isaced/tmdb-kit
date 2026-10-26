@@ -1,4 +1,10 @@
-import { createTMDB, TMDBClient, type TMDBClientOptions, type TMDBTransport } from '../../src'
+import {
+  createTMDB,
+  TMDBClient,
+  TMDBHttpClient,
+  type TMDBClientOptions,
+  type TMDBTransport,
+} from '../../src'
 
 // Automatically load .env on Node.js 20.12+ / 21.7+
 if (typeof process.loadEnvFile === 'function') {
@@ -42,4 +48,17 @@ export function createRealTMDB(options: RealTMDBOptions = {}): TMDBClient {
   return envAccessToken
     ? createTMDB({ accessToken: envAccessToken, ...common })
     : createTMDB({ apiKey: envApiKey as string, ...common })
+}
+
+/**
+ * Create the built-in HTTP transport with the integration credentials.
+ *
+ * Useful for testing transport wrappers without going through the factory.
+ */
+export function createRealTransport(): TMDBTransport {
+  const common = apiEndpoint ? { baseUrl: apiEndpoint } : {}
+
+  return envAccessToken
+    ? new TMDBHttpClient({ accessToken: envAccessToken, ...common })
+    : new TMDBHttpClient({ apiKey: envApiKey as string, ...common })
 }
