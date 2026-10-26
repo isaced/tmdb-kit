@@ -726,3 +726,258 @@ export interface MultiSearchOptions extends Omit<ListOptions, 'region'> {
 export interface ImageQueryOptions extends LanguageOptions {
   includeImageLanguage?: string | readonly string[]
 }
+
+/** External ID namespace accepted by the TMDB `/find` endpoint. */
+export type ExternalIdSource =
+  | 'imdb_id'
+  | 'freebase_mid'
+  | 'freebase_id'
+  | 'tvdb_id'
+  | 'tvrage_id'
+  | 'facebook_id'
+  | 'twitter_id'
+  | 'instagram_id'
+  | 'tiktok_id'
+  | 'youtube_id'
+  | 'wikidata_id'
+
+/**
+ * External IDs attached to a TMDB movie, TV show, season, episode, or person.
+ *
+ * Fields are optional because they vary by entity: seasons have no
+ * `imdb_id`, people have no `tvdb_id`, and older records omit newer
+ * social IDs.
+ */
+export interface ExternalIds {
+  id: number
+  imdb_id?: string | null
+  freebase_mid?: string | null
+  freebase_id?: string | null
+  facebook_id?: string | null
+  instagram_id?: string | null
+  twitter_id?: string | null
+  tiktok_id?: string | null
+  youtube_id?: string | null
+  wikidata_id?: string | null
+  tvdb_id?: number | null
+  tvrage_id?: number | null
+}
+
+export interface FindOptions extends LanguageOptions {
+  /** Which external ID namespace `externalId` belongs to. */
+  source: ExternalIdSource
+}
+
+export interface FindMovieResult extends MovieSummary {
+  media_type: 'movie'
+}
+
+export interface FindTVResult extends TVSummary {
+  media_type: 'tv'
+}
+
+export interface FindPersonResult extends PersonSummary {
+  media_type: 'person'
+}
+
+export interface FindTVEpisodeResult {
+  air_date: TMDBDateString | null
+  episode_number: number
+  episode_type: string
+  id: number
+  media_type: 'tv_episode'
+  name: string
+  overview: string
+  production_code: string | null
+  runtime: number | null
+  season_number: number
+  show_id: number
+  still_path: string | null
+  vote_average: number
+  vote_count: number
+}
+
+export interface FindTVSeasonResult extends SeasonSummary {
+  media_type: 'tv_season'
+  show_id: number
+}
+
+/**
+ * Result of a reverse external-ID lookup.
+ *
+ * TMDB returns all five arrays on every call, even when only one has
+ * matches. Episodes and seasons are only present for TV IDs.
+ */
+export interface FindResponse {
+  movie_results: FindMovieResult[]
+  person_results: FindPersonResult[]
+  tv_episode_results: FindTVEpisodeResult[]
+  tv_results: FindTVResult[]
+  tv_season_results: FindTVSeasonResult[]
+}
+
+export type WatchMonetizationType = 'flatrate' | 'free' | 'ads' | 'rent' | 'buy'
+
+export interface WatchProvider {
+  display_priority: number
+  logo_path: string | null
+  provider_id: number
+  provider_name: string
+}
+
+export interface WatchProviderRegion {
+  /** JustWatch link for this title and region. */
+  link: string
+  ads?: WatchProvider[]
+  buy?: WatchProvider[]
+  flatrate?: WatchProvider[]
+  free?: WatchProvider[]
+  rent?: WatchProvider[]
+}
+
+/**
+ * Per-title watch providers keyed by ISO 3166-1 region code.
+ *
+ * Use `client.watchProviders.movies()` / `tv()` to resolve provider IDs
+ * to names and logos.
+ */
+export interface WatchProvidersResponse {
+  id: number
+  results: Record<string, WatchProviderRegion>
+}
+
+export interface WatchProviderListItem extends WatchProvider {
+  /** Display priority per region, keyed by ISO 3166-1 region code. */
+  display_priorities: Record<string, number>
+}
+
+export interface WatchProviderListResponse {
+  results: WatchProviderListItem[]
+}
+
+export interface WatchProviderListOptions extends LanguageOptions {
+  /**
+   * Limit the provider list to one region. Unlike `defaultRegion`, this
+   * is never inherited automatically: it describes provider availability,
+   * not a release region.
+   */
+  watchRegion?: RegionCode
+}
+
+export interface CollectionPart extends MovieSummary {
+  media_type?: 'movie'
+}
+
+export interface CollectionDetails extends CollectionSummary {
+  original_language: string
+  original_name: string
+  overview: string
+  parts: CollectionPart[]
+}
+
+export interface CollectionTranslationData {
+  homepage: string
+  overview: string
+  title: string
+}
+
+export interface CollectionTranslation {
+  data: CollectionTranslationData
+  english_name: string
+  iso_3166_1: string
+  iso_639_1: string
+  name: string
+}
+
+export interface CollectionTranslationsResponse {
+  id: number
+  translations: CollectionTranslation[]
+}
+
+/**
+ * Multi-value discover filter.
+ *
+ * Arrays are comma-joined (TMDB treats commas as AND). Pass a raw string
+ * such as `"28|12"` to use TMDB's pipe syntax (OR).
+ */
+export type DiscoverIdFilter = number | string | readonly (number | string)[]
+
+export type DiscoverMovieSortBy =
+  | 'popularity.asc'
+  | 'popularity.desc'
+  | 'revenue.asc'
+  | 'revenue.desc'
+  | 'primary_release_date.asc'
+  | 'primary_release_date.desc'
+  | 'original_title.asc'
+  | 'original_title.desc'
+  | 'title.asc'
+  | 'title.desc'
+  | 'vote_average.asc'
+  | 'vote_average.desc'
+  | 'vote_count.asc'
+  | 'vote_count.desc'
+
+export type DiscoverTVSortBy =
+  | 'first_air_date.asc'
+  | 'first_air_date.desc'
+  | 'name.asc'
+  | 'name.desc'
+  | 'original_name.asc'
+  | 'original_name.desc'
+  | 'popularity.asc'
+  | 'popularity.desc'
+  | 'vote_average.asc'
+  | 'vote_average.desc'
+  | 'vote_count.asc'
+  | 'vote_count.desc'
+
+export interface DiscoverCommonOptions extends RequestOptions {
+  includeAdult?: boolean
+  language?: LanguageCode
+  page?: number
+  runtimeGte?: number
+  runtimeLte?: number
+  voteAverageGte?: number
+  voteAverageLte?: number
+  voteCountGte?: number
+  voteCountLte?: number
+  /** Provider availability region. Never inherited from `defaultRegion`. */
+  watchRegion?: RegionCode
+  withCompanies?: DiscoverIdFilter
+  withGenres?: DiscoverIdFilter
+  withKeywords?: DiscoverIdFilter
+  withOriginalLanguage?: LanguageCode
+  withOriginCountry?: RegionCode | readonly RegionCode[]
+  withWatchMonetizationTypes?: WatchMonetizationType | readonly WatchMonetizationType[]
+  withWatchProviders?: DiscoverIdFilter
+  withoutGenres?: DiscoverIdFilter
+}
+
+export interface DiscoverMovieOptions extends DiscoverCommonOptions {
+  primaryReleaseDateGte?: TMDBDateString
+  primaryReleaseDateLte?: TMDBDateString
+  primaryReleaseYear?: number
+  /** Release region. Inherits `defaultRegion` when omitted. */
+  region?: RegionCode
+  releaseDateGte?: TMDBDateString
+  releaseDateLte?: TMDBDateString
+  sortBy?: DiscoverMovieSortBy
+  withCast?: DiscoverIdFilter
+  withCrew?: DiscoverIdFilter
+  withPeople?: DiscoverIdFilter
+  withReleaseType?: DiscoverIdFilter
+  year?: number
+}
+
+export interface DiscoverTVOptions extends DiscoverCommonOptions {
+  airDateGte?: TMDBDateString
+  airDateLte?: TMDBDateString
+  firstAirDateGte?: TMDBDateString
+  firstAirDateLte?: TMDBDateString
+  firstAirDateYear?: number
+  sortBy?: DiscoverTVSortBy
+  withNetworks?: DiscoverIdFilter
+  withStatus?: number
+  withType?: number
+}
