@@ -313,7 +313,7 @@ for await (const movie of paginateItems((page) => tmdb.movies.popular({ page }))
 }
 ```
 
-`paginate` stops at `total_pages`, an empty page, `maxPages` (default 500), or an aborted signal.
+`paginate` stops at `total_pages`, an empty page, `endPage` (default 500), or an aborted signal. `endPage` is the last page number to request, so it yields nothing when it is lower than `startPage`.
 
 **Retry**
 
@@ -323,15 +323,13 @@ import { createTMDB, retry, TMDBHttpClient, withRetry } from 'tmdb-kit'
 // Wrap one call.
 const movie = await retry(() => tmdb.movies.details(550), { retries: 3 })
 
-// Or wrap the transport once.
+// Or wrap the transport once. The transport owns authentication, so the
+// factory does not need credentials.
 const http = new TMDBHttpClient({ accessToken: 'your_access_token_here' })
-const retrying = createTMDB({
-  accessToken: 'your_access_token_here',
-  transport: withRetry(http, { retries: 3 }),
-})
+const retrying = createTMDB({ transport: withRetry(http, { retries: 3 }) })
 ```
 
-Retries 429 using `Retry-After`, retries 5xx and network failures with exponential backoff, and leaves other errors untouched. The SDK itself still never retries by default.
+Retries 429 and any response that carries `Retry-After` (including 503), retries 408, 5xx and network failures with exponential backoff, and leaves other errors untouched. A wrapper-level `signal` and a per-request `signal` are combined, so aborting either cancels the call. The SDK itself still never retries by default.
 
 **Timeout**
 
@@ -350,7 +348,6 @@ import { createTMDB, TMDBHttpClient, withMemoryCache } from 'tmdb-kit'
 
 const http = new TMDBHttpClient({ accessToken: 'your_access_token_here' })
 const cached = createTMDB({
-  accessToken: 'your_access_token_here',
   transport: withMemoryCache(http, { ttlMs: 60_000, maxEntries: 200 }),
 })
 ```

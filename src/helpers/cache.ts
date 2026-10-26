@@ -8,7 +8,7 @@ export interface MemoryCacheOptions {
   maxEntries?: number
 }
 
-export interface MemoryCacheTransport extends TMDBTransport {
+export type MemoryCacheTransport<T extends TMDBTransport = TMDBTransport> = T & {
   /** Remove every cached response. */
   clear(): void
 }
@@ -28,15 +28,14 @@ interface CacheEntry {
  * ```ts
  * const http = new TMDBHttpClient({ accessToken })
  * const tmdb = createTMDB({
- *   accessToken,
  *   transport: withMemoryCache(http, { ttlMs: 60_000, maxEntries: 200 }),
  * })
  * ```
  */
-export function withMemoryCache(
-  transport: TMDBTransport,
+export function withMemoryCache<T extends TMDBTransport>(
+  transport: T,
   options: MemoryCacheOptions = {},
-): MemoryCacheTransport {
+): MemoryCacheTransport<T> {
   const ttlMs = options.ttlMs ?? 5 * 60_000
   const maxEntries = options.maxEntries ?? 100
 
@@ -50,8 +49,8 @@ export function withMemoryCache(
   const entries = new Map<string, CacheEntry>()
 
   return {
-    defaults: transport.defaults,
-    async get<T>(path: string, requestOptions: TMDBRequestOptions = {}): Promise<T> {
+    ...transport,
+    async get<U>(path: string, requestOptions: TMDBRequestOptions = {}): Promise<U> {
       const key = cacheKey(path, requestOptions)
       const cached = entries.get(key)
 
@@ -60,12 +59,12 @@ export function withMemoryCache(
           // Refresh the LRU position.
           entries.delete(key)
           entries.set(key, cached)
-          return cached.value as T
+          return cached.value as U
         }
         entries.delete(key)
       }
 
-      const value = await transport.get<T>(path, requestOptions)
+      const value = await transport.get<U>(path, requestOptions)
       entries.set(key, { expiresAt: Date.now() + ttlMs, value })
       evictOverflow(entries, maxEntries)
       return value

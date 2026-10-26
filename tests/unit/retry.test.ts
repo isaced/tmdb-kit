@@ -7,6 +7,7 @@ import {
   TMDBTimeoutError,
   withRetry,
   type RetryInfo,
+  type TMDBRequestOptions,
   type TMDBTransport,
 } from '../../src'
 
@@ -21,10 +22,10 @@ function rateLimit(retryAfter = 0): TMDBRateLimitError {
   })
 }
 
-function serverError(status = 503): TMDBResponseError {
+function serverError(status = 503, headers = new Headers()): TMDBResponseError {
   return new TMDBResponseError('server error', {
     body: {},
-    headers: new Headers(),
+    headers,
     status,
     statusText: 'Service Unavailable',
     url: 'https://api.themoviedb.org/3/movie/550',
@@ -109,6 +110,44 @@ describe('retry', () => {
     expect(result).toBe('ok')
     expect(calls).toBe(3)
     expect(delays).toEqual([10, 20])
+  })
+
+  it('honors Retry-After on 5xx responses', async () => {
+    let calls = 0
+    const delays: number[] = []
+
+    const result = await retry(
+      async () => {
+        calls += 1
+        if (calls === 1) {
+          throw serverError(503, new Headers({ 'Retry-After': '0.002' }))
+        }
+        return 'ok'
+      },
+      { onRetry: (info) => delays.push(info.delayMs), retries: 1 },
+    )
+
+    expect(result).toBe('ok')
+    expect(calls).toBe(2)
+    expect(delays).toEqual([2])
+  })
+
+  it('retries 408 request timeouts', async () => {
+    let calls = 0
+
+    const result = await retry(
+      async () => {
+        calls += 1
+        if (calls === 1) {
+          throw serverError(408)
+        }
+        return 'ok'
+      },
+      { baseDelayMs: 0, retries: 1 },
+    )
+
+    expect(result).toBe('ok')
+    expect(calls).toBe(2)
   })
 
   it('retries network failures', async () => {
@@ -246,6 +285,24 @@ describe('retry', () => {
     expect(calls).toBe(2)
   })
 
+  it('rejects before the first attempt when the signal is already aborted', async () => {
+    const controller = new AbortController()
+    controller.abort(new Error('stop'))
+    let calls = 0
+
+    await expect(
+      retry(
+        async () => {
+          calls += 1
+          return 'ok'
+        },
+        { signal: controller.signal },
+      ),
+    ).rejects.toThrow('stop')
+
+    expect(calls).toBe(0)
+  })
+
   it('stops immediately when the signal is already aborted', async () => {
     const controller = new AbortController()
     const promise = retry(
@@ -324,6 +381,26 @@ describe('retry', () => {
   })
 })
 
+function abortableTransport(): {
+  seen: Array<AbortSignal | undefined>
+  transport: TMDBTransport
+} {
+  const seen: Array<AbortSignal | undefined> = []
+  const transport: TMDBTransport = {
+    defaults: { imageBaseUrl: 'https://image.tmdb.org/t/p' },
+    get<T>(_path: string, options?: TMDBRequestOptions): Promise<T> {
+      seen.push(options?.signal)
+      return new Promise<T>((_resolve, reject) => {
+        options?.signal?.addEventListener('abort', () => reject(options.signal!.reason), {
+          once: true,
+        })
+      })
+    },
+  }
+
+  return { seen, transport }
+}
+
 describe('withRetry', () => {
   it('forwards defaults and retries transport calls', async () => {
     let calls = 0
@@ -344,6 +421,83 @@ describe('withRetry', () => {
     const result = await wrapped.get<{ path: string }>('/movie/550')
     expect(result.path).toBe('/movie/550')
     expect(calls).toBe(2)
+  })
+
+  it('preserves extra transport members', async () => {
+    const { transport } = createTransport(() => ({ ok: true }))
+    const withStats = Object.assign(transport, { stats: () => 7 })
+    const wrapped = withRetry(withStats)
+
+    expect(wrapped.stats()).toBe(7)
+    expect(wrapped.defaults).toBe(transport.defaults)
+    expect(await wrapped.get('/movie/550')).toEqual({ ok: true })
+  })
+
+  it('forwards a wrapper-level signal to the transport', async () => {
+    const controller = new AbortController()
+    const { seen, transport } = abortableTransport()
+    const wrapped = withRetry(transport, { signal: controller.signal })
+
+    const promise = wrapped.get('/movie/550')
+    await Bun.sleep(0)
+    controller.abort(new Error('stop'))
+
+    await expect(promise).rejects.toThrow('stop')
+    expect(seen).toEqual([controller.signal])
+  })
+
+  it('composes wrapper and per-request signals', async () => {
+    const wrapper = new AbortController()
+    const request = new AbortController()
+    const { seen, transport } = abortableTransport()
+    const wrapped = withRetry(transport, { signal: wrapper.signal })
+
+    const promise = wrapped.get('/movie/550', { signal: request.signal })
+    await Bun.sleep(0)
+
+    expect(seen).toHaveLength(1)
+    expect(seen[0]).not.toBe(wrapper.signal)
+    expect(seen[0]).not.toBe(request.signal)
+
+    request.abort(new Error('request stop'))
+    await expect(promise).rejects.toThrow('request stop')
+  })
+
+  it('aborts when the wrapper signal fires while a request is in flight', async () => {
+    const wrapper = new AbortController()
+    const request = new AbortController()
+    const { transport } = abortableTransport()
+    const wrapped = withRetry(transport, { signal: wrapper.signal })
+
+    const promise = wrapped.get('/movie/550', { signal: request.signal })
+    await Bun.sleep(0)
+    wrapper.abort(new Error('wrapper stop'))
+
+    await expect(promise).rejects.toThrow('wrapper stop')
+  })
+
+  it('accepts the same signal at both levels', async () => {
+    const controller = new AbortController()
+    const { seen, transport } = abortableTransport()
+    const wrapped = withRetry(transport, { signal: controller.signal })
+
+    const promise = wrapped.get('/movie/550', { signal: controller.signal })
+    await Bun.sleep(0)
+    controller.abort(new Error('stop'))
+
+    await expect(promise).rejects.toThrow('stop')
+    expect(seen).toEqual([controller.signal])
+  })
+
+  it('rejects before the first attempt when either signal is already aborted', async () => {
+    const wrapper = new AbortController()
+    wrapper.abort(new Error('already'))
+    const request = new AbortController()
+    const { seen, transport } = abortableTransport()
+    const wrapped = withRetry(transport, { signal: wrapper.signal })
+
+    await expect(wrapped.get('/movie/550', { signal: request.signal })).rejects.toThrow('already')
+    expect(seen).toHaveLength(0)
   })
 
   it('uses the per-request signal for backoff cancellation', async () => {

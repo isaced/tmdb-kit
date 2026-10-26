@@ -14,15 +14,23 @@ import { TrendingResource } from './resources/trending'
 import { TVResource } from './resources/tv'
 
 /**
+ * Options accepted when the caller supplies a custom transport.
+ *
+ * The transport owns authentication, so credentials are not required.
+ */
+export type TMDBTransportOptions = Omit<TMDBClientOptions, 'accessToken' | 'apiKey'> & {
+  transport: TMDBTransport
+}
+
+/**
  * Options accepted by {@link createTMDB} and the {@link TMDBClient} constructor.
  *
- * Extends {@link TMDBClientOptions} with an optional {@link TMDBTransport} so
- * callers can plug in a custom transport (typically for tests, caching, or
- * instrumentation) without having to mock `fetch` or the factory itself.
+ * Either provide credentials for the built-in transport, or pass a custom
+ * {@link TMDBTransport} (typically for tests, caching, or instrumentation)
+ * without credentials.
  */
-export type TMDBFactoryOptions = TMDBClientOptions & {
-  transport?: TMDBTransport
-}
+export type TMDBFactoryOptions =
+  (TMDBClientOptions & { transport?: TMDBTransport }) | TMDBTransportOptions
 
 /**
  * Main SDK entry point.
@@ -44,21 +52,23 @@ export class TMDBClient {
   readonly #transport: TMDBTransport
 
   constructor(options: TMDBFactoryOptions) {
-    const { transport, images, ...httpOptions } = options
     // When the caller supplies a custom transport we still want to honor the
     // global images.transform option; otherwise read it back from the HTTP
     // client after it has been constructed.
-    const fallbackTransform = images?.transform
-    const builtInClient =
-      transport === undefined ? new TMDBHttpClient({ ...httpOptions, images }) : undefined
-    this.#transport = builtInClient ?? (transport as TMDBTransport)
+    let imageTransform = options.images?.transform
+
+    if (options.transport === undefined) {
+      // Transport-only options always define a transport, so this branch has credentials.
+      const builtInClient = new TMDBHttpClient(options as TMDBClientOptions)
+      this.#transport = builtInClient
+      imageTransform = builtInClient.imageTransform
+    } else {
+      this.#transport = options.transport
+    }
 
     this.configuration = new ConfigurationResource(this.#transport)
     this.genres = new GenresResource(this.#transport)
-    this.images = new ImagesHelper(
-      this.#transport,
-      builtInClient ? builtInClient.imageTransform : fallbackTransform,
-    )
+    this.images = new ImagesHelper(this.#transport, imageTransform)
     this.movies = new MoviesResource(this.#transport)
     this.people = new PeopleResource(this.#transport)
     this.search = new SearchResource(this.#transport)

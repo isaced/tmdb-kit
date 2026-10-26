@@ -95,7 +95,7 @@ describe('TMDBClient facade', () => {
     )
   })
 
-  it('accepts a custom transport and routes every resource through it (no fetch involved)', async () => {
+  it('accepts a custom transport without credentials and routes every resource through it', async () => {
     const { calls, transport } = createTransportMock<unknown>([
       // configuration.details()
       { images: { secure_base_url: 'https://images.example/t/p' } },
@@ -107,7 +107,7 @@ describe('TMDBClient facade', () => {
       { results: [{ id: 27205, name: 'Inception' }] },
     ])
 
-    const tmdb = createTMDB({ accessToken: 'read-token', transport })
+    const tmdb = createTMDB({ transport })
 
     const config = await tmdb.configuration.details()
     const genres = await tmdb.genres.movies()
@@ -133,7 +133,7 @@ describe('TMDBClient facade', () => {
 
   it('uses the injected transport defaults (imageBaseUrl) for ImagesHelper', async () => {
     const { transport } = createTransportMock<unknown>()
-    const tmdb = createTMDB({ accessToken: 'read-token', transport })
+    const tmdb = createTMDB({ transport })
 
     expect(tmdb.images.url('/poster.jpg', 'w500')).toBe(
       'https://image.tmdb.org/t/p/w500/poster.jpg',

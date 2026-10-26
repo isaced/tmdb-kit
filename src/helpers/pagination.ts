@@ -8,8 +8,8 @@ export interface PageFetcher<T> {
 export interface PaginateOptions {
   /** First page to request. Defaults to 1. */
   startPage?: number
-  /** Maximum page to request. Defaults to 500, TMDB's documented cap. */
-  maxPages?: number
+  /** Last page to request, inclusive. Defaults to 500, TMDB's documented cap. */
+  endPage?: number
   /** Cancels the iteration before the next request. */
   signal?: AbortSignal
 }
@@ -18,7 +18,8 @@ export interface PaginateOptions {
  * Iterate a paged TMDB endpoint page by page.
  *
  * Stops when the API reports the last page, when a page has no results,
- * when `maxPages` is reached, or when the signal is aborted. The fetcher
+ * when `endPage` is reached, or when the signal is aborted. Yields nothing
+ * when `endPage` is lower than `startPage`. The fetcher
  * receives the page number and should forward the signal to the SDK:
  *
  * ```ts
@@ -32,11 +33,11 @@ export async function* paginate<T>(
   options: PaginateOptions = {},
 ): AsyncGenerator<PagedResponse<T>, void, undefined> {
   const startPage = options.startPage ?? 1
-  const maxPages = options.maxPages ?? 500
+  const endPage = options.endPage ?? 500
   assertPositiveInteger(startPage, 'startPage')
-  assertPositiveInteger(maxPages, 'maxPages')
+  assertPositiveInteger(endPage, 'endPage')
 
-  for (let page = startPage; page <= maxPages; page += 1) {
+  for (let page = startPage; page <= endPage; page += 1) {
     options.signal?.throwIfAborted()
 
     const response = await fetchPage(page)

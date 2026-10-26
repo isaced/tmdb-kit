@@ -47,7 +47,7 @@ describe('paginate', () => {
     expect(pages).toHaveLength(2)
   })
 
-  it('respects startPage and maxPages', async () => {
+  it('respects startPage and endPage', async () => {
     const requested: number[] = []
     await collect(
       paginate(
@@ -55,11 +55,40 @@ describe('paginate', () => {
           requested.push(pageNumber)
           return page(pageNumber, ['item'], 10)
         },
-        { startPage: 3, maxPages: 4 },
+        { endPage: 4, startPage: 3 },
       ),
     )
 
     expect(requested).toEqual([3, 4])
+  })
+
+  it('defaults endPage to 500', async () => {
+    const requested: number[] = []
+    await collect(
+      paginate(async (pageNumber) => {
+        requested.push(pageNumber)
+        return page(pageNumber, ['item'], 10_000)
+      }),
+    )
+
+    expect(requested).toHaveLength(500)
+    expect(requested.at(-1)).toBe(500)
+  })
+
+  it('yields nothing when endPage is lower than startPage', async () => {
+    const requested: number[] = []
+    const pages = await collect(
+      paginate(
+        async (pageNumber) => {
+          requested.push(pageNumber)
+          return page(pageNumber, ['item'], 10)
+        },
+        { endPage: 2, startPage: 5 },
+      ),
+    )
+
+    expect(pages).toEqual([])
+    expect(requested).toEqual([])
   })
 
   it('stops before the next request when the signal is aborted', async () => {
@@ -87,7 +116,7 @@ describe('paginate', () => {
     const fetchPage = async () => page(1, [])
 
     await expect(collect(paginate(fetchPage, { startPage: 0 }))).rejects.toThrow(RangeError)
-    await expect(collect(paginate(fetchPage, { maxPages: 1.5 }))).rejects.toThrow(RangeError)
+    await expect(collect(paginate(fetchPage, { endPage: 1.5 }))).rejects.toThrow(RangeError)
   })
 })
 

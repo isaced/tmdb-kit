@@ -116,6 +116,15 @@ describe('withMemoryCache', () => {
     expect(cached.defaults).toBe(transport.defaults)
   })
 
+  it('preserves extra transport members', () => {
+    const { transport } = createTransport(() => 'x')
+    const withStats = Object.assign(transport, { stats: () => 7 })
+    const cached = withMemoryCache(withStats)
+
+    expect(cached.stats()).toBe(7)
+    expect(cached.defaults).toBe(transport.defaults)
+  })
+
   it('rejects invalid options', () => {
     const { transport } = createTransport(() => 'x')
 

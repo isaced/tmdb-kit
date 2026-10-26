@@ -1,4 +1,5 @@
 import {
+  parseRetryAfter,
   TMDBRateLimitError,
   TMDBRequestError,
   TMDBResponseError,
@@ -39,10 +40,10 @@ const MAX_RETRY_AFTER_MS = 60_000
 /**
  * Retry an async task using TMDB-aware defaults.
  *
- * Retries HTTP 429 using `Retry-After`, retries 5xx responses and network
- * failures with exponential backoff, and never retries other 4xx responses,
- * validation errors, aborts, or timeouts. All TMDB requests are GETs, so the
- * helper is safe for every resource method.
+ * Retries 429 and any response that carries `Retry-After`, retries 408 and
+ * 5xx responses plus network failures with exponential backoff, and never
+ * retries other 4xx responses, validation errors, aborts, or timeouts. All
+ * TMDB requests are GETs, so the helper is safe for every resource method.
  */
 export async function retry<T>(task: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const retries = options.retries ?? 2
@@ -52,6 +53,10 @@ export async function retry<T>(task: () => Promise<T>, options: RetryOptions = {
 
   const retryOn = options.retryOn ?? shouldRetry
   const signal = options.signal
+
+  if (signal?.aborted) {
+    throw signal.reason
+  }
 
   for (let attempt = 0; ; attempt += 1) {
     try {
@@ -76,17 +81,20 @@ export async function retry<T>(task: () => Promise<T>, options: RetryOptions = {
  *
  * ```ts
  * const http = new TMDBHttpClient({ accessToken })
- * const tmdb = createTMDB({ accessToken, transport: withRetry(http, { retries: 3 }) })
+ * const tmdb = createTMDB({ transport: withRetry(http, { retries: 3 }) })
  * ```
  */
-export function withRetry(transport: TMDBTransport, options: RetryOptions = {}): TMDBTransport {
+export function withRetry<T extends TMDBTransport>(transport: T, options: RetryOptions = {}): T {
   return {
-    defaults: transport.defaults,
-    get<T>(path: string, requestOptions?: TMDBRequestOptions): Promise<T> {
-      return retry(() => transport.get<T>(path, requestOptions), {
+    ...transport,
+    get<U>(path: string, requestOptions?: TMDBRequestOptions): Promise<U> {
+      const { cleanup, signal } = combineSignals(options.signal, requestOptions?.signal)
+      const effectiveOptions = signal === undefined ? requestOptions : { ...requestOptions, signal }
+
+      return retry(() => transport.get<U>(path, effectiveOptions), {
         ...options,
-        signal: requestOptions?.signal ?? options.signal,
-      })
+        signal,
+      }).finally(cleanup)
     },
   }
 }
@@ -96,7 +104,7 @@ function shouldRetry(error: unknown): boolean {
     return true
   }
   if (error instanceof TMDBResponseError) {
-    return error.isServerError
+    return error.isServerError || error.status === 408
   }
   if (error instanceof TMDBTimeoutError) {
     return false
@@ -111,6 +119,11 @@ function shouldRetry(error: unknown): boolean {
 }
 
 function retryDelay(error: unknown, attempt: number, options: RetryOptions): number {
+  const retryAfter = retryAfterMs(error)
+  if (retryAfter !== undefined) {
+    return Math.min(Math.max(retryAfter, 0), MAX_RETRY_AFTER_MS)
+  }
+
   if (error instanceof TMDBRateLimitError) {
     return Math.min(Math.max(error.retryAfter * 1000, 0), MAX_RETRY_AFTER_MS)
   }
@@ -122,6 +135,56 @@ function retryDelay(error: unknown, attempt: number, options: RetryOptions): num
 
   return options.jitter === false ? delay : Math.random() * delay
 }
+
+function retryAfterMs(error: unknown): number | undefined {
+  if (!(error instanceof TMDBResponseError)) {
+    return undefined
+  }
+
+  const header = error.headers.get('retry-after')
+  if (header === null || header.trim() === '') {
+    return undefined
+  }
+
+  return parseRetryAfter(header) * 1000
+}
+
+/**
+ * Combine a wrapper-level signal with a per-request signal.
+ *
+ * `AbortSignal.any()` requires Node 20.3+, while the package supports Node 18,
+ * so the fallback keeps both signals wired to one controller. The cleanup
+ * function detaches the listeners once the request settles.
+ */
+function combineSignals(
+  first: AbortSignal | undefined,
+  second: AbortSignal | undefined,
+): { cleanup: () => void; signal: AbortSignal | undefined } {
+  if (first === undefined || second === undefined || first === second) {
+    return { cleanup: noop, signal: first ?? second }
+  }
+
+  const controller = new AbortController()
+  const onAbort = () => controller.abort((first.aborted ? first : second).reason)
+
+  first.addEventListener('abort', onAbort, { once: true })
+  second.addEventListener('abort', onAbort, { once: true })
+
+  // Either signal may have aborted between the guard above and registration.
+  if (first.aborted || second.aborted) {
+    onAbort()
+  }
+
+  return {
+    cleanup() {
+      first.removeEventListener('abort', onAbort)
+      second.removeEventListener('abort', onAbort)
+    },
+    signal: controller.signal,
+  }
+}
+
+function noop(): void {}
 
 function isAbortError(error: unknown): boolean {
   return (
