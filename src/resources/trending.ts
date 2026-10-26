@@ -33,6 +33,7 @@ export class TrendingResource {
         language: options.language,
         page: options.page,
       }),
+      signal: options.signal,
     })
   }
 
@@ -45,6 +46,7 @@ export class TrendingResource {
         language: options.language,
         page: options.page,
       }),
+      signal: options.signal,
     })
   }
 
@@ -57,6 +59,7 @@ export class TrendingResource {
         language: options.language,
         page: options.page,
       }),
+      signal: options.signal,
     })
   }
 
@@ -69,6 +72,7 @@ export class TrendingResource {
         language: options.language,
         page: options.page,
       }),
+      signal: options.signal,
     })
   }
 }

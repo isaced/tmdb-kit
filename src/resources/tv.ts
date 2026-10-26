@@ -44,24 +44,28 @@ export class TVResource {
   popular(options: Omit<ListOptions, 'region'> = {}): Promise<PagedResponse<TVSummary>> {
     return this.#transport.get('/tv/popular', {
       query: tvListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
   topRated(options: Omit<ListOptions, 'region'> = {}): Promise<PagedResponse<TVSummary>> {
     return this.#transport.get('/tv/top_rated', {
       query: tvListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
   airingToday(options: Omit<ListOptions, 'region'> = {}): Promise<PagedResponse<TVSummary>> {
     return this.#transport.get('/tv/airing_today', {
       query: tvListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
   onTheAir(options: Omit<ListOptions, 'region'> = {}): Promise<PagedResponse<TVSummary>> {
     return this.#transport.get('/tv/on_the_air', {
       query: tvListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
@@ -74,6 +78,7 @@ export class TVResource {
         append_to_response: toCommaList(options.appendToResponse),
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
@@ -82,6 +87,7 @@ export class TVResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
@@ -91,6 +97,7 @@ export class TVResource {
         include_image_language: toCommaList(options.includeImageLanguage),
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
@@ -100,6 +107,7 @@ export class TVResource {
   ): Promise<PagedResponse<TVSummary>> {
     return this.#transport.get(`/tv/${toId(seriesId, 'seriesId')}/recommendations`, {
       query: tvListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
@@ -109,6 +117,7 @@ export class TVResource {
   ): Promise<PagedResponse<TVSummary>> {
     return this.#transport.get(`/tv/${toId(seriesId, 'seriesId')}/similar`, {
       query: tvListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
@@ -117,6 +126,7 @@ export class TVResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
@@ -132,6 +142,7 @@ export class TVResource {
           append_to_response: toCommaList(options.appendToResponse),
           language: options.language,
         }),
+        signal: options.signal,
       },
     )
   }
@@ -147,6 +158,7 @@ export class TVResource {
         query: withLanguage(this.#transport.defaults, {
           language: options.language,
         }),
+        signal: options.signal,
       },
     )
   }
@@ -162,6 +174,7 @@ export class TVResource {
         query: withLanguage(this.#transport.defaults, {
           language: options.language,
         }),
+        signal: options.signal,
       },
     )
   }
@@ -178,6 +191,7 @@ export class TVResource {
           include_image_language: toCommaList(options.includeImageLanguage),
           language: options.language,
         }),
+        signal: options.signal,
       },
     )
   }
@@ -193,6 +207,7 @@ export class TVResource {
         query: withLanguage(this.#transport.defaults, {
           language: options.language,
         }),
+        signal: options.signal,
       },
     )
   }
@@ -210,6 +225,7 @@ export class TVResource {
           append_to_response: toCommaList(options.appendToResponse),
           language: options.language,
         }),
+        signal: options.signal,
       },
     )
   }
@@ -222,6 +238,7 @@ export class TVResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
@@ -230,6 +247,7 @@ export class TVResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
@@ -238,6 +256,7 @@ export class TVResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 }
