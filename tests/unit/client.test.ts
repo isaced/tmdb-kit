@@ -47,7 +47,10 @@ describe('TMDBClient facade', () => {
     })
 
     expect(tmdb).toBeInstanceOf(TMDBClient)
+    expect(tmdb.collections).toBeDefined()
     expect(tmdb.configuration).toBeDefined()
+    expect(tmdb.discover).toBeDefined()
+    expect(tmdb.find).toBeDefined()
     expect(tmdb.genres).toBeDefined()
     expect(tmdb.images).toBeDefined()
     expect(tmdb.movies).toBeDefined()
@@ -55,6 +58,7 @@ describe('TMDBClient facade', () => {
     expect(tmdb.search).toBeDefined()
     expect(tmdb.trending).toBeDefined()
     expect(tmdb.tv).toBeDefined()
+    expect(tmdb.watchProviders).toBeDefined()
   })
 
   it('keeps a typed request escape hatch for endpoints that are not wrapped yet', async () => {

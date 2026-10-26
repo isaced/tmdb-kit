@@ -4,7 +4,10 @@ import {
   type TMDBRequestOptions,
   type TMDBTransport,
 } from './http'
+import { CollectionsResource } from './resources/collections'
 import { ConfigurationResource } from './resources/configuration'
+import { DiscoverResource } from './resources/discover'
+import { FindResource } from './resources/find'
 import { GenresResource } from './resources/genres'
 import { ImagesHelper } from './resources/images'
 import { MoviesResource } from './resources/movies'
@@ -12,6 +15,7 @@ import { PeopleResource } from './resources/people'
 import { SearchResource } from './resources/search'
 import { TrendingResource } from './resources/trending'
 import { TVResource } from './resources/tv'
+import { WatchProvidersResource } from './resources/watch-providers'
 
 /**
  * Options accepted when the caller supplies a custom transport.
@@ -40,7 +44,10 @@ export type TMDBFactoryOptions =
  * to call without waiting for a generated surface area.
  */
 export class TMDBClient {
+  readonly collections: CollectionsResource
   readonly configuration: ConfigurationResource
+  readonly discover: DiscoverResource
+  readonly find: FindResource
   readonly genres: GenresResource
   readonly images: ImagesHelper
   readonly movies: MoviesResource
@@ -48,6 +55,7 @@ export class TMDBClient {
   readonly search: SearchResource
   readonly trending: TrendingResource
   readonly tv: TVResource
+  readonly watchProviders: WatchProvidersResource
 
   readonly #transport: TMDBTransport
 
@@ -66,7 +74,10 @@ export class TMDBClient {
       this.#transport = options.transport
     }
 
+    this.collections = new CollectionsResource(this.#transport)
     this.configuration = new ConfigurationResource(this.#transport)
+    this.discover = new DiscoverResource(this.#transport)
+    this.find = new FindResource(this.#transport)
     this.genres = new GenresResource(this.#transport)
     this.images = new ImagesHelper(this.#transport, imageTransform)
     this.movies = new MoviesResource(this.#transport)
@@ -74,6 +85,7 @@ export class TMDBClient {
     this.search = new SearchResource(this.#transport)
     this.trending = new TrendingResource(this.#transport)
     this.tv = new TVResource(this.#transport)
+    this.watchProviders = new WatchProvidersResource(this.#transport)
   }
 
   /**
