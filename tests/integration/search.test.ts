@@ -27,6 +27,18 @@ describe('Search API (integration)', () => {
     expect(Array.isArray(result.results)).toBe(true)
   })
 
+  it('filters movie searches by release year', async () => {
+    const result = await tmdb.search.movies('Inception', { year: 2010 })
+    expect(result.results.length).toBeGreaterThan(0)
+    expect(result.results[0]!.id).toBe(27205)
+  })
+
+  it('paginates multi search', async () => {
+    const result = await tmdb.search.multi('Star Wars', { page: 2 })
+    expect(result.page).toBe(2)
+    expect(result.results.length).toBeGreaterThan(0)
+  })
+
   it('rejects empty queries before a request is made', async () => {
     expect(() => tmdb.search.movies('   ')).toThrow('search query must not be empty')
     expect(() => tmdb.search.tv('')).toThrow('search query must not be empty')
@@ -62,6 +74,12 @@ describe('Search type guards and exclude on the live API (integration)', () => {
     }
     // total_results reflects the unfiltered payload (client-side filter).
     expect(filtered.total_results).toBe(unfiltered.total_results)
+  })
+
+  it('exclude: ["tv"] removes TV entries from search.multi()', async () => {
+    const result = await tmdb.search.multi('Star Wars', { exclude: ['tv'] })
+    expect(result.results.length).toBeGreaterThan(0)
+    expect(result.results.some((item) => item.media_type === 'tv')).toBe(false)
   })
 
   it('isMovieSearchResult narrows a real multi-search payload', async () => {

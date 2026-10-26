@@ -13,6 +13,12 @@ describe('Images helper (integration)', () => {
     expect(url).toContain('w500')
   })
 
+  it('defaults to the original size', async () => {
+    const movie = await tmdb.movies.details(550)
+    const url = tmdb.images.url(movie.poster_path)
+    expect(url).toContain('/original/')
+  })
+
   it('returns null for nullish paths', () => {
     expect(tmdb.images.url(null)).toBeNull()
     expect(tmdb.images.url(undefined)).toBeNull()

@@ -60,7 +60,7 @@ tests/
 
 - **Unit tests** (`tests/unit/`): mock `fetch` via `TMDBTransport` stubs. No real network calls.
 - **Resource tests** (`tests/resources/`): same mock pattern, focused on resource methods.
-- **Integration tests** (`tests/integration/`): hit the live TMDB API. Require `TMDB_ACCESS_TOKEN` env var. Run with `bun run test:integration`.
+- **Integration tests** (`tests/integration/`): hit the live TMDB API. Require `TMDB_ACCESS_TOKEN` env var. Run with `bun run test:integration`. The suite covers the SDK resources and the CLI entry point, and runs in CI through the `Integration` workflow (nightly, manual dispatch, and same-repo pull requests). Configure the `TMDB_ACCESS_TOKEN` repository secret to enable it.
 
 All tests must pass with 100% line coverage before submitting a PR.
 

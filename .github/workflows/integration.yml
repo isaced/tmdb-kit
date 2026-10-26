@@ -1,0 +1,61 @@
+name: Integration
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/integration.yml'
+      - 'bun.lock'
+      - 'bunfig.toml'
+      - 'package.json'
+      - 'src/**'
+      - 'tests/_support/**'
+      - 'tests/integration/**'
+  schedule:
+    # Nightly so upstream TMDB changes surface even without a push.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live:
+    name: Live TMDB API
+    # Pin the image so the ubuntu-latest migration does not change the toolchain.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Repository secrets are not exposed to fork pull requests, and
+    # Dependabot runs get a read-only token without secrets.
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify TMDB_ACCESS_TOKEN
+        env:
+          TMDB_ACCESS_TOKEN: ${{ secrets.TMDB_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$TMDB_ACCESS_TOKEN" ]; then
+            echo "::error::TMDB_ACCESS_TOKEN is not configured. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Run integration tests
+        env:
+          TMDB_ACCESS_TOKEN: ${{ secrets.TMDB_ACCESS_TOKEN }}
+        run: bun run test:integration

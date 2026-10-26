@@ -16,6 +16,15 @@ describe('Client request() escape hatch (integration)', () => {
     expect(result).toBeDefined()
     expect(result.id).toBe(10)
   })
+
+  it('forwards request options through the escape hatch', async () => {
+    const result = await tmdb.request<{ id: number; credits?: unknown }>('movie/550', {
+      query: { append_to_response: 'credits' },
+    })
+
+    expect(result.id).toBe(550)
+    expect(result.credits).toBeDefined()
+  })
 })
 
 describe('Client configuration on the live API (integration)', () => {
@@ -26,12 +35,11 @@ describe('Client configuration on the live API (integration)', () => {
       defaultLanguage: 'zh-CN',
     })
 
-    const result = await tmdb.movies.popular({ page: 1, region: 'CN' })
-    expect(result.page).toBe(1)
-    // We cannot assert the body shape changes between languages, but a
-    // successful 200 with the SDK's defaults applied is enough — any
-    // failure here would surface as a TMDBResponseError.
-    expect(result.results.length).toBeGreaterThan(0)
+    const movie = await tmdb.movies.details(550)
+    expect(movie.id).toBe(550)
+    // Fight Club's Simplified Chinese title. Without the default language
+    // reaching TMDB, this would fall back to the original English title.
+    expect(movie.title).toBe('搏击俱乐部')
   })
 
   it('accepts a custom transport and routes every resource through it on the live API', async () => {
