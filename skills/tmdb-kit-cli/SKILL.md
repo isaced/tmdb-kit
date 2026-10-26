@@ -26,11 +26,19 @@ Do not reach for it when the work belongs in application code — import the `tm
 
 ## Setup
 
-Run it without installing:
+Check the installed binary and its version before running anything:
 
 ```bash
-npx -y tmdb-kit@latest trending movie --format json
+tmdb --version    # must be 1.2.0 or newer
 ```
+
+If `tmdb` is missing or reports an older version, run through a package runner instead:
+
+```bash
+npx -y tmdb-kit@latest --version     # or: bunx tmdb-kit@latest
+```
+
+Releases before 1.2.0 silently ignore `--format`, `--fields`, `--all`, and `--max-items`: a 1.1.0 binary prints text even when `--format json` is passed, with exit code `0`. Never pair an older binary with the flags in this skill, and do not fall back to a runner when the installed binary is already 1.2.0 or newer.
 
 Credentials come from `TMDB_ACCESS_TOKEN`, then `TMDB_API_KEY`, then the config file. Check what is in effect before assuming:
 
@@ -164,6 +172,7 @@ Branch on the exit code or `kind`, never on the message text. `kind` is one of `
 
 ## Rules
 
+- Run `tmdb` only when `tmdb --version` reports 1.2.0 or newer. Otherwise use `npx -y tmdb-kit@latest`, which re-resolves the package on every call but keeps the flags working.
 - Always pass `--format json` or `--format ndjson` when the output will be parsed.
 - Use IDs for follow-up calls. Names are ambiguous and `search` ordering can change.
 - `--fields` works only on top-level keys. Nested paths such as `credits.cast` are rejected; ask for `credits` and index in `jq`.
