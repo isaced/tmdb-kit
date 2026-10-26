@@ -14,9 +14,10 @@ import {
   printTV,
   printVideos,
 } from '../format'
-import { printResult, runSafely } from '../output'
+import { printPaged, printResult, runSafely } from '../output'
 import {
   commonArgs,
+  paginationArgs,
   parseCommaList,
   parseGroupId,
   parseId,
@@ -39,6 +40,7 @@ export const tvCommand = defineCommand({
       },
       args: {
         ...commonArgs,
+        ...paginationArgs,
         category: {
           type: 'positional',
           description: 'popular, top-rated, airing-today, or on-the-air',
@@ -50,22 +52,32 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(args, async (output) => {
-          const category = parseTVListCategory(args.category)
-          const options = { page: parsePage(args.page) }
-          const client = createClient({ language: args.lang })
+        await runSafely(
+          args,
+          async (output) => {
+            const category = parseTVListCategory(args.category)
+            const params = { page: parsePage(args.page) }
+            const client = createClient({ language: args.lang })
 
-          const response =
-            category === 'top-rated'
-              ? await client.tv.topRated(options)
-              : category === 'airing-today'
-                ? await client.tv.airingToday(options)
-                : category === 'on-the-air'
-                  ? await client.tv.onTheAir(options)
-                  : await client.tv.popular(options)
+            await printPaged({
+              fetchPage: (page) => {
+                const options = { ...params, page }
 
-          printResult(response, output, () => printSearchResults(response, 'tv'))
-        })
+                return category === 'top-rated'
+                  ? client.tv.topRated(options)
+                  : category === 'airing-today'
+                    ? client.tv.airingToday(options)
+                    : category === 'on-the-air'
+                      ? client.tv.onTheAir(options)
+                      : client.tv.popular(options)
+              },
+              output,
+              renderText: (response) => printSearchResults(response, 'tv'),
+              startPage: params.page,
+            })
+          },
+          { paginated: true },
+        )
       },
     }),
 
@@ -188,6 +200,7 @@ export const tvCommand = defineCommand({
       },
       args: {
         ...commonArgs,
+        ...paginationArgs,
         id: {
           type: 'positional',
           description: 'TMDB TV show ID',
@@ -199,14 +212,22 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(args, async (output) => {
-          const id = parseId(args.id, 'TV show ID')
-          const options = { page: parsePage(args.page) }
-          const client = createClient({ language: args.lang })
-          const response = await client.tv.similar(id, options)
+        await runSafely(
+          args,
+          async (output) => {
+            const id = parseId(args.id, 'TV show ID')
+            const params = { page: parsePage(args.page) }
+            const client = createClient({ language: args.lang })
 
-          printResult(response, output, () => printSearchResults(response, 'tv'))
-        })
+            await printPaged({
+              fetchPage: (page) => client.tv.similar(id, { ...params, page }),
+              output,
+              renderText: (response) => printSearchResults(response, 'tv'),
+              startPage: params.page,
+            })
+          },
+          { paginated: true },
+        )
       },
     }),
 
@@ -217,6 +238,7 @@ export const tvCommand = defineCommand({
       },
       args: {
         ...commonArgs,
+        ...paginationArgs,
         id: {
           type: 'positional',
           description: 'TMDB TV show ID',
@@ -228,14 +250,22 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(args, async (output) => {
-          const id = parseId(args.id, 'TV show ID')
-          const options = { page: parsePage(args.page) }
-          const client = createClient({ language: args.lang })
-          const response = await client.tv.recommendations(id, options)
+        await runSafely(
+          args,
+          async (output) => {
+            const id = parseId(args.id, 'TV show ID')
+            const params = { page: parsePage(args.page) }
+            const client = createClient({ language: args.lang })
 
-          printResult(response, output, () => printSearchResults(response, 'tv'))
-        })
+            await printPaged({
+              fetchPage: (page) => client.tv.recommendations(id, { ...params, page }),
+              output,
+              renderText: (response) => printSearchResults(response, 'tv'),
+              startPage: params.page,
+            })
+          },
+          { paginated: true },
+        )
       },
     }),
 

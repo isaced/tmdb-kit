@@ -1,9 +1,9 @@
 import { defineCommand } from 'citty'
 import { createClient } from '../client'
 import { CliError } from '../errors'
-import { printSearchResults } from '../format'
-import { printResult, runSafely } from '../output'
-import { commonArgs, parsePage, parseSearchType, SEARCH_TYPES } from '../options'
+import { printSearchResults, type SearchResult } from '../format'
+import { printPaged, runSafely } from '../output'
+import { commonArgs, paginationArgs, parsePage, parseSearchType, SEARCH_TYPES } from '../options'
 
 export const searchCommand = defineCommand({
   meta: {
@@ -12,6 +12,7 @@ export const searchCommand = defineCommand({
   },
   args: {
     ...commonArgs,
+    ...paginationArgs,
     query: {
       type: 'positional',
       description: 'Search query',
@@ -33,33 +34,42 @@ export const searchCommand = defineCommand({
     },
   },
   async run({ args }) {
-    await runSafely(args, async (output) => {
-      const query = args.query.trim()
-      if (!query) {
-        throw new CliError('Search query must not be empty.', 2)
-      }
+    await runSafely(
+      args,
+      async (output) => {
+        const query = args.query.trim()
+        if (!query) {
+          throw new CliError('Search query must not be empty.', 2)
+        }
 
-      const type = parseSearchType(args.type)
-      const page = parsePage(args.page)
-      const year = args.year?.trim() || undefined
+        const type = parseSearchType(args.type)
+        const page = parsePage(args.page)
+        const year = args.year?.trim() || undefined
 
-      if (year && type !== 'movie' && type !== 'tv') {
-        throw new CliError('--year is only supported with --type movie or tv.', 2)
-      }
+        if (year && type !== 'movie' && type !== 'tv') {
+          throw new CliError('--year is only supported with --type movie or tv.', 2)
+        }
 
-      const client = createClient({ language: args.lang })
-      const options = { page }
+        const client = createClient({ language: args.lang })
 
-      const response =
-        type === 'movie'
-          ? await client.search.movies(query, { ...options, year })
-          : type === 'tv'
-            ? await client.search.tv(query, { ...options, firstAirDateYear: year })
-            : type === 'person'
-              ? await client.search.people(query, options)
-              : await client.search.multi(query, options)
+        await printPaged<SearchResult>({
+          fetchPage: (nextPage) => {
+            const options = { page: nextPage }
 
-      printResult(response, output, () => printSearchResults(response, type))
-    })
+            return type === 'movie'
+              ? client.search.movies(query, { ...options, year })
+              : type === 'tv'
+                ? client.search.tv(query, { ...options, firstAirDateYear: year })
+                : type === 'person'
+                  ? client.search.people(query, options)
+                  : client.search.multi(query, options)
+          },
+          output,
+          renderText: (response) => printSearchResults(response, type),
+          startPage: page,
+        })
+      },
+      { paginated: true },
+    )
   },
 })
