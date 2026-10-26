@@ -361,7 +361,7 @@ Defaults are a 5-minute TTL and 100 entries. The cache key includes the path, qu
 
 ## CLI
 
-The `tmdb` command is a read-only client for the same TMDB API. It reads credentials from the environment or a config file, prints human-readable summaries by default, and accepts `--format json` (or its `--json` alias) for raw TMDB payloads.
+The `tmdb` command is a read-only client for the same TMDB API. It reads credentials from the environment or a config file, prints human-readable summaries by default, and accepts `--format json` (or its `--json` alias) for raw TMDB payloads and `--format ndjson` for line-oriented output.
 
 The CLI runs on Node.js 18+ and Bun.
 
@@ -413,7 +413,7 @@ Use `--lang` to override the config language for a single command. `auth logout`
 
 ### Commands
 
-Every API command accepts `--lang`, `--format`, and `--compact`. Run `tmdb <command> --help` for the full option list.
+Every API command accepts `--lang`, `--format`, `--fields`, and `--compact`. Run `tmdb <command> --help` for the full option list.
 
 | Command                                          | Description                                                                       | Command options              |
 | ------------------------------------------------ | --------------------------------------------------------------------------------- | ---------------------------- |
@@ -448,33 +448,34 @@ Every API command accepts `--lang`, `--format`, and `--compact`. Run `tmdb <comm
 
 Credential and config commands:
 
-| Command                         | Description                                            | Command options            |
-| ------------------------------- | ------------------------------------------------------ | -------------------------- |
-| `tmdb auth login`               | Validate and save credentials.                         | `--token-stdin`, `--force` |
-| `tmdb auth status`              | Show credential source, masked token, and config path. | `--format`, `--compact`    |
-| `tmdb auth logout`              | Remove saved credentials.                              | none                       |
-| `tmdb config show`              | Show config values with secrets masked.                | `--format`, `--compact`    |
-| `tmdb config path`              | Print the config file path.                            | none                       |
-| `tmdb config test`              | Verify credentials with an authenticated request.      | `--format`, `--compact`    |
-| `tmdb config set <key> [value]` | Set `token`, `api-key`, `language`, or `region`.       | none                       |
-| `tmdb config unset <key>`       | Remove a config value.                                 | none                       |
+| Command                         | Description                                            | Command options                     |
+| ------------------------------- | ------------------------------------------------------ | ----------------------------------- |
+| `tmdb auth login`               | Validate and save credentials.                         | `--token-stdin`, `--force`          |
+| `tmdb auth status`              | Show credential source, masked token, and config path. | `--format`, `--fields`, `--compact` |
+| `tmdb auth logout`              | Remove saved credentials.                              | none                                |
+| `tmdb config show`              | Show config values with secrets masked.                | `--format`, `--fields`, `--compact` |
+| `tmdb config path`              | Print the config file path.                            | none                                |
+| `tmdb config test`              | Verify credentials with an authenticated request.      | `--format`, `--fields`, `--compact` |
+| `tmdb config set <key> [value]` | Set `token`, `api-key`, `language`, or `region`.       | none                                |
+| `tmdb config unset <key>`       | Remove a config value.                                 | none                                |
 
 ### Common options
 
-| Option                    | Description                                                                        |
-| ------------------------- | ---------------------------------------------------------------------------------- |
-| `--format <text\|json>`   | Output format. Defaults to `text`; `json` prints the raw TMDB response.            |
-| `--json`                  | Alias for `--format json`.                                                         |
-| `--compact`               | Print JSON on a single line instead of pretty-printing it.                         |
-| `--lang <code>`           | Language for this command. Defaults to config `language`, then `en-US`.            |
-| `--page <number>`         | Page number. Defaults to `1`.                                                      |
-| `--region <code>`         | Region for movie lists, similar, and recommendations. Defaults to config `region`. |
-| `--limit <number>`        | Maximum rows for credits. Defaults to `10`.                                        |
-| `--append <list>`         | Comma-separated `append_to_response` values, such as `credits,videos`.             |
-| `--image-language <list>` | Comma-separated image language codes.                                              |
-| `--year <year>`           | Movie release year or TV first-air year. Only with `--type movie` or `--type tv`.  |
-| `--type <value>`          | Media selector for `search`: `all`, `movie`, `tv`, or `person`.                    |
-| `--window <day\|week>`    | Trending window. Defaults to `week`.                                               |
+| Option                          | Description                                                                         |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| `--format <text\|json\|ndjson>` | Output format. `json` prints the raw response, `ndjson` prints one record per line. |
+| `--fields <list>`               | Comma-separated top-level fields to keep. Requires `--format json` or `ndjson`.     |
+| `--json`                        | Alias for `--format json`.                                                          |
+| `--compact`                     | Print JSON on a single line instead of pretty-printing it.                          |
+| `--lang <code>`                 | Language for this command. Defaults to config `language`, then `en-US`.             |
+| `--page <number>`               | Page number. Defaults to `1`.                                                       |
+| `--region <code>`               | Region for movie lists, similar, and recommendations. Defaults to config `region`.  |
+| `--limit <number>`              | Maximum rows for credits. Defaults to `10`.                                         |
+| `--append <list>`               | Comma-separated `append_to_response` values, such as `credits,videos`.              |
+| `--image-language <list>`       | Comma-separated image language codes.                                               |
+| `--year <year>`                 | Movie release year or TV first-air year. Only with `--type movie` or `--type tv`.   |
+| `--type <value>`                | Media selector for `search`: `all`, `movie`, `tv`, or `person`.                     |
+| `--window <day\|week>`          | Trending window. Defaults to `week`.                                                |
 
 `--version` prints the CLI version.
 
@@ -488,7 +489,38 @@ tmdb movie get 550 --json | jq '.title'
 tmdb movie get 550 --format json --compact   # single line, for line-oriented tools
 ```
 
-`--compact` only affects JSON output and is ignored for `text`. Combining `--json` with an explicit `--format text` is a usage error.
+`--compact` only affects `json` output and is ignored for `text`. Combining `--json` with an explicit `--format text` or `--format ndjson` is a usage error.
+
+#### NDJSON
+
+`--format ndjson` (alias `jsonl`) prints one JSON object per line. Responses with a `results` array stream as three record kinds:
+
+<!-- prettier-ignore -->
+```json
+{"type":"meta","page":1,"total_pages":5,"total_results":100}
+{"type":"item","index":0,"value":{"id":550,"title":"Fight Club"}}
+{"type":"summary","count":20}
+```
+
+`meta` is the response envelope without `results`, `index` is zero-based, and `summary` closes the stream. Every other response emits a single record:
+
+<!-- prettier-ignore -->
+```json
+{"type":"result","value":{"id":550,"title":"Fight Club"}}
+```
+
+Because the stream is line-oriented, a missing `summary` line means the command failed; the reason is still on stderr as a single `{"type":"error",...}` record.
+
+#### Selecting fields
+
+`--fields` keeps only the listed top-level fields. For detail commands it projects the response; for list commands it projects each entry in `results` while keeping the envelope:
+
+```bash
+tmdb movie get 550 --format json --fields id,title,release_date
+tmdb movie list --format ndjson --fields id,title | jq -c 'select(.type == "item")'
+```
+
+Fields that a record does not have are omitted. If none of the requested fields exist, the command exits `2` and lists the available names. Nested paths are not supported, and `--fields` requires `--format json` or `--format ndjson`.
 
 When JSON output is active, errors go to stderr as one JSON object and stdout stays empty, so a pipeline never receives a partial payload:
 

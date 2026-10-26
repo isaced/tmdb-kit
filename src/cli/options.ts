@@ -11,11 +11,15 @@ export const jsonArg = {
 export const formatArg = {
   format: {
     type: 'string',
-    description: 'Output format: text or json (default: text)',
+    description: 'Output format: text, json, or ndjson (default: text)',
   },
   compact: {
     type: 'boolean',
     description: 'Print JSON on a single line',
+  },
+  fields: {
+    type: 'string',
+    description: 'Comma-separated top-level fields to keep in JSON output',
   },
 } satisfies ArgsDef
 
