@@ -26,11 +26,19 @@ Do not reach for it when the work belongs in application code — import the `tm
 
 ## Setup
 
-Run it without installing:
+Use the installed binary. Check once per session:
 
 ```bash
-npx -y tmdb-kit@latest trending movie --format json
+tmdb --version
 ```
+
+Only when `tmdb` is not on `PATH`, fall back to a package runner for the rest of the session:
+
+```bash
+npx -y tmdb-kit@latest --version     # or: bunx tmdb-kit@latest
+```
+
+Do not prepend a runner to commands when `tmdb` already works. `npx -y tmdb-kit@latest` re-resolves the package on every call and can run a different version than the one the user installed.
 
 Credentials come from `TMDB_ACCESS_TOKEN`, then `TMDB_API_KEY`, then the config file. Check what is in effect before assuming:
 
@@ -164,6 +172,7 @@ Branch on the exit code or `kind`, never on the message text. `kind` is one of `
 
 ## Rules
 
+- Run `tmdb` when it is installed. Use `npx -y tmdb-kit@latest` only as a fallback after `tmdb --version` fails.
 - Always pass `--format json` or `--format ndjson` when the output will be parsed.
 - Use IDs for follow-up calls. Names are ambiguous and `search` ordering can change.
 - `--fields` works only on top-level keys. Nested paths such as `credits.cast` are rejected; ask for `credits` and index in `jq`.
