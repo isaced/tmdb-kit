@@ -1,15 +1,8 @@
 import { defineCommand } from 'citty'
 import type { MovieAppendToResponse } from '../../index'
 import { createClient } from '../client'
-import { runSafely } from '../errors'
-import {
-  printCredits,
-  printImages,
-  printJson,
-  printMovie,
-  printSearchResults,
-  printVideos,
-} from '../format'
+import { printCredits, printImages, printMovie, printSearchResults, printVideos } from '../format'
+import { printResult, runSafely } from '../output'
 import {
   commonArgs,
   parseCommaList,
@@ -47,7 +40,7 @@ export const movieCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const category = parseMovieListCategory(args.category)
           const options = { page: parsePage(args.page), region: args.region }
           const client = createClient({ language: args.lang })
@@ -61,11 +54,7 @@ export const movieCommand = defineCommand({
                   ? await client.movies.upcoming(options)
                   : await client.movies.popular(options)
 
-          if (args.json) {
-            printJson(response)
-          } else {
-            printSearchResults(response, 'movie')
-          }
+          printResult(response, output, () => printSearchResults(response, 'movie'))
         })
       },
     }),
@@ -88,7 +77,7 @@ export const movieCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'movie ID')
           const client = createClient({ language: args.lang })
           const appendToResponse = parseCommaList(args.append) as
@@ -96,11 +85,7 @@ export const movieCommand = defineCommand({
 
           const movie = await client.movies.details(id, { appendToResponse })
 
-          if (args.json) {
-            printJson(movie)
-          } else {
-            printMovie(movie, client)
-          }
+          printResult(movie, output, () => printMovie(movie, client))
         })
       },
     }),
@@ -123,17 +108,13 @@ export const movieCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'movie ID')
           const limit = parseLimit(args.limit)
           const client = createClient({ language: args.lang })
           const credits = await client.movies.credits(id)
 
-          if (args.json) {
-            printJson(credits)
-          } else {
-            printCredits(credits, limit)
-          }
+          printResult(credits, output, () => printCredits(credits, limit))
         })
       },
     }),
@@ -156,17 +137,13 @@ export const movieCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'movie ID')
           const includeImageLanguage = parseCommaList(args['image-language'])
           const client = createClient({ language: args.lang })
           const images = await client.movies.images(id, { includeImageLanguage })
 
-          if (args.json) {
-            printJson(images)
-          } else {
-            printImages(images, client)
-          }
+          printResult(images, output, () => printImages(images, client))
         })
       },
     }),
@@ -185,16 +162,12 @@ export const movieCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'movie ID')
           const client = createClient({ language: args.lang })
           const videos = await client.movies.videos(id)
 
-          if (args.json) {
-            printJson(videos)
-          } else {
-            printVideos(videos)
-          }
+          printResult(videos, output, () => printVideos(videos))
         })
       },
     }),
@@ -221,17 +194,13 @@ export const movieCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'movie ID')
           const options = { page: parsePage(args.page), region: args.region }
           const client = createClient({ language: args.lang })
           const response = await client.movies.similar(id, options)
 
-          if (args.json) {
-            printJson(response)
-          } else {
-            printSearchResults(response, 'movie')
-          }
+          printResult(response, output, () => printSearchResults(response, 'movie'))
         })
       },
     }),
@@ -258,17 +227,13 @@ export const movieCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'movie ID')
           const options = { page: parsePage(args.page), region: args.region }
           const client = createClient({ language: args.lang })
           const response = await client.movies.recommendations(id, options)
 
-          if (args.json) {
-            printJson(response)
-          } else {
-            printSearchResults(response, 'movie')
-          }
+          printResult(response, output, () => printSearchResults(response, 'movie'))
         })
       },
     }),

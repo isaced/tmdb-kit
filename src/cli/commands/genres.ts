@@ -1,7 +1,7 @@
 import { defineCommand } from 'citty'
 import { createClient } from '../client'
-import { runSafely } from '../errors'
-import { printGenres, printJson } from '../format'
+import { printGenres } from '../format'
+import { printResult, runSafely } from '../output'
 import { commonArgs, parseGenreType } from '../options'
 
 export const genresCommand = defineCommand({
@@ -18,16 +18,12 @@ export const genresCommand = defineCommand({
     },
   },
   async run({ args }) {
-    await runSafely(async () => {
+    await runSafely(args, async (output) => {
       const type = parseGenreType(args.type)
       const client = createClient({ language: args.lang })
       const response = type === 'tv' ? await client.genres.tv() : await client.genres.movies()
 
-      if (args.json) {
-        printJson(response)
-      } else {
-        printGenres(response)
-      }
+      printResult(response, output, () => printGenres(response))
     })
   },
 })

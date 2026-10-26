@@ -1,4 +1,4 @@
-import { TMDBRateLimitError, TMDBRequestError, TMDBResponseError } from '../index'
+import { TMDBRateLimitError, TMDBRequestError, TMDBResponseError, TMDBTimeoutError } from '../index'
 
 export class CliError extends Error {
   readonly exitCode: number
@@ -50,11 +50,64 @@ export function errorMessage(error: unknown): string {
   return String(error)
 }
 
-export async function runSafely(task: () => Promise<void>): Promise<void> {
-  try {
-    await task()
-  } catch (error) {
-    process.stderr.write(`${errorMessage(error)}\n`)
-    process.exitCode = exitCodeFor(error)
+/** Machine-readable error categories reported by `--format json`. */
+export type ErrorKind =
+  'usage' | 'auth' | 'not_found' | 'rate_limit' | 'network' | 'api' | 'internal'
+
+/** Structured error record written to stderr when `--format json` is active. */
+export interface ErrorRecord {
+  type: 'error'
+  kind: ErrorKind
+  message: string
+  exitCode: number
+  status?: number
+  requestId?: string
+  retryAfter?: number
+}
+
+const EXIT_CODE_KINDS: Partial<Record<number, ErrorKind>> = {
+  2: 'usage',
+  3: 'auth',
+  4: 'not_found',
+  5: 'rate_limit',
+}
+
+export function errorKind(error: unknown): ErrorKind {
+  if (error instanceof CliError) {
+    return EXIT_CODE_KINDS[error.exitCode] ?? 'internal'
   }
+  if (error instanceof TMDBRateLimitError) {
+    return 'rate_limit'
+  }
+  if (error instanceof TMDBResponseError) {
+    if (error.status === 401 || error.status === 403) return 'auth'
+    if (error.status === 404) return 'not_found'
+    if (error.status === 429) return 'rate_limit'
+    return 'api'
+  }
+  if (error instanceof TMDBRequestError || error instanceof TMDBTimeoutError) {
+    return 'network'
+  }
+  return 'internal'
+}
+
+export function toErrorRecord(error: unknown): ErrorRecord {
+  const record: ErrorRecord = {
+    type: 'error',
+    kind: errorKind(error),
+    message: errorMessage(error),
+    exitCode: exitCodeFor(error),
+  }
+
+  if (error instanceof TMDBResponseError) {
+    record.status = error.status
+    if (error.requestId !== null) {
+      record.requestId = error.requestId
+    }
+  }
+  if (error instanceof TMDBRateLimitError) {
+    record.retryAfter = error.retryAfter
+  }
+
+  return record
 }

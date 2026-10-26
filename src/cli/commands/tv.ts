@@ -1,7 +1,6 @@
 import { defineCommand } from 'citty'
 import type { EpisodeAppendToResponse, TVAppendToResponse } from '../../index'
 import { createClient } from '../client'
-import { runSafely } from '../errors'
 import {
   printAggregateCredits,
   printCredits,
@@ -9,13 +8,13 @@ import {
   printEpisodeGroup,
   printEpisodeGroups,
   printImages,
-  printJson,
   printSearchResults,
   printSeason,
   printSeasonImages,
   printTV,
   printVideos,
 } from '../format'
+import { printResult, runSafely } from '../output'
 import {
   commonArgs,
   parseCommaList,
@@ -51,7 +50,7 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const category = parseTVListCategory(args.category)
           const options = { page: parsePage(args.page) }
           const client = createClient({ language: args.lang })
@@ -65,11 +64,7 @@ export const tvCommand = defineCommand({
                   ? await client.tv.onTheAir(options)
                   : await client.tv.popular(options)
 
-          if (args.json) {
-            printJson(response)
-          } else {
-            printSearchResults(response, 'tv')
-          }
+          printResult(response, output, () => printSearchResults(response, 'tv'))
         })
       },
     }),
@@ -92,18 +87,14 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const client = createClient({ language: args.lang })
           const appendToResponse = parseCommaList(args.append) as TVAppendToResponse[] | undefined
 
           const tv = await client.tv.details(id, { appendToResponse })
 
-          if (args.json) {
-            printJson(tv)
-          } else {
-            printTV(tv, client)
-          }
+          printResult(tv, output, () => printTV(tv, client))
         })
       },
     }),
@@ -126,17 +117,13 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const limit = parseLimit(args.limit)
           const client = createClient({ language: args.lang })
           const credits = await client.tv.credits(id)
 
-          if (args.json) {
-            printJson(credits)
-          } else {
-            printCredits(credits, limit)
-          }
+          printResult(credits, output, () => printCredits(credits, limit))
         })
       },
     }),
@@ -159,17 +146,13 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const includeImageLanguage = parseCommaList(args['image-language'])
           const client = createClient({ language: args.lang })
           const images = await client.tv.images(id, { includeImageLanguage })
 
-          if (args.json) {
-            printJson(images)
-          } else {
-            printImages(images, client)
-          }
+          printResult(images, output, () => printImages(images, client))
         })
       },
     }),
@@ -188,16 +171,12 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const client = createClient({ language: args.lang })
           const videos = await client.tv.videos(id)
 
-          if (args.json) {
-            printJson(videos)
-          } else {
-            printVideos(videos)
-          }
+          printResult(videos, output, () => printVideos(videos))
         })
       },
     }),
@@ -220,17 +199,13 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const options = { page: parsePage(args.page) }
           const client = createClient({ language: args.lang })
           const response = await client.tv.similar(id, options)
 
-          if (args.json) {
-            printJson(response)
-          } else {
-            printSearchResults(response, 'tv')
-          }
+          printResult(response, output, () => printSearchResults(response, 'tv'))
         })
       },
     }),
@@ -253,17 +228,13 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const options = { page: parsePage(args.page) }
           const client = createClient({ language: args.lang })
           const response = await client.tv.recommendations(id, options)
 
-          if (args.json) {
-            printJson(response)
-          } else {
-            printSearchResults(response, 'tv')
-          }
+          printResult(response, output, () => printSearchResults(response, 'tv'))
         })
       },
     }),
@@ -287,17 +258,13 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const seasonNumber = parseSeasonNumber(args.season)
           const client = createClient({ language: args.lang })
           const season = await client.tv.seasonDetails(id, seasonNumber)
 
-          if (args.json) {
-            printJson(season)
-          } else {
-            printSeason(season, client)
-          }
+          printResult(season, output, () => printSeason(season, client))
         })
       },
     }),
@@ -330,7 +297,7 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const seasonNumber = parseSeasonNumber(args.season)
           const episodeNumber = parseId(args.episode, 'episode number')
@@ -341,11 +308,7 @@ export const tvCommand = defineCommand({
             appendToResponse,
           })
 
-          if (args.json) {
-            printJson(episode)
-          } else {
-            printEpisode(episode, client, id)
-          }
+          printResult(episode, output, () => printEpisode(episode, client, id))
         })
       },
     }),
@@ -368,17 +331,13 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const limit = parseLimit(args.limit)
           const client = createClient({ language: args.lang })
           const credits = await client.tv.aggregateCredits(id)
 
-          if (args.json) {
-            printJson(credits)
-          } else {
-            printAggregateCredits(credits, limit)
-          }
+          printResult(credits, output, () => printAggregateCredits(credits, limit))
         })
       },
     }),
@@ -406,18 +365,14 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const seasonNumber = parseSeasonNumber(args.season)
           const limit = parseLimit(args.limit)
           const client = createClient({ language: args.lang })
           const credits = await client.tv.seasonCredits(id, seasonNumber)
 
-          if (args.json) {
-            printJson(credits)
-          } else {
-            printCredits(credits, limit)
-          }
+          printResult(credits, output, () => printCredits(credits, limit))
         })
       },
     }),
@@ -445,18 +400,14 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const seasonNumber = parseSeasonNumber(args.season)
           const limit = parseLimit(args.limit)
           const client = createClient({ language: args.lang })
           const credits = await client.tv.seasonAggregateCredits(id, seasonNumber)
 
-          if (args.json) {
-            printJson(credits)
-          } else {
-            printAggregateCredits(credits, limit)
-          }
+          printResult(credits, output, () => printAggregateCredits(credits, limit))
         })
       },
     }),
@@ -484,18 +435,14 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const seasonNumber = parseSeasonNumber(args.season)
           const includeImageLanguage = parseCommaList(args['image-language'])
           const client = createClient({ language: args.lang })
           const images = await client.tv.seasonImages(id, seasonNumber, { includeImageLanguage })
 
-          if (args.json) {
-            printJson(images)
-          } else {
-            printSeasonImages(images, client)
-          }
+          printResult(images, output, () => printSeasonImages(images, client))
         })
       },
     }),
@@ -519,17 +466,13 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const seasonNumber = parseSeasonNumber(args.season)
           const client = createClient({ language: args.lang })
           const videos = await client.tv.seasonVideos(id, seasonNumber)
 
-          if (args.json) {
-            printJson(videos)
-          } else {
-            printVideos(videos)
-          }
+          printResult(videos, output, () => printVideos(videos))
         })
       },
     }),
@@ -548,16 +491,12 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'TV show ID')
           const client = createClient({ language: args.lang })
           const groups = await client.tv.episodeGroups(id)
 
-          if (args.json) {
-            printJson(groups)
-          } else {
-            printEpisodeGroups(groups)
-          }
+          printResult(groups, output, () => printEpisodeGroups(groups))
         })
       },
     }),
@@ -576,16 +515,12 @@ export const tvCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const groupId = parseGroupId(args['group-id'])
           const client = createClient({ language: args.lang })
           const group = await client.tv.episodeGroup(groupId)
 
-          if (args.json) {
-            printJson(group)
-          } else {
-            printEpisodeGroup(group)
-          }
+          printResult(group, output, () => printEpisodeGroup(group))
         })
       },
     }),

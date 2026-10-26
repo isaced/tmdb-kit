@@ -7,9 +7,9 @@ import {
   type ConfigField,
 } from '../config'
 import { createClient } from '../client'
-import { CliError, runSafely } from '../errors'
-import { printJson } from '../format'
-import { jsonArg } from '../options'
+import { CliError } from '../errors'
+import { outputArgs } from '../options'
+import { printResult, runSafely } from '../output'
 import { readSecret } from '../prompt'
 import { describeSecret } from '../redact'
 
@@ -35,9 +35,9 @@ export const configCommand = defineCommand({
         name: 'show',
         description: 'Show the resolved config with secrets masked',
       },
-      args: { ...jsonArg },
+      args: { ...outputArgs },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const config = readConfig()
           const path = getConfigPath()
           const view = {
@@ -48,20 +48,17 @@ export const configCommand = defineCommand({
             region: config.region ?? null,
           }
 
-          if (args.json) {
-            printJson(view)
-            return
-          }
-
-          process.stdout.write(
-            [
-              `Path: ${path}`,
-              `accessToken: ${view.accessToken ?? '(not set)'}`,
-              `apiKey: ${view.apiKey ?? '(not set)'}`,
-              `language: ${view.language ?? '(not set)'}`,
-              `region: ${view.region ?? '(not set)'}`,
-            ].join('\n') + '\n',
-          )
+          printResult(view, output, () => {
+            process.stdout.write(
+              [
+                `Path: ${path}`,
+                `accessToken: ${view.accessToken ?? '(not set)'}`,
+                `apiKey: ${view.apiKey ?? '(not set)'}`,
+                `language: ${view.language ?? '(not set)'}`,
+                `region: ${view.region ?? '(not set)'}`,
+              ].join('\n') + '\n',
+            )
+          })
         })
       },
     }),
@@ -81,18 +78,15 @@ export const configCommand = defineCommand({
         name: 'test',
         description: 'Verify credentials with an authenticated TMDB request',
       },
-      args: { ...jsonArg },
+      args: { ...outputArgs },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const client = createClient()
           await client.movies.details(550)
 
-          if (args.json) {
-            printJson({ ok: true })
-            return
-          }
-
-          process.stdout.write('TMDB connection OK\nCredentials are valid.\n')
+          printResult({ ok: true }, output, () => {
+            process.stdout.write('TMDB connection OK\nCredentials are valid.\n')
+          })
         })
       },
     }),
@@ -115,7 +109,7 @@ export const configCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely({}, async () => {
           const field = parseConfigKey(args.key)
           const path = getConfigPath()
 
@@ -162,7 +156,7 @@ export const configCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely({}, async () => {
           const field = parseConfigKey(args.key)
           unsetConfigValue(field)
           process.stdout.write(`Removed ${field} from ${getConfigPath()}\n`)

@@ -1,7 +1,7 @@
 import { defineCommand } from 'citty'
 import { createClient } from '../client'
-import { runSafely } from '../errors'
-import { printJson, printSearchResults } from '../format'
+import { printSearchResults } from '../format'
+import { printResult, runSafely } from '../output'
 import { commonArgs, parsePage, parseSearchType, parseWindow, TRENDING_WINDOWS } from '../options'
 
 export const trendingCommand = defineCommand({
@@ -28,7 +28,7 @@ export const trendingCommand = defineCommand({
     },
   },
   async run({ args }) {
-    await runSafely(async () => {
+    await runSafely(args, async (output) => {
       const type = parseSearchType(args.type)
       const window = parseWindow(args.window)
       const page = parsePage(args.page)
@@ -43,11 +43,7 @@ export const trendingCommand = defineCommand({
               ? await client.trending.people(window, { page })
               : await client.trending.all(window, { page })
 
-      if (args.json) {
-        printJson(response)
-      } else {
-        printSearchResults(response, type)
-      }
+      printResult(response, output, () => printSearchResults(response, type))
     })
   },
 })

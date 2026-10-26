@@ -361,7 +361,7 @@ Defaults are a 5-minute TTL and 100 entries. The cache key includes the path, qu
 
 ## CLI
 
-The `tmdb` command is a read-only client for the same TMDB API. It reads credentials from the environment or a config file, prints human-readable summaries by default, and accepts `--json` for raw TMDB payloads.
+The `tmdb` command is a read-only client for the same TMDB API. It reads credentials from the environment or a config file, prints human-readable summaries by default, and accepts `--format json` (or its `--json` alias) for raw TMDB payloads.
 
 The CLI runs on Node.js 18+ and Bun.
 
@@ -413,7 +413,7 @@ Use `--lang` to override the config language for a single command. `auth logout`
 
 ### Commands
 
-Every API command accepts `--lang` and `--json`. Run `tmdb <command> --help` for the full option list.
+Every API command accepts `--lang`, `--format`, and `--compact`. Run `tmdb <command> --help` for the full option list.
 
 | Command                                          | Description                                                                       | Command options              |
 | ------------------------------------------------ | --------------------------------------------------------------------------------- | ---------------------------- |
@@ -451,11 +451,11 @@ Credential and config commands:
 | Command                         | Description                                            | Command options            |
 | ------------------------------- | ------------------------------------------------------ | -------------------------- |
 | `tmdb auth login`               | Validate and save credentials.                         | `--token-stdin`, `--force` |
-| `tmdb auth status`              | Show credential source, masked token, and config path. | `--json`                   |
+| `tmdb auth status`              | Show credential source, masked token, and config path. | `--format`, `--compact`    |
 | `tmdb auth logout`              | Remove saved credentials.                              | none                       |
-| `tmdb config show`              | Show config values with secrets masked.                | `--json`                   |
+| `tmdb config show`              | Show config values with secrets masked.                | `--format`, `--compact`    |
 | `tmdb config path`              | Print the config file path.                            | none                       |
-| `tmdb config test`              | Verify credentials with an authenticated request.      | `--json`                   |
+| `tmdb config test`              | Verify credentials with an authenticated request.      | `--format`, `--compact`    |
 | `tmdb config set <key> [value]` | Set `token`, `api-key`, `language`, or `region`.       | none                       |
 | `tmdb config unset <key>`       | Remove a config value.                                 | none                       |
 
@@ -463,7 +463,9 @@ Credential and config commands:
 
 | Option                    | Description                                                                        |
 | ------------------------- | ---------------------------------------------------------------------------------- |
-| `--json`                  | Print the raw TMDB JSON response instead of the formatted summary.                 |
+| `--format <text\|json>`   | Output format. Defaults to `text`; `json` prints the raw TMDB response.            |
+| `--json`                  | Alias for `--format json`.                                                         |
+| `--compact`               | Print JSON on a single line instead of pretty-printing it.                         |
 | `--lang <code>`           | Language for this command. Defaults to config `language`, then `en-US`.            |
 | `--page <number>`         | Page number. Defaults to `1`.                                                      |
 | `--region <code>`         | Region for movie lists, similar, and recommendations. Defaults to config `region`. |
@@ -478,11 +480,32 @@ Credential and config commands:
 
 ### Output and exit codes
 
-The default output is a compact summary for reading in a terminal. Use `--json` for scripts:
+The default output is a compact summary for reading in a terminal. Use `--format json` for scripts; `--json` is a shorter alias:
 
 ```bash
-tmdb movie get 550 --json | jq '.title, .release_date'
+tmdb movie get 550 --format json | jq '.title, .release_date'
+tmdb movie get 550 --json | jq '.title'
+tmdb movie get 550 --format json --compact   # single line, for line-oriented tools
 ```
+
+`--compact` only affects JSON output and is ignored for `text`. Combining `--json` with an explicit `--format text` is a usage error.
+
+When JSON output is active, errors go to stderr as one JSON object and stdout stays empty, so a pipeline never receives a partial payload:
+
+<!-- prettier-ignore -->
+```json
+{"type":"error","kind":"not_found","message":"TMDB request failed (404): ...","exitCode":4,"status":404}
+```
+
+| Field        | Meaning                                                                      |
+| ------------ | ---------------------------------------------------------------------------- |
+| `type`       | Always `error`.                                                              |
+| `kind`       | `usage`, `auth`, `not_found`, `rate_limit`, `network`, `api`, or `internal`. |
+| `message`    | Human-readable description.                                                  |
+| `exitCode`   | Process exit code, matching the table below.                                 |
+| `status`     | HTTP status, when the failure came from a TMDB response.                     |
+| `requestId`  | TMDB `x-request-id`, when the response included one.                         |
+| `retryAfter` | Seconds to wait before retrying, for rate limit errors.                      |
 
 Exit codes:
 

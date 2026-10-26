@@ -1,7 +1,7 @@
 import { defineCommand } from 'citty'
 import { createClient } from '../client'
-import { runSafely } from '../errors'
-import { printJson, printPerson, printPersonCredits } from '../format'
+import { printPerson, printPersonCredits } from '../format'
+import { printResult, runSafely } from '../output'
 import { commonArgs, parseId, parseLimit } from '../options'
 
 export const personCommand = defineCommand({
@@ -24,16 +24,12 @@ export const personCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'person ID')
           const client = createClient({ language: args.lang })
           const person = await client.people.details(id)
 
-          if (args.json) {
-            printJson(person)
-          } else {
-            printPerson(person, client)
-          }
+          printResult(person, output, () => printPerson(person, client))
         })
       },
     }),
@@ -56,17 +52,13 @@ export const personCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const id = parseId(args.id, 'person ID')
           const limit = parseLimit(args.limit)
           const client = createClient({ language: args.lang })
           const credits = await client.people.combinedCredits(id)
 
-          if (args.json) {
-            printJson(credits)
-          } else {
-            printPersonCredits(credits, limit)
-          }
+          printResult(credits, output, () => printPersonCredits(credits, limit))
         })
       },
     }),
