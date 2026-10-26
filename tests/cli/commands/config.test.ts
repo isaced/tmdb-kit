@@ -1,10 +1,15 @@
-import { Readable } from 'node:stream'
 import { runCommand } from 'citty'
 import { describe, expect, it } from 'vitest'
 import { configCommand } from '../../../src/cli/commands/config'
 import { readConfig, setConfigValue } from '../../../src/cli/config'
-import { configurationResponse } from '../../_support/fixtures'
-import { captureOutput, jsonResponse, mockFetch, useCliTestEnv } from '../helpers'
+import { movieDetails } from '../fixtures'
+import {
+  captureOutput,
+  jsonResponse,
+  mockFetch,
+  useCliTestEnv,
+  withStdin,
+} from '../helpers'
 
 describe('config command', () => {
   const env = useCliTestEnv()
@@ -134,44 +139,25 @@ describe('config command', () => {
     expect(output.stdout()).toContain('Removed language')
   })
 
-  it('tests the TMDB connection', async () => {
+  it('tests the TMDB connection with an authenticated request', async () => {
     process.env.TMDB_ACCESS_TOKEN = 'token'
-    const { calls } = mockFetch(() => jsonResponse(configurationResponse))
+    const { calls } = mockFetch(() => jsonResponse(movieDetails()))
     const output = captureOutput()
 
     await runCommand(configCommand, { rawArgs: ['test'] })
 
     expect(output.stdout()).toContain('TMDB connection OK')
-    expect(output.stdout()).toContain(
-      'Image base URL: https://image.tmdb.org/t/p/',
-    )
-    expect(calls[0]?.pathname.endsWith('/configuration')).toBe(true)
+    expect(output.stdout()).toContain('Credentials are valid.')
+    expect(calls[0]?.pathname.endsWith('/movie/550')).toBe(true)
   })
 
   it('prints the connection test as JSON', async () => {
     process.env.TMDB_ACCESS_TOKEN = 'token'
-    mockFetch(() => jsonResponse(configurationResponse))
+    mockFetch(() => jsonResponse(movieDetails()))
     const output = captureOutput()
 
     await runCommand(configCommand, { rawArgs: ['test', '--json'] })
 
-    expect(JSON.parse(output.stdout())).toEqual({
-      ok: true,
-      imageBaseUrl: 'https://image.tmdb.org/t/p/',
-    })
+    expect(JSON.parse(output.stdout())).toEqual({ ok: true })
   })
 })
-
-async function withStdin(input: string, task: () => Promise<void>): Promise<void> {
-  const descriptor = Object.getOwnPropertyDescriptor(process, 'stdin')!
-  Object.defineProperty(process, 'stdin', {
-    configurable: true,
-    value: Readable.from([input]),
-  })
-
-  try {
-    await task()
-  } finally {
-    Object.defineProperty(process, 'stdin', descriptor)
-  }
-}

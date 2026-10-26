@@ -10,14 +10,18 @@ describe('CLI client', () => {
   const env = useCliTestEnv()
 
   it('requires exactly one credential source', () => {
-    expect.assertions(3)
+    expect.assertions(6)
 
     try {
       createClient()
     } catch (error) {
       expect(error).toBeInstanceOf(CliError)
       expect((error as CliError).exitCode).toBe(3)
-      expect((error as CliError).message).toContain('No TMDB credentials found')
+      const message = (error as CliError).message
+      expect(message).toContain('No TMDB credentials found')
+      expect(message).toContain('tmdb auth login')
+      expect(message).toContain(env.configPath())
+      expect(message).toContain('"accessToken"')
     }
   })
 

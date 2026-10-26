@@ -37,6 +37,12 @@ export function errorMessage(error: unknown): string {
     return `TMDB rate limit exceeded. Retry after ${error.retryAfter} seconds.`
   }
   if (error instanceof TMDBResponseError) {
+    if (error.status === 401 || error.status === 403) {
+      return [
+        `TMDB rejected the credentials (HTTP ${error.status}): ${error.message}`,
+        'Run `tmdb auth login` to replace the token, or check `tmdb config show`.',
+      ].join('\n')
+    }
     return `TMDB request failed (${error.status}): ${error.message}`
   }
   if (error instanceof TMDBRequestError) {

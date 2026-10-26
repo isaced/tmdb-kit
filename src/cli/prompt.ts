@@ -2,7 +2,7 @@ import { createInterface } from 'node:readline/promises'
 
 export async function readSecret(prompt: string): Promise<string> {
   if (!process.stdin.isTTY) {
-    return (await readStdin()).trim()
+    return readStdinSecret()
   }
 
   const rl = createInterface({
@@ -24,10 +24,10 @@ export async function readSecret(prompt: string): Promise<string> {
   }
 }
 
-async function readStdin(): Promise<string> {
+export async function readStdinSecret(): Promise<string> {
   const chunks: Buffer[] = []
   for await (const chunk of process.stdin) {
     chunks.push(Buffer.from(chunk))
   }
-  return Buffer.concat(chunks).toString('utf8')
+  return Buffer.concat(chunks).toString('utf8').trim()
 }

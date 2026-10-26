@@ -65,6 +65,11 @@ describe('CLI errors', () => {
 
   it('formats TMDB response and rate limit errors', () => {
     expect(errorMessage(responseError(404))).toContain('TMDB request failed (404)')
+    expect(errorMessage(responseError(401))).toContain(
+      'TMDB rejected the credentials (HTTP 401)',
+    )
+    expect(errorMessage(responseError(401))).toContain('tmdb auth login')
+    expect(errorMessage(responseError(403))).toContain('tmdb auth login')
     expect(errorMessage(responseError(429, '7'))).toBe(
       'TMDB rate limit exceeded. Retry after 7 seconds.',
     )

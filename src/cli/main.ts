@@ -6,6 +6,7 @@ import {
   type CommandDef,
 } from 'citty'
 import { CLI_VERSION, mainCommand } from './command'
+import { AUTHENTICATION_HELP } from './help'
 
 await runMain(mainCommand, { showUsage: showFullUsage })
 
@@ -15,8 +16,11 @@ async function showFullUsage<T extends ArgsDef = ArgsDef>(
 ): Promise<void> {
   const path = await findPath(mainCommand, cmd as CommandDef)
 
-  if (!parent || !path) {
-    process.stdout.write(`${await renderUsage(cmd)}\n`)
+  if (!parent || !path || path.length === 0) {
+    const usage = await renderUsage(cmd)
+    const authentication =
+      cmd === mainCommand ? `\n\n${AUTHENTICATION_HELP}` : ''
+    process.stdout.write(`${usage}${authentication}\n`)
     return
   }
 

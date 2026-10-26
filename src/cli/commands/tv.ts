@@ -149,7 +149,7 @@ export const tvCommand = defineCommand({
           description: 'TMDB TV show ID',
           required: true,
         },
-        imageLanguage: {
+        'image-language': {
           type: 'string',
           description: 'Comma-separated image language codes',
         },
@@ -157,7 +157,7 @@ export const tvCommand = defineCommand({
       async run({ args }) {
         await runSafely(async () => {
           const id = parseId(args.id, 'TV show ID')
-          const includeImageLanguage = parseCommaList(args.imageLanguage)
+          const includeImageLanguage = parseCommaList(args['image-language'])
           const client = createClient({ language: args.lang })
           const images = await client.tv.images(id, { includeImageLanguage })
 

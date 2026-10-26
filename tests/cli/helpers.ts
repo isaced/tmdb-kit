@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { Readable } from 'node:stream'
 import { afterEach, beforeEach, vi } from 'vitest'
 
 const ENV_KEYS = [
@@ -68,6 +69,23 @@ export function captureOutput() {
   return {
     stdout: () => stdout.join(''),
     stderr: () => stderr.join(''),
+  }
+}
+
+export async function withStdin(
+  input: string,
+  task: () => Promise<void>,
+): Promise<void> {
+  const descriptor = Object.getOwnPropertyDescriptor(process, 'stdin')!
+  Object.defineProperty(process, 'stdin', {
+    configurable: true,
+    value: Readable.from([input]),
+  })
+
+  try {
+    await task()
+  } finally {
+    Object.defineProperty(process, 'stdin', descriptor)
   }
 }
 

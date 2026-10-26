@@ -11,6 +11,7 @@ import { CliError, runSafely } from '../errors'
 import { printJson } from '../format'
 import { jsonArg } from '../options'
 import { readSecret } from '../prompt'
+import { maskSecret } from '../redact'
 
 const CONFIG_KEY_ALIASES = {
   token: 'accessToken',
@@ -78,25 +79,20 @@ export const configCommand = defineCommand({
     test: defineCommand({
       meta: {
         name: 'test',
-        description: 'Verify credentials by calling the TMDB configuration API',
+        description: 'Verify credentials with an authenticated TMDB request',
       },
       args: { ...jsonArg },
       async run({ args }) {
         await runSafely(async () => {
           const client = createClient()
-          const configuration = await client.configuration.details()
+          await client.movies.details(550)
 
           if (args.json) {
-            printJson({
-              ok: true,
-              imageBaseUrl: configuration.images.secure_base_url,
-            })
+            printJson({ ok: true })
             return
           }
 
-          process.stdout.write(
-            `TMDB connection OK\nImage base URL: ${configuration.images.secure_base_url}\n`,
-          )
+          process.stdout.write('TMDB connection OK\nCredentials are valid.\n')
         })
       },
     }),
@@ -184,11 +180,4 @@ function parseConfigKey(value: string): ConfigField {
     )
   }
   return CONFIG_KEY_ALIASES[value as ConfigKey]
-}
-
-function maskSecret(value: string | undefined): string | null {
-  if (!value) {
-    return null
-  }
-  return value.length <= 4 ? '••••' : `••••${value.slice(-4)}`
 }

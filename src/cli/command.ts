@@ -1,5 +1,6 @@
 import { defineCommand } from 'citty'
 import pkg from '../../package.json' with { type: 'json' }
+import { authCommand } from './commands/auth'
 import { configCommand } from './commands/config'
 import { genresCommand } from './commands/genres'
 import { movieCommand } from './commands/movie'
@@ -23,6 +24,7 @@ export const mainCommand = defineCommand({
     person: personCommand,
     trending: trendingCommand,
     genres: genresCommand,
+    auth: authCommand,
     config: configCommand,
   },
 })
