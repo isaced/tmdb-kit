@@ -1,6 +1,6 @@
 ---
 name: tmdb-kit-cli
-description: Query The Movie Database (TMDB) from the terminal with the tmdb CLI — search movies, TV shows, and people, read details, credits, images, videos, seasons, and episodes, and emit text, JSON, or NDJSON. Use when a task needs movie or TV metadata such as titles, release dates, ratings, cast, or TMDB IDs without writing API code.
+description: Query The Movie Database (TMDB) from the terminal with the tmdb CLI — discover titles, search movies, TV shows, and people, look up external IDs, read details, credits, images, videos, seasons, episodes, collections, and watch providers, and emit text, JSON, or NDJSON. Use when a task needs movie or TV metadata such as titles, release dates, ratings, cast, streaming availability, or TMDB IDs without writing API code.
 license: MIT
 compatibility: Requires Node.js 18+ or Bun, and a TMDB API Read Access Token or legacy API key.
 metadata:
@@ -50,42 +50,57 @@ Never pass a secret as a positional argument — `config set token` deliberately
 
 ## Command map
 
-`<id>` is always a numeric TMDB ID. Use `search` first when you only have a name.
+`<id>` is a numeric TMDB ID unless the command says otherwise. `find` takes an external ID such as `tt0137523`. Use `search` first when you only have a name.
 
-| Command                                          | Purpose                                                        | Options                                             |
-| ------------------------------------------------ | -------------------------------------------------------------- | --------------------------------------------------- |
-| `tmdb search <query>`                            | Search all media, or one type                                  | `--type all\|movie\|tv\|person`, `--year`, `--page` |
-| `tmdb trending [type]`                           | Trending list, default `all`                                   | `--window day\|week`, `--page`                      |
-| `tmdb genres [movie\|tv]`                        | Genre ID to name mapping                                       | —                                                   |
-| `tmdb movie list [category]`                     | `popular` (default), `top-rated`, `now-playing`, `upcoming`    | `--page`, `--region`                                |
-| `tmdb movie get <id>`                            | Details                                                        | `--append credits,videos`                           |
-| `tmdb movie credits <id>`                        | Cast and crew                                                  | `--limit` (default 10)                              |
-| `tmdb movie images <id>`                         | Image paths and sizes                                          | `--image-language`                                  |
-| `tmdb movie videos <id>`                         | Trailers and clips                                             | —                                                   |
-| `tmdb movie similar <id>`                        | Similar movies                                                 | `--page`, `--region`                                |
-| `tmdb movie recommendations <id>`                | Recommended movies                                             | `--page`, `--region`                                |
-| `tmdb tv list [category]`                        | `popular` (default), `top-rated`, `airing-today`, `on-the-air` | `--page`                                            |
-| `tmdb tv get <id>`                               | Details                                                        | `--append credits,videos`                           |
-| `tmdb tv credits <id>`                           | Cast and crew                                                  | `--limit`                                           |
-| `tmdb tv images <id>`                            | Image paths and sizes                                          | `--image-language`                                  |
-| `tmdb tv videos <id>`                            | Trailers and clips                                             | —                                                   |
-| `tmdb tv similar <id>`                           | Similar shows                                                  | `--page`                                            |
-| `tmdb tv recommendations <id>`                   | Recommended shows                                              | `--page`                                            |
-| `tmdb tv season <id> <season>`                   | Season with its episodes                                       | —                                                   |
-| `tmdb tv episode <id> <season> <episode>`        | Episode details                                                | `--append`                                          |
-| `tmdb tv aggregate-credits <id>`                 | Cast and crew across all seasons                               | `--limit`                                           |
-| `tmdb tv season-credits <id> <season>`           | Season cast and crew                                           | `--limit`                                           |
-| `tmdb tv season-aggregate-credits <id> <season>` | Aggregate season credits                                       | `--limit`                                           |
-| `tmdb tv season-images <id> <season>`            | Season images                                                  | `--image-language`                                  |
-| `tmdb tv season-videos <id> <season>`            | Season videos                                                  | —                                                   |
-| `tmdb tv episode-groups <id>`                    | Alternate episode orderings                                    | —                                                   |
-| `tmdb tv episode-group <group-id>`               | One alternate group (string ID)                                | —                                                   |
-| `tmdb person get <id>`                           | Person details                                                 | —                                                   |
-| `tmdb person credits <id>`                       | Combined cast and crew credits                                 | `--limit`                                           |
+| Command                                                | Purpose                                                        | Options                                                 |
+| ------------------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------- |
+| `tmdb search <query>`                                  | Search all media, or one type                                  | `--type all\|movie\|tv\|person`, `--year`, `--page`     |
+| `tmdb discover movie [filters]`                        | Filter movies by genre, rating, year, provider, and more       | `--with-genres`, `--vote-average-gte`, `--watch-region` |
+| `tmdb discover tv [filters]`                           | Filter TV shows by genre, rating, network, and more            | `--with-genres`, `--with-networks`, `--watch-region`    |
+| `tmdb find <external-id>`                              | Find entries by IMDb, TVDB, Wikidata, or social ID             | `--source` (default `imdb_id`)                          |
+| `tmdb trending [type]`                                 | Trending list, default `all`                                   | `--window day\|week`, `--page`                          |
+| `tmdb genres [movie\|tv]`                              | Genre ID to name mapping                                       | —                                                       |
+| `tmdb movie list [category]`                           | `popular` (default), `top-rated`, `now-playing`, `upcoming`    | `--page`, `--region`                                    |
+| `tmdb movie get <id>`                                  | Details                                                        | `--append credits,videos`                               |
+| `tmdb movie credits <id>`                              | Cast and crew                                                  | `--limit` (default 10)                                  |
+| `tmdb movie images <id>`                               | Image paths and sizes                                          | `--image-language`                                      |
+| `tmdb movie videos <id>`                               | Trailers and clips                                             | —                                                       |
+| `tmdb movie similar <id>`                              | Similar movies                                                 | `--page`, `--region`                                    |
+| `tmdb movie recommendations <id>`                      | Recommended movies                                             | `--page`, `--region`                                    |
+| `tmdb movie external-ids <id>`                         | IMDb, TVDB, and social IDs for a movie                         | —                                                       |
+| `tmdb tv list [category]`                              | `popular` (default), `top-rated`, `airing-today`, `on-the-air` | `--page`                                                |
+| `tmdb tv get <id>`                                     | Details                                                        | `--append credits,videos`                               |
+| `tmdb tv credits <id>`                                 | Cast and crew                                                  | `--limit`                                               |
+| `tmdb tv images <id>`                                  | Image paths and sizes                                          | `--image-language`                                      |
+| `tmdb tv videos <id>`                                  | Trailers and clips                                             | —                                                       |
+| `tmdb tv similar <id>`                                 | Similar shows                                                  | `--page`                                                |
+| `tmdb tv recommendations <id>`                         | Recommended shows                                              | `--page`                                                |
+| `tmdb tv season <id> <season>`                         | Season with its episodes                                       | —                                                       |
+| `tmdb tv episode <id> <season> <episode>`              | Episode details                                                | `--append`                                              |
+| `tmdb tv aggregate-credits <id>`                       | Cast and crew across all seasons                               | `--limit`                                               |
+| `tmdb tv season-credits <id> <season>`                 | Season cast and crew                                           | `--limit`                                               |
+| `tmdb tv season-aggregate-credits <id> <season>`       | Aggregate season credits                                       | `--limit`                                               |
+| `tmdb tv season-images <id> <season>`                  | Season images                                                  | `--image-language`                                      |
+| `tmdb tv season-videos <id> <season>`                  | Season videos                                                  | —                                                       |
+| `tmdb tv episode-groups <id>`                          | Alternate episode orderings                                    | —                                                       |
+| `tmdb tv episode-group <group-id>`                     | One alternate group (string ID)                                | —                                                       |
+| `tmdb tv external-ids <id>`                            | IMDb, TVDB, and social IDs for a show                          | —                                                       |
+| `tmdb tv season-external-ids <id> <season>`            | External IDs for a season                                      | —                                                       |
+| `tmdb tv episode-external-ids <id> <season> <episode>` | External IDs for an episode                                    | —                                                       |
+| `tmdb person get <id>`                                 | Person details                                                 | —                                                       |
+| `tmdb person credits <id>`                             | Combined cast and crew credits                                 | `--limit`                                               |
+| `tmdb person external-ids <id>`                        | IMDb, TVDB, and social IDs for a person                        | —                                                       |
+| `tmdb collection get <id>`                             | Franchise details and parts                                    | `--limit`                                               |
+| `tmdb collection images <id>`                          | Franchise images                                               | `--image-language`                                      |
+| `tmdb collection translations <id>`                    | Franchise translations                                         | —                                                       |
+| `tmdb providers movie <id>`                            | Streaming availability for a movie                             | `--region`                                              |
+| `tmdb providers tv <id>`                               | Streaming availability for a show                              | `--region`                                              |
+| `tmdb providers list movie`                            | Provider ID to name/logo mapping for movies                    | `--watch-region`                                        |
+| `tmdb providers list tv`                               | Provider ID to name/logo mapping for TV                        | `--watch-region`                                        |
 
 Season `0` means specials. `--append` takes a comma-separated list of TMDB `append_to_response` values, for example `credits,videos,images`.
 
-Every API command also accepts `--lang`, `--format`, `--fields`, and `--compact`. List commands add `--all` and `--max-items`. Full details: [references/commands.md](references/commands.md).
+Every API command also accepts `--lang`, `--format`, `--fields`, and `--compact`, except the external-ID commands, `collection translations`, and `providers movie|tv`, whose endpoints have no language parameter. List commands add `--all` and `--max-items`. `providers movie|tv --region` filters both text and JSON to one region. Watch provider data is provided by JustWatch. Full details: [references/commands.md](references/commands.md).
 
 ## Output contract
 

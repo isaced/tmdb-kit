@@ -1,6 +1,6 @@
 ---
 name: tmdb-kit
-description: Call The Movie Database (TMDB) API from TypeScript or JavaScript with the tmdb-kit SDK — typed movie, TV, person, search, trending, genre, and image requests with zero runtime dependencies. Use when writing application, server, or edge-runtime code that needs TMDB data and typed responses.
+description: Call The Movie Database (TMDB) API from TypeScript or JavaScript with the tmdb-kit SDK — typed movie, TV, discover, collection, watch provider, external ID, person, search, trending, genre, and image requests with zero runtime dependencies. Use when writing application, server, or edge-runtime code that needs TMDB data and typed responses.
 license: MIT
 compatibility: Requires Node.js 18+, Bun, Deno, or any runtime providing fetch, Headers, URL, and AbortSignal.
 metadata:
@@ -51,16 +51,20 @@ Pass exactly one of `accessToken` or `apiKey`. Passing both, or neither without 
 
 ## Resources
 
-| Resource             | Methods                                                                                                                                                                                                                                                                                     |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tmdb.movies`        | `popular`, `topRated`, `nowPlaying`, `upcoming`, `details`, `credits`, `images`, `recommendations`, `similar`, `videos`                                                                                                                                                                     |
-| `tmdb.tv`            | `popular`, `topRated`, `airingToday`, `onTheAir`, `details`, `credits`, `images`, `recommendations`, `similar`, `videos`, `seasonDetails`, `seasonCredits`, `seasonAggregateCredits`, `seasonImages`, `seasonVideos`, `episodeDetails`, `aggregateCredits`, `episodeGroups`, `episodeGroup` |
-| `tmdb.search`        | `movies`, `tv`, `people`, `multi`                                                                                                                                                                                                                                                           |
-| `tmdb.trending`      | `all`, `movies`, `tv`, `people`                                                                                                                                                                                                                                                             |
-| `tmdb.people`        | `popular`, `details`, `combinedCredits`                                                                                                                                                                                                                                                     |
-| `tmdb.genres`        | `movies`, `tv`                                                                                                                                                                                                                                                                              |
-| `tmdb.configuration` | `details`, `countries`, `jobs`, `languages`, `primaryTranslations`, `timezones`                                                                                                                                                                                                             |
-| `tmdb.images`        | `url`                                                                                                                                                                                                                                                                                       |
+| Resource              | Methods                                                                                                                                                                                                                                                                                                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tmdb.movies`         | `popular`, `topRated`, `nowPlaying`, `upcoming`, `details`, `credits`, `images`, `recommendations`, `similar`, `videos`, `externalIds`, `watchProviders`                                                                                                                                                                                                                |
+| `tmdb.tv`             | `popular`, `topRated`, `airingToday`, `onTheAir`, `details`, `credits`, `images`, `recommendations`, `similar`, `videos`, `seasonDetails`, `seasonCredits`, `seasonAggregateCredits`, `seasonImages`, `seasonVideos`, `episodeDetails`, `aggregateCredits`, `episodeGroups`, `episodeGroup`, `externalIds`, `seasonExternalIds`, `episodeExternalIds`, `watchProviders` |
+| `tmdb.discover`       | `movies`, `tv`                                                                                                                                                                                                                                                                                                                                                          |
+| `tmdb.find`           | `byExternalId`                                                                                                                                                                                                                                                                                                                                                          |
+| `tmdb.collections`    | `details`, `images`, `translations`                                                                                                                                                                                                                                                                                                                                     |
+| `tmdb.watchProviders` | `movies`, `tv`                                                                                                                                                                                                                                                                                                                                                          |
+| `tmdb.search`         | `movies`, `tv`, `people`, `multi`                                                                                                                                                                                                                                                                                                                                       |
+| `tmdb.trending`       | `all`, `movies`, `tv`, `people`                                                                                                                                                                                                                                                                                                                                         |
+| `tmdb.people`         | `popular`, `details`, `combinedCredits`, `externalIds`                                                                                                                                                                                                                                                                                                                  |
+| `tmdb.genres`         | `movies`, `tv`                                                                                                                                                                                                                                                                                                                                                          |
+| `tmdb.configuration`  | `details`, `countries`, `jobs`, `languages`, `primaryTranslations`, `timezones`                                                                                                                                                                                                                                                                                         |
+| `tmdb.images`         | `url`                                                                                                                                                                                                                                                                                                                                                                   |
 
 Signatures, option types, and response shapes: [references/api.md](references/api.md). Pagination, retry, timeout, cache, transport, and error handling: [references/patterns.md](references/patterns.md).
 
@@ -102,6 +106,22 @@ const movies = results.filter(isMovieSearchResult)
 ```
 
 `exclude` filters client-side; `total_results` stays unfiltered.
+
+### Discover and streaming availability
+
+```ts
+const { results } = await tmdb.discover.movies({
+  withGenres: [28, 12],
+  voteAverageGte: 7.5,
+  watchRegion: 'US',
+})
+
+const found = await tmdb.find.byExternalId('tt0137523', { source: 'imdb_id' })
+const providers = await tmdb.movies.watchProviders(550)
+const us = providers.results.US
+```
+
+Arrays are comma-joined (AND); pass a pipe string such as `"28|12"` for OR. `watchRegion` is not inherited from `defaultRegion`. Provider data is provided by JustWatch; attribute it when displayed.
 
 ### Image URLs
 

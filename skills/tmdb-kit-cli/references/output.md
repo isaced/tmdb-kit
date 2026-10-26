@@ -65,7 +65,7 @@ tmdb trending movie --format ndjson --fields id,title | jq -c 'select(.type=="it
 
 ## Pagination
 
-Eight commands return paginated lists: `search`, `trending`, `movie list`, `movie similar`, `movie recommendations`, `tv list`, `tv similar`, `tv recommendations`.
+Ten commands return paginated lists: `search`, `discover movie`, `discover tv`, `trending`, `movie list`, `movie similar`, `movie recommendations`, `tv list`, `tv similar`, `tv recommendations`.
 
 | Flag              | Behavior                                      |
 | ----------------- | --------------------------------------------- |

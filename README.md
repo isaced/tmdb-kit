@@ -8,7 +8,7 @@
 
 A minimal, fully typed SDK and read-only command-line interface (CLI) for The Movie Database (TMDB). Zero runtime dependencies. Built for Node.js, Bun, and edge runtimes.
 
-`tmdb-kit` covers common TMDB workflows: movies, TV shows, search, trending, people, genres, and images. Use it as a library, or run the bundled `tmdb` command in your terminal.
+`tmdb-kit` covers common TMDB workflows: movies, TV shows, discover, collections, watch providers, external IDs, search, trending, people, genres, and images. Use it as a library, or run the bundled `tmdb` command in your terminal.
 
 ## Contents
 
@@ -22,6 +22,8 @@ A minimal, fully typed SDK and read-only command-line interface (CLI) for The Mo
   - [Custom transport](#custom-transport)
   - [Cancellation](#cancellation)
   - [Supported resources](#supported-resources)
+  - [Discover](#discover)
+  - [Find, collections, and watch providers](#find-collections-and-watch-providers)
   - [Image URLs](#image-urls)
   - [Search](#search)
   - [Image sizes](#image-sizes)
@@ -43,7 +45,7 @@ A minimal, fully typed SDK and read-only command-line interface (CLI) for The Mo
 - **SDK and CLI**: typed resource methods for your app, plus `tmdb` and `tmdb-kit` binaries for terminal use.
 - **Strict TypeScript**: full type safety with autocomplete for request options, response shapes, image sizes, and error handling.
 - **ESM output**: modern module output with bundled type declarations.
-- **Typed resources**: first-class methods for movies, TV, search, trending, people, genres, configuration, and images.
+- **Typed resources**: first-class methods for movies, TV, discover, collections, watch providers, external IDs, search, trending, people, genres, configuration, and images.
 - **Injectable transport**: swap the HTTP layer for tests, caching, or instrumentation without mocking `fetch`.
 - **Optional helpers**: async pagination, `Retry-After`-aware retries, `AbortSignal` timeouts, and an LRU memory cache — all opt-in and tree-shakeable.
 - **Image helpers**: build content delivery network (CDN), proxy, or signed URLs with per-request transform overrides.
@@ -187,27 +189,70 @@ await promise // rejects with an AbortError
 
 ### Supported resources
 
-| Resource             | Methods                                                                                                                                                                                                                                                                                                                           |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tmdb.movies`        | `popular()`, `topRated()`, `nowPlaying()`, `upcoming()`, `details()`, `credits()`, `images()`, `recommendations()`, `similar()`, `videos()`                                                                                                                                                                                       |
-| `tmdb.tv`            | `popular()`, `topRated()`, `airingToday()`, `onTheAir()`, `details()`, `credits()`, `images()`, `recommendations()`, `similar()`, `videos()`, `seasonDetails()`, `seasonCredits()`, `seasonAggregateCredits()`, `seasonImages()`, `seasonVideos()`, `episodeDetails()`, `aggregateCredits()`, `episodeGroups()`, `episodeGroup()` |
-| `tmdb.search`        | `movies()`, `tv()`, `people()`, `multi()`                                                                                                                                                                                                                                                                                         |
-| `tmdb.trending`      | `all()`, `movies()`, `tv()`, `people()`                                                                                                                                                                                                                                                                                           |
-| `tmdb.people`        | `popular()`, `details()`, `combinedCredits()`                                                                                                                                                                                                                                                                                     |
-| `tmdb.genres`        | `movies()`, `tv()`                                                                                                                                                                                                                                                                                                                |
-| `tmdb.configuration` | `details()`, `countries()`, `jobs()`, `languages()`, `primaryTranslations()`, `timezones()`                                                                                                                                                                                                                                       |
-| `tmdb.images`        | `url()`                                                                                                                                                                                                                                                                                                                           |
+| Resource              | Methods                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tmdb.movies`         | `popular()`, `topRated()`, `nowPlaying()`, `upcoming()`, `details()`, `credits()`, `images()`, `recommendations()`, `similar()`, `videos()`, `externalIds()`, `watchProviders()`                                                                                                                                                                                                                                      |
+| `tmdb.tv`             | `popular()`, `topRated()`, `airingToday()`, `onTheAir()`, `details()`, `credits()`, `images()`, `recommendations()`, `similar()`, `videos()`, `seasonDetails()`, `seasonCredits()`, `seasonAggregateCredits()`, `seasonImages()`, `seasonVideos()`, `episodeDetails()`, `aggregateCredits()`, `episodeGroups()`, `episodeGroup()`, `externalIds()`, `seasonExternalIds()`, `episodeExternalIds()`, `watchProviders()` |
+| `tmdb.discover`       | `movies()`, `tv()`                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `tmdb.find`           | `byExternalId()`                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `tmdb.collections`    | `details()`, `images()`, `translations()`                                                                                                                                                                                                                                                                                                                                                                             |
+| `tmdb.watchProviders` | `movies()`, `tv()`                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `tmdb.search`         | `movies()`, `tv()`, `people()`, `multi()`                                                                                                                                                                                                                                                                                                                                                                             |
+| `tmdb.trending`       | `all()`, `movies()`, `tv()`, `people()`                                                                                                                                                                                                                                                                                                                                                                               |
+| `tmdb.people`         | `popular()`, `details()`, `combinedCredits()`, `externalIds()`                                                                                                                                                                                                                                                                                                                                                        |
+| `tmdb.genres`         | `movies()`, `tv()`                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `tmdb.configuration`  | `details()`, `countries()`, `jobs()`, `languages()`, `primaryTranslations()`, `timezones()`                                                                                                                                                                                                                                                                                                                           |
+| `tmdb.images`         | `url()`                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 For an endpoint that is not wrapped yet, use the `request()` escape hatch:
 
 ```ts
-const response = await tmdb.request<{ results: unknown[] }>('/discover/movie', {
-  query: {
-    sort_by: 'popularity.desc',
-    with_genres: [28, 12],
-  },
+const response = await tmdb.request<{ keywords: Array<{ id: number; name: string }> }>(
+  '/movie/550/keywords',
+)
+```
+
+### Discover
+
+`tmdb.discover.movies()` and `tmdb.discover.tv()` expose typed options for the most common discover filters. Dotted TMDB parameters use camelCase names:
+
+```ts
+const { results } = await tmdb.discover.movies({
+  sortBy: 'vote_average.desc',
+  voteAverageGte: 7.5,
+  voteCountGte: 500,
+  withGenres: [28, 12],
+  withoutGenres: '35|99',
+  watchRegion: 'US',
+  withWatchProviders: [8, 9],
+  withWatchMonetizationTypes: ['flatrate', 'rent'],
+  releaseDateGte: '2024-01-01',
 })
 ```
+
+Arrays are comma-joined, which TMDB treats as AND. Pass a string with a pipe (`'28|12'`) for OR. `watchRegion` is never inherited from `defaultRegion`; `region` on movie discover is. Filters that are not modeled yet — certification, `include_video`, `without_keywords`, and others — can still be sent through `tmdb.request()`.
+
+### Find, collections, and watch providers
+
+```ts
+// Reverse lookup: IMDb ID -> TMDB entries.
+const found = await tmdb.find.byExternalId('tt0137523', { source: 'imdb_id' })
+
+// Forward lookup: TMDB ID -> external IDs.
+const ids = await tmdb.movies.externalIds(550)
+
+// Franchise details, images, and translations.
+const collection = await tmdb.collections.details(10)
+
+// Streaming availability for one title, keyed by region.
+const providers = await tmdb.movies.watchProviders(550)
+const us = providers.results.US
+
+// Provider ID -> name and logo.
+const { results } = await tmdb.watchProviders.movies({ watchRegion: 'US' })
+```
+
+`/find` returns five arrays: `movie_results`, `tv_results`, `person_results`, `tv_episode_results`, and `tv_season_results`. Watch provider data is provided by JustWatch and requires attribution when displayed.
 
 ### Image URLs
 
@@ -431,36 +476,51 @@ Use `--lang` to override the config language for a single command. `auth logout`
 
 Every API command accepts `--lang`, `--format`, `--fields`, and `--compact`. Commands that return a paginated list also accept `--all` and `--max-items` with `--format ndjson`. Run `tmdb <command> --help` for the full option list.
 
-| Command                                          | Description                                                                       | Command options              |
-| ------------------------------------------------ | --------------------------------------------------------------------------------- | ---------------------------- |
-| `tmdb search <query>`                            | Search all media, movies, TV, or people.                                          | `--type`, `--year`, `--page` |
-| `tmdb movie list [category]`                     | List movies. Default `popular`; also `top-rated`, `now-playing`, `upcoming`.      | `--page`, `--region`         |
-| `tmdb movie get <id>`                            | Movie details.                                                                    | `--append`                   |
-| `tmdb movie credits <id>`                        | Movie cast and crew.                                                              | `--limit`                    |
-| `tmdb movie images <id>`                         | Movie image URLs.                                                                 | `--image-language`           |
-| `tmdb movie videos <id>`                         | Movie videos and trailers.                                                        | none                         |
-| `tmdb movie similar <id>`                        | Similar movies.                                                                   | `--page`, `--region`         |
-| `tmdb movie recommendations <id>`                | Recommended movies.                                                               | `--page`, `--region`         |
-| `tmdb tv list [category]`                        | List TV shows. Default `popular`; also `top-rated`, `airing-today`, `on-the-air`. | `--page`                     |
-| `tmdb tv get <id>`                               | TV show details.                                                                  | `--append`                   |
-| `tmdb tv credits <id>`                           | TV cast and crew.                                                                 | `--limit`                    |
-| `tmdb tv images <id>`                            | TV image URLs.                                                                    | `--image-language`           |
-| `tmdb tv videos <id>`                            | TV videos and trailers.                                                           | none                         |
-| `tmdb tv similar <id>`                           | Similar TV shows.                                                                 | `--page`                     |
-| `tmdb tv recommendations <id>`                   | Recommended TV shows.                                                             | `--page`                     |
-| `tmdb tv season <id> <season>`                   | TV season and episodes. Use `0` for specials.                                     | none                         |
-| `tmdb tv episode <id> <season> <episode>`        | TV episode details. Use `0` for specials.                                         | `--append`                   |
-| `tmdb tv aggregate-credits <id>`                 | Aggregate cast and crew credits for a show.                                       | `--limit`                    |
-| `tmdb tv season-credits <id> <season>`           | Season cast and crew credits.                                                     | `--limit`                    |
-| `tmdb tv season-aggregate-credits <id> <season>` | Aggregate season cast and crew credits.                                           | `--limit`                    |
-| `tmdb tv season-images <id> <season>`            | Season image URLs.                                                                | `--image-language`           |
-| `tmdb tv season-videos <id> <season>`            | Season videos and trailers.                                                       | none                         |
-| `tmdb tv episode-groups <id>`                    | Alternate episode groups for a show.                                              | none                         |
-| `tmdb tv episode-group <group-id>`               | Episodes in an alternate group.                                                   | none                         |
-| `tmdb person get <id>`                           | Person details.                                                                   | none                         |
-| `tmdb person credits <id>`                       | Combined cast and crew credits.                                                   | `--limit`                    |
-| `tmdb trending [type]`                           | Trending media. Default `all`; also `movie`, `tv`, `person`.                      | `--window`, `--page`         |
-| `tmdb genres [type]`                             | Genres. Default `movie`; also `tv`.                                               | none                         |
+| Command                                                | Description                                                                       | Command options                                            |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `tmdb search <query>`                                  | Search all media, movies, TV, or people.                                          | `--type`, `--year`, `--page`                               |
+| `tmdb discover movie [filters]`                        | Discover movies with filters.                                                     | `--sort-by`, `--with-genres`, `--watch-region`, `--region` |
+| `tmdb discover tv [filters]`                           | Discover TV shows with filters.                                                   | `--sort-by`, `--with-genres`, `--watch-region`             |
+| `tmdb find <external-id>`                              | Find entries by an external ID.                                                   | `--source`                                                 |
+| `tmdb movie list [category]`                           | List movies. Default `popular`; also `top-rated`, `now-playing`, `upcoming`.      | `--page`, `--region`                                       |
+| `tmdb movie get <id>`                                  | Movie details.                                                                    | `--append`                                                 |
+| `tmdb movie credits <id>`                              | Movie cast and crew.                                                              | `--limit`                                                  |
+| `tmdb movie images <id>`                               | Movie image URLs.                                                                 | `--image-language`                                         |
+| `tmdb movie videos <id>`                               | Movie videos and trailers.                                                        | none                                                       |
+| `tmdb movie similar <id>`                              | Similar movies.                                                                   | `--page`, `--region`                                       |
+| `tmdb movie recommendations <id>`                      | Recommended movies.                                                               | `--page`, `--region`                                       |
+| `tmdb movie external-ids <id>`                         | Movie external IDs.                                                               | none                                                       |
+| `tmdb tv list [category]`                              | List TV shows. Default `popular`; also `top-rated`, `airing-today`, `on-the-air`. | `--page`                                                   |
+| `tmdb tv get <id>`                                     | TV show details.                                                                  | `--append`                                                 |
+| `tmdb tv credits <id>`                                 | TV cast and crew.                                                                 | `--limit`                                                  |
+| `tmdb tv images <id>`                                  | TV image URLs.                                                                    | `--image-language`                                         |
+| `tmdb tv videos <id>`                                  | TV videos and trailers.                                                           | none                                                       |
+| `tmdb tv similar <id>`                                 | Similar TV shows.                                                                 | `--page`                                                   |
+| `tmdb tv recommendations <id>`                         | Recommended TV shows.                                                             | `--page`                                                   |
+| `tmdb tv season <id> <season>`                         | TV season and episodes. Use `0` for specials.                                     | none                                                       |
+| `tmdb tv episode <id> <season> <episode>`              | TV episode details. Use `0` for specials.                                         | `--append`                                                 |
+| `tmdb tv aggregate-credits <id>`                       | Aggregate cast and crew credits for a show.                                       | `--limit`                                                  |
+| `tmdb tv season-credits <id> <season>`                 | Season cast and crew credits.                                                     | `--limit`                                                  |
+| `tmdb tv season-aggregate-credits <id> <season>`       | Aggregate season cast and crew credits.                                           | `--limit`                                                  |
+| `tmdb tv season-images <id> <season>`                  | Season image URLs.                                                                | `--image-language`                                         |
+| `tmdb tv season-videos <id> <season>`                  | Season videos and trailers.                                                       | none                                                       |
+| `tmdb tv episode-groups <id>`                          | Alternate episode groups for a show.                                              | none                                                       |
+| `tmdb tv episode-group <group-id>`                     | Episodes in an alternate group.                                                   | none                                                       |
+| `tmdb tv external-ids <id>`                            | TV show external IDs.                                                             | none                                                       |
+| `tmdb tv season-external-ids <id> <season>`            | Season external IDs. Use `0` for specials.                                        | none                                                       |
+| `tmdb tv episode-external-ids <id> <season> <episode>` | Episode external IDs. Use `0` for specials.                                       | none                                                       |
+| `tmdb person get <id>`                                 | Person details.                                                                   | none                                                       |
+| `tmdb person credits <id>`                             | Combined cast and crew credits.                                                   | `--limit`                                                  |
+| `tmdb person external-ids <id>`                        | Person external IDs.                                                              | none                                                       |
+| `tmdb collection get <id>`                             | Collection details.                                                               | `--limit`                                                  |
+| `tmdb collection images <id>`                          | Collection images.                                                                | `--image-language`                                         |
+| `tmdb collection translations <id>`                    | Collection translations.                                                          | none                                                       |
+| `tmdb providers movie <id>`                            | Watch providers for a movie.                                                      | `--region`                                                 |
+| `tmdb providers tv <id>`                               | Watch providers for a TV show.                                                    | `--region`                                                 |
+| `tmdb providers list movie`                            | Provider reference list for movies.                                               | `--watch-region`                                           |
+| `tmdb providers list tv`                               | Provider reference list for TV.                                                   | `--watch-region`                                           |
+| `tmdb trending [type]`                                 | Trending media. Default `all`; also `movie`, `tv`, `person`.                      | `--window`, `--page`                                       |
+| `tmdb genres [type]`                                   | Genres. Default `movie`; also `tv`.                                               | none                                                       |
 
 Credential and config commands:
 
@@ -477,23 +537,29 @@ Credential and config commands:
 
 ### Common options
 
-| Option                          | Description                                                                         |
-| ------------------------------- | ----------------------------------------------------------------------------------- |
-| `--format <text\|json\|ndjson>` | Output format. `json` prints the raw response, `ndjson` prints one record per line. |
-| `--fields <list>`               | Comma-separated top-level fields to keep. Requires `--format json` or `ndjson`.     |
-| `--json`                        | Alias for `--format json`.                                                          |
-| `--compact`                     | Print JSON on a single line instead of pretty-printing it.                          |
-| `--all`                         | Follow pagination to the last page. List commands only; requires `ndjson`.          |
-| `--max-items <number>`          | Stop after this many items. List commands only; requires `ndjson`.                  |
-| `--lang <code>`                 | Language for this command. Defaults to config `language`, then `en-US`.             |
-| `--page <number>`               | Page number. Defaults to `1`.                                                       |
-| `--region <code>`               | Region for movie lists, similar, and recommendations. Defaults to config `region`.  |
-| `--limit <number>`              | Maximum rows for credits. Defaults to `10`.                                         |
-| `--append <list>`               | Comma-separated `append_to_response` values, such as `credits,videos`.              |
-| `--image-language <list>`       | Comma-separated image language codes.                                               |
-| `--year <year>`                 | Movie release year or TV first-air year. Only with `--type movie` or `--type tv`.   |
-| `--type <value>`                | Media selector for `search`: `all`, `movie`, `tv`, or `person`.                     |
-| `--window <day\|week>`          | Trending window. Defaults to `week`.                                                |
+| Option                          | Description                                                                                   |
+| ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `--format <text\|json\|ndjson>` | Output format. `json` prints the raw response, `ndjson` prints one record per line.           |
+| `--fields <list>`               | Comma-separated top-level fields to keep. Requires `--format json` or `ndjson`.               |
+| `--json`                        | Alias for `--format json`.                                                                    |
+| `--compact`                     | Print JSON on a single line instead of pretty-printing it.                                    |
+| `--all`                         | Follow pagination to the last page. List commands only; requires `ndjson`.                    |
+| `--max-items <number>`          | Stop after this many items. List commands only; requires `ndjson`.                            |
+| `--lang <code>`                 | Language for this command. Defaults to config `language`, then `en-US`.                       |
+| `--page <number>`               | Page number. Defaults to `1`.                                                                 |
+| `--region <code>`               | Region for movie lists, discover, similar, and recommendations; also filters `providers movie | tv`output. Defaults to config`region`. |
+| `--sort-by <value>`             | Discover sort order, such as `vote_average.desc`.                                             |
+| `--with-genres <ids>`           | Discover genre IDs. Comma means AND; a pipe means OR.                                         |
+| `--watch-region <code>`         | Provider availability region for discover and provider lists.                                 |
+| `--source <value>`              | External ID source for `find`. Defaults to `imdb_id`.                                         |
+| `--limit <number>`              | Maximum rows for credits. Defaults to `10`.                                                   |
+| `--append <list>`               | Comma-separated `append_to_response` values, such as `credits,videos`.                        |
+| `--image-language <list>`       | Comma-separated image language codes.                                                         |
+| `--year <year>`                 | Movie release year or TV first-air year. Only with `--type movie` or `--type tv`.             |
+| `--type <value>`                | Media selector for `search`: `all`, `movie`, `tv`, or `person`.                               |
+| `--window <day\|week>`          | Trending window. Defaults to `week`.                                                          |
+
+`--lang` is not accepted by `external-ids`, `collection translations`, or `providers movie|tv`; those endpoints have no language parameter. `providers movie|tv --region` filters both text and JSON output to one region.
 
 `--version` prints the CLI version.
 
@@ -599,6 +665,18 @@ tmdb tv episode 1399 1 1
 # Alternate episode groups
 tmdb tv episode-groups 1399
 
+# Discover highly rated science-fiction movies from 2024
+tmdb discover movie --with-genres 878 --vote-average-gte 7.5 --year 2024 --sort-by vote_average.desc
+
+# Find a movie by IMDb ID
+tmdb find tt0137523 --source imdb_id
+
+# Streaming availability in the US
+tmdb providers movie 550 --region US
+
+# Franchise overview
+tmdb collection get 10
+
 # Save defaults for later commands
 tmdb config set language zh-CN
 tmdb config set region CN
@@ -635,4 +713,6 @@ bun dist/cli.js --help
 
 - [TMDB authentication](https://developer.themoviedb.org/docs/authentication-application)
 - [TMDB API reference](https://developer.themoviedb.org/reference/intro/getting-started)
+- [TMDB watch providers](https://developer.themoviedb.org/reference/movie-watch-providers)
+- [JustWatch](https://www.justwatch.com)
 - [Bun bundler docs](https://bun.com/docs/bundler)
