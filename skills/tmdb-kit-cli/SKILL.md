@@ -97,7 +97,7 @@ Default output is a text summary for humans. It is not a stable interface — pa
 | `--json`                       | Alias for `--format json`                                         |
 | `--format ndjson` (or `jsonl`) | One JSON record per line, streamed                                |
 | `--fields id,title`            | Keep only those top-level fields; requires json or ndjson         |
-| `--compact`                    | Single-line JSON instead of pretty-printed                        |
+| `--compact`                    | Single-line JSON; use it whenever output is piped or truncated    |
 | `--all`                        | Follow pagination to the last page; ndjson and list commands only |
 | `--max-items <n>`              | Stop after `n` items; ndjson and list commands only               |
 
@@ -116,6 +116,9 @@ A detail response becomes a single `{"type":"result","value":…}` record. A mis
 ## Recipes
 
 ```bash
+# One line of JSON, safe to capture or truncate
+tmdb search "Dune" --type movie --format json --compact --fields id,title,release_date | jq .
+
 # Resolve a title to a TMDB ID, then fetch details by ID
 tmdb search "Dune" --type movie --format json | jq -r '.results[0].id'
 tmdb movie get 438631 --format json | jq '{title, release_date, runtime, vote_average}'
@@ -167,6 +170,7 @@ Branch on the exit code or `kind`, never on the message text. `kind` is one of `
 
 - Run `tmdb` first; fall back to `npx -y tmdb-kit@latest` when it is missing, fails, or prints a text summary for a `--format json` request.
 - Always pass `--format json` or `--format ndjson` when the output will be parsed.
+- Pipe JSON through `jq`, not `head`: `head` can cut a pretty-printed document mid-object. Add `--compact` so a response is a single line, and `--fields` to shrink it before truncation.
 - Use IDs for follow-up calls. Names are ambiguous and `search` ordering can change.
 - `--fields` works only on top-level keys. Nested paths such as `credits.cast` are rejected; ask for `credits` and index in `jq`.
 - If none of the requested fields exist, the command exits `2` and lists the available names — useful for discovering a payload shape.
