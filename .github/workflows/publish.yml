@@ -42,10 +42,27 @@ jobs:
           TAG=$(bun -e "const v=require('./package.json').version; const m=v.match(/-([a-z]+)/); console.log(m?m[1]:'latest')")
           if npm view "tmdb-kit@$VERSION" version > /dev/null 2>&1; then
             echo "tmdb-kit@$VERSION is already on npm, skipping."
-          else
-            npm publish --provenance --access public --tag "$TAG"
+            exit 0
           fi
+          LOG=$(mktemp)
+          if npm publish --provenance --access public --tag "$TAG" 2>&1 | tee "$LOG"; then
+            exit 0
+          fi
+          # A 409 means the version is staged and waits for maintainer approval,
+          # which CI cannot grant. Leave the run green but surface the reminder.
+          if grep -q "previously staged version" "$LOG"; then
+            echo "::warning::tmdb-kit@$VERSION is staged on npm and needs approval at https://www.npmjs.com/package/tmdb-kit"
+            exit 0
+          fi
+          exit 1
 
       - uses: actions/checkout@v7
       - name: Publish package (jsr)
-        run: bunx jsr publish
+        run: |
+          NAME=$(bun -e "console.log(require('./jsr.json').name)")
+          VERSION=$(bun -e "console.log(require('./jsr.json').version)")
+          if curl -fsS "https://jsr.io/$NAME/meta.json" | grep -q "\"$VERSION\""; then
+            echo "$NAME@$VERSION is already on jsr, skipping."
+            exit 0
+          fi
+          bunx jsr publish
