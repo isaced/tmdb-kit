@@ -359,7 +359,7 @@ Every API command accepts `--lang` and `--json`. Run `tmdb <command> --help` for
 | `tmdb tv season-images <id> <season>`            | Season image URLs.                                                                | `--image-language`           |
 | `tmdb tv season-videos <id> <season>`            | Season videos and trailers.                                                       | none                         |
 | `tmdb tv episode-groups <id>`                    | Alternate episode groups for a show.                                              | none                         |
-| `tmdb tv episode-group <id> <group-id>`          | Episodes in an alternate group.                                                   | none                         |
+| `tmdb tv episode-group <group-id>`               | Episodes in an alternate group.                                                   | none                         |
 | `tmdb person get <id>`                           | Person details.                                                                   | none                         |
 | `tmdb person credits <id>`                       | Combined cast and crew credits.                                                   | `--limit`                    |
 | `tmdb trending [type]`                           | Trending media. Default `all`; also `movie`, `tv`, `person`.                      | `--window`, `--page`         |

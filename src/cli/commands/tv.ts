@@ -344,7 +344,7 @@ export const tvCommand = defineCommand({
           if (args.json) {
             printJson(episode)
           } else {
-            printEpisode(episode, client)
+            printEpisode(episode, client, id)
           }
         })
       },
@@ -569,11 +569,6 @@ export const tvCommand = defineCommand({
       },
       args: {
         ...commonArgs,
-        id: {
-          type: 'positional',
-          description: 'TMDB TV show ID',
-          required: true,
-        },
         'group-id': {
           type: 'positional',
           description: 'TMDB episode group ID',
@@ -582,10 +577,9 @@ export const tvCommand = defineCommand({
       },
       async run({ args }) {
         await runSafely(async () => {
-          const id = parseId(args.id, 'TV show ID')
           const groupId = parseGroupId(args['group-id'])
           const client = createClient({ language: args.lang })
-          const group = await client.tv.episodeGroup(id, groupId)
+          const group = await client.tv.episodeGroup(groupId)
 
           if (args.json) {
             printJson(group)

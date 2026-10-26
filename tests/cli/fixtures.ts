@@ -304,7 +304,6 @@ export function episodeDetails(overrides: Partial<EpisodeDetails> = {}): Episode
     production_code: '101',
     runtime: 62,
     season_number: 1,
-    show_id: 1399,
     still_path: '/still.jpg',
     vote_average: 7.9,
     vote_count: 350,
@@ -399,10 +398,12 @@ export function episodeGroupDetails(
         id: 'section-1',
         name: 'Season 1',
         order: 1,
+        locked: true,
         episodes: [
           {
             air_date: '2011-04-17',
             episode_number: 1,
+            episode_type: 'standard',
             id: 63056,
             name: 'Winter Is Coming',
             order: 1,

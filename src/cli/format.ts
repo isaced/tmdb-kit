@@ -283,7 +283,7 @@ export function printSeason(season: TVSeasonDetails, tmdb: TMDBClient): void {
   writeLines(lines)
 }
 
-export function printEpisode(episode: EpisodeDetails, tmdb: TMDBClient): void {
+export function printEpisode(episode: EpisodeDetails, tmdb: TMDBClient, seriesId: number): void {
   const lines = [`${episodeCode(episode)} · ${episode.name}`]
   const facts = [
     episode.air_date,
@@ -293,7 +293,7 @@ export function printEpisode(episode: EpisodeDetails, tmdb: TMDBClient): void {
   lines.push(facts.join(' · '))
 
   lines.push(
-    `TMDB: https://www.themoviedb.org/tv/${episode.show_id}/season/${episode.season_number}/episode/${episode.episode_number}`,
+    `TMDB: https://www.themoviedb.org/tv/${seriesId}/season/${episode.season_number}/episode/${episode.episode_number}`,
   )
 
   const still = tmdb.images.url(episode.still_path, 'w300')

@@ -196,8 +196,11 @@ export interface TVSeasonDetailsOptions extends LanguageOptions {
   appendToResponse?: TVSeasonAppendToResponse | readonly TVSeasonAppendToResponse[]
 }
 
-/** Episode details endpoint payload; identical wire shape to a season-list episode. */
-export type EpisodeDetails = EpisodeSummary
+/**
+ * Episode details endpoint payload. Unlike {@link EpisodeSummary}, the
+ * single-episode endpoint does not return `show_id`.
+ */
+export type EpisodeDetails = Omit<EpisodeSummary, 'show_id'>
 
 export type EpisodeAppendToResponse =
   | 'account_states'
@@ -276,6 +279,7 @@ export interface EpisodeGroupsResponse {
 export interface EpisodeGroupEpisode {
   air_date: TMDBDateString | null
   episode_number: number
+  episode_type: string
   id: number
   name: string
   order: number
@@ -293,6 +297,7 @@ export interface EpisodeGroup {
   id: string
   name: string
   order: number
+  locked: boolean
   episodes: EpisodeGroupEpisode[]
 }
 

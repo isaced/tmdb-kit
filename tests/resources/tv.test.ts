@@ -179,14 +179,14 @@ describe('TVResource', () => {
     await tmdb.tv.aggregateCredits(1399)
     await tmdb.tv.seasonAggregateCredits(1399, 0)
     await tmdb.tv.episodeGroups(1399)
-    await tmdb.tv.episodeGroup(1399, 'abc123')
+    await tmdb.tv.episodeGroup('abc123')
 
     expectPaths(mock.calls, [
       '/3/tv/1399/season/1/episode/2',
       '/3/tv/1399/aggregate_credits',
       '/3/tv/1399/season/0/aggregate_credits',
       '/3/tv/1399/episode_groups',
-      '/3/tv/1399/episode_group/abc123',
+      '/3/tv/episode_group/abc123',
     ])
     expectRequest(mock.calls[0]!, {
       path: '/3/tv/1399/season/1/episode/2',
@@ -241,10 +241,8 @@ describe('TVResource', () => {
     expect(() => tmdb.tv.episodeDetails(1399, 1, 0)).toThrow(
       'episodeNumber must be a positive integer',
     )
-    expect(() => tmdb.tv.episodeGroup(1399, '')).toThrow('groupId must be a non-empty identifier')
-    expect(() => tmdb.tv.episodeGroup(1399, '../admin')).toThrow(
-      'groupId must be a non-empty identifier',
-    )
+    expect(() => tmdb.tv.episodeGroup('')).toThrow('groupId must be a non-empty identifier')
+    expect(() => tmdb.tv.episodeGroup('../admin')).toThrow('groupId must be a non-empty identifier')
     expect(() => tmdb.tv.seasonCredits(0, 1)).toThrow('seriesId must be a positive integer')
     expect(mock.calls).toHaveLength(0)
   })

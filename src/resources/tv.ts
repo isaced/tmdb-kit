@@ -233,19 +233,12 @@ export class TVResource {
     })
   }
 
-  episodeGroup(
-    seriesId: number,
-    groupId: string,
-    options: LanguageOptions = {},
-  ): Promise<EpisodeGroupDetails> {
-    return this.#transport.get(
-      `/tv/${toId(seriesId, 'seriesId')}/episode_group/${toGroupId(groupId)}`,
-      {
-        query: withLanguage(this.#transport.defaults, {
-          language: options.language,
-        }),
-      },
-    )
+  episodeGroup(groupId: string, options: LanguageOptions = {}): Promise<EpisodeGroupDetails> {
+    return this.#transport.get(`/tv/episode_group/${toGroupId(groupId)}`, {
+      query: withLanguage(this.#transport.defaults, {
+        language: options.language,
+      }),
+    })
   }
 }
 

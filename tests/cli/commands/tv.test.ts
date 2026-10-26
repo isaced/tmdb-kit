@@ -208,19 +208,19 @@ describe('tv command', () => {
     const output = captureOutput()
 
     await runCommand(tvCommand, { rawArgs: ['episode-groups', '1399'] })
-    await runCommand(tvCommand, { rawArgs: ['episode-group', '1399', 'group-1'] })
+    await runCommand(tvCommand, { rawArgs: ['episode-group', 'group-1'] })
 
     expect(output.stdout()).toContain('group-1  Story Arc  (1 groups, 10 episodes)')
     expect(output.stdout()).toContain('  1. S01E01 · Winter Is Coming  #63056')
     expect(calls[0]?.pathname.endsWith('/tv/1399/episode_groups')).toBe(true)
-    expect(calls[1]?.pathname.endsWith('/tv/1399/episode_group/group-1')).toBe(true)
+    expect(calls[1]?.pathname.endsWith('/tv/episode_group/group-1')).toBe(true)
   })
 
   it('rejects invalid group ids', async () => {
     process.env.TMDB_ACCESS_TOKEN = 'token'
     const output = captureOutput()
 
-    await runCommand(tvCommand, { rawArgs: ['episode-group', '1399', '../admin'] })
+    await runCommand(tvCommand, { rawArgs: ['episode-group', '../admin'] })
 
     expect(process.exitCode).toBe(2)
     expect(output.stderr()).toContain('Invalid group ID')
@@ -257,7 +257,7 @@ describe('tv command', () => {
       ['season-images', '1399', '1'],
       ['season-videos', '1399', '1'],
       ['episode-groups', '1399'],
-      ['episode-group', '1399', 'group-1'],
+      ['episode-group', 'group-1'],
     ]) {
       await runCommand(tvCommand, { rawArgs: [...args, '--json'] })
       expect(process.exitCode).toBe(0)

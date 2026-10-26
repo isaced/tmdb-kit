@@ -299,7 +299,7 @@ describe('CLI output formatting', () => {
     const output = captureOutput()
     const tmdb = createTMDB({ accessToken: 'token' })
 
-    printEpisode(episodeDetails(), tmdb)
+    printEpisode(episodeDetails(), tmdb, 1399)
 
     expect(output.stdout()).toContain('S01E01 · Winter Is Coming')
     expect(output.stdout()).toContain('2011-04-17 · 62 min · ★ 7.9/10 (350 votes)')
@@ -315,6 +315,7 @@ describe('CLI output formatting', () => {
     printEpisode(
       episodeDetails({ air_date: null, runtime: null, still_path: null, overview: '' }),
       tmdb,
+      1399,
     )
 
     expect(output.stdout()).not.toContain('62 min')
