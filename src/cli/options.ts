@@ -4,12 +4,28 @@ import { CliError } from './errors'
 export const jsonArg = {
   json: {
     type: 'boolean',
-    description: 'Print the raw TMDB JSON response',
+    description: 'Alias for --format json',
   },
 } satisfies ArgsDef
 
-export const commonArgs = {
+export const formatArg = {
+  format: {
+    type: 'string',
+    description: 'Output format: text or json (default: text)',
+  },
+  compact: {
+    type: 'boolean',
+    description: 'Print JSON on a single line',
+  },
+} satisfies ArgsDef
+
+export const outputArgs = {
   ...jsonArg,
+  ...formatArg,
+} satisfies ArgsDef
+
+export const commonArgs = {
+  ...outputArgs,
   lang: {
     type: 'string',
     description: 'TMDB language code (default: en-US)',

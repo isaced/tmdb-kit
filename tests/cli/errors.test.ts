@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'bun:test'
-import { TMDBRequestError, TMDBResponseError } from '../../src'
+import { TMDBRequestError, TMDBResponseError, TMDBTimeoutError } from '../../src'
 import { createResponseError } from '../../src/errors'
-import { CliError, errorMessage, exitCodeFor, runSafely } from '../../src/cli/errors'
+import { CliError, errorKind, errorMessage, exitCodeFor, toErrorRecord } from '../../src/cli/errors'
+import { runSafely } from '../../src/cli/output'
 import { captureOutput } from './helpers'
 
 function responseError(status: number, retryAfter?: string) {
@@ -68,9 +69,53 @@ describe('CLI errors', () => {
     )
   })
 
+  it('classifies errors for machine-readable output', () => {
+    expect(errorKind(new CliError('bad usage', 2))).toBe('usage')
+    expect(errorKind(new CliError('missing credentials', 3))).toBe('auth')
+    expect(errorKind(new CliError('unexpected'))).toBe('internal')
+    expect(errorKind(responseError(401))).toBe('auth')
+    expect(errorKind(responseError(403))).toBe('auth')
+    expect(errorKind(responseError(404))).toBe('not_found')
+    expect(errorKind(responseError(429))).toBe('rate_limit')
+    expect(errorKind(responseError(500))).toBe('api')
+    expect(errorKind(new TMDBRequestError('network'))).toBe('network')
+    expect(errorKind(new TMDBTimeoutError(10))).toBe('network')
+    expect(errorKind(new Error('boom'))).toBe('internal')
+  })
+
+  it('builds structured error records', () => {
+    expect(toErrorRecord(responseError(429, '7'))).toEqual({
+      type: 'error',
+      kind: 'rate_limit',
+      message: 'TMDB rate limit exceeded. Retry after 7 seconds.',
+      exitCode: 5,
+      status: 429,
+      retryAfter: 7,
+    })
+
+    expect(toErrorRecord(new CliError('bad usage', 2))).toEqual({
+      type: 'error',
+      kind: 'usage',
+      message: 'bad usage',
+      exitCode: 2,
+    })
+  })
+
+  it('includes the TMDB request id when present', () => {
+    const error = createResponseError({
+      body: { status_message: 'nope' },
+      headers: new Headers({ 'x-request-id': 'req-123' }),
+      status: 500,
+      statusText: 'Internal Server Error',
+      url: 'https://api.themoviedb.org/3/movie/1',
+    })
+
+    expect(toErrorRecord(error)).toMatchObject({ status: 500, requestId: 'req-123' })
+  })
+
   it('runs a successful task without changing the exit code', async () => {
     const output = captureOutput()
-    await runSafely(async () => {})
+    await runSafely({}, async () => {})
 
     expect(output.stdout()).toBe('')
     expect(output.stderr()).toBe('')
@@ -79,7 +124,7 @@ describe('CLI errors', () => {
 
   it('reports task errors and sets the exit code', async () => {
     const output = captureOutput()
-    await runSafely(async () => {
+    await runSafely({}, async () => {
       throw new CliError('missing credentials', 3)
     })
 

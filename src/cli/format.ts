@@ -27,8 +27,8 @@ import type { SearchType } from './options'
 
 type SearchResult = MovieSearchResult | TVSearchResult | PersonSearchResult | SearchMultiResult
 
-export function printJson(value: unknown): void {
-  process.stdout.write(`${JSON.stringify(value, null, 2)}\n`)
+export function printJson(value: unknown, compact = false): void {
+  process.stdout.write(`${compact ? JSON.stringify(value) : JSON.stringify(value, null, 2)}\n`)
 }
 
 export function printSearchResults(response: PagedResponse<SearchResult>, type: SearchType): void {

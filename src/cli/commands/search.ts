@@ -1,7 +1,8 @@
 import { defineCommand } from 'citty'
 import { createClient } from '../client'
-import { CliError, runSafely } from '../errors'
-import { printJson, printSearchResults } from '../format'
+import { CliError } from '../errors'
+import { printSearchResults } from '../format'
+import { printResult, runSafely } from '../output'
 import { commonArgs, parsePage, parseSearchType, SEARCH_TYPES } from '../options'
 
 export const searchCommand = defineCommand({
@@ -32,7 +33,7 @@ export const searchCommand = defineCommand({
     },
   },
   async run({ args }) {
-    await runSafely(async () => {
+    await runSafely(args, async (output) => {
       const query = args.query.trim()
       if (!query) {
         throw new CliError('Search query must not be empty.', 2)
@@ -58,11 +59,7 @@ export const searchCommand = defineCommand({
               ? await client.search.people(query, options)
               : await client.search.multi(query, options)
 
-      if (args.json) {
-        printJson(response)
-      } else {
-        printSearchResults(response, type)
-      }
+      printResult(response, output, () => printSearchResults(response, type))
     })
   },
 })

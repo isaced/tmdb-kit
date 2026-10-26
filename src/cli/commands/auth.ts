@@ -4,9 +4,9 @@ import { createTMDB, TMDBResponseError } from '../../index'
 import { getConfigPath, readConfig, writeConfig } from '../config'
 import { detectCredential, unrecognizedCredentialMessage } from '../credential-format'
 import { resolveCredentials, type ResolvedCredentials } from '../credentials'
-import { CliError, errorMessage, exitCodeFor, runSafely } from '../errors'
-import { printJson } from '../format'
-import { jsonArg } from '../options'
+import { CliError, errorMessage, exitCodeFor } from '../errors'
+import { outputArgs } from '../options'
+import { printResult, runSafely } from '../output'
 import { confirm, readSecret, readStdinSecret } from '../prompt'
 import { isPlaceholderCredential, maskSecret } from '../redact'
 
@@ -32,7 +32,7 @@ export const authCommand = defineCommand({
         },
       },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely({}, async () => {
           const existing = resolveCredentials()
 
           if (!args.force && existing.source !== 'none') {
@@ -125,9 +125,9 @@ export const authCommand = defineCommand({
         name: 'status',
         description: 'Show credential source, token mask, and config path',
       },
-      args: { ...jsonArg },
+      args: { ...outputArgs },
       async run({ args }) {
-        await runSafely(async () => {
+        await runSafely(args, async (output) => {
           const credentials = resolveCredentials()
           const path = getConfigPath()
           const configExists = existsSync(path)
@@ -140,11 +140,6 @@ export const authCommand = defineCommand({
             configExists,
             language: credentials.config.language ?? null,
             region: credentials.config.region ?? null,
-          }
-
-          if (args.json) {
-            printJson(view)
-            return
           }
 
           const lines = [
@@ -169,7 +164,7 @@ export const authCommand = defineCommand({
             lines.push('', 'Run `tmdb auth login` to set up credentials.')
           }
 
-          process.stdout.write(`${lines.join('\n')}\n`)
+          printResult(view, output, () => process.stdout.write(`${lines.join('\n')}\n`))
         })
       },
     }),
@@ -180,7 +175,7 @@ export const authCommand = defineCommand({
         description: 'Remove saved API credentials from the config file',
       },
       async run() {
-        await runSafely(async () => {
+        await runSafely({}, async () => {
           const config = readConfig()
           const hadCredentials = Boolean(config.accessToken || config.apiKey)
 
