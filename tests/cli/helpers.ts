@@ -47,7 +47,7 @@ export function useCliTestEnv() {
 
   return {
     dir: () => dir,
-    configPath: () => join(dir, 'tmdb', 'config.json'),
+    configPath: () => join(dir, 'tmdb-kit', 'config.json'),
   }
 }
 

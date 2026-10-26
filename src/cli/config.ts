@@ -20,13 +20,15 @@ export interface CliConfig {
 
 export type ConfigField = keyof CliConfig
 
+const CONFIG_DIR = 'tmdb-kit'
+
 export function getConfigPath(): string {
   if (process.platform === 'win32') {
-    return join(process.env.APPDATA ?? homedir(), 'tmdb', 'config.json')
+    return join(process.env.APPDATA ?? homedir(), CONFIG_DIR, 'config.json')
   }
 
   const configHome = process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config')
-  return join(configHome, 'tmdb', 'config.json')
+  return join(configHome, CONFIG_DIR, 'config.json')
 }
 
 export function readConfig(): CliConfig {

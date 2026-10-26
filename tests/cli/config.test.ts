@@ -13,28 +13,28 @@ describe('CLI config', () => {
     mockPlatform('darwin')
     process.env.XDG_CONFIG_HOME = '/tmp/tmdb-xdg'
 
-    expect(getConfigPath()).toBe(join('/tmp/tmdb-xdg', 'tmdb', 'config.json'))
+    expect(getConfigPath()).toBe(join('/tmp/tmdb-xdg', 'tmdb-kit', 'config.json'))
   })
 
   it('falls back to the home directory when XDG_CONFIG_HOME is unset', () => {
     mockPlatform('darwin')
     delete process.env.XDG_CONFIG_HOME
 
-    expect(getConfigPath()).toBe(join(homedir(), '.config', 'tmdb', 'config.json'))
+    expect(getConfigPath()).toBe(join(homedir(), '.config', 'tmdb-kit', 'config.json'))
   })
 
   it('uses APPDATA on Windows', () => {
     mockPlatform('win32')
     process.env.APPDATA = '/tmp/tmdb-appdata'
 
-    expect(getConfigPath()).toBe(join('/tmp/tmdb-appdata', 'tmdb', 'config.json'))
+    expect(getConfigPath()).toBe(join('/tmp/tmdb-appdata', 'tmdb-kit', 'config.json'))
   })
 
   it('falls back to the home directory when APPDATA is unset', () => {
     mockPlatform('win32')
     delete process.env.APPDATA
 
-    expect(getConfigPath()).toBe(join(homedir(), 'tmdb', 'config.json'))
+    expect(getConfigPath()).toBe(join(homedir(), 'tmdb-kit', 'config.json'))
   })
 
   it('returns an empty config when the file does not exist', () => {

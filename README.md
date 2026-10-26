@@ -297,8 +297,8 @@ Environment variables take precedence over the config file. `TMDB_BASE_URL` over
 
 The config file lives at:
 
-- Windows: `%APPDATA%\tmdb\config.json`
-- macOS and Linux: `$XDG_CONFIG_HOME/tmdb/config.json`, or `~/.config/tmdb/config.json` when `XDG_CONFIG_HOME` is unset
+- Windows: `%APPDATA%\tmdb-kit\config.json`
+- macOS and Linux: `$XDG_CONFIG_HOME/tmdb-kit/config.json`, or `~/.config/tmdb-kit/config.json` when `XDG_CONFIG_HOME` is unset
 
 On Unix, the directory is created with mode `0700` and the file with mode `0600`.
 
