@@ -22,20 +22,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
           registry-url: https://registry.npmjs.org
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Verify package
-        run: npm run ci
+        run: bun run ci
 
       - name: Publish package
         run: |
-          TAG=$(node -e "const v=require('./package.json').version; const m=v.match(/-([a-z]+)/); console.log(m?m[1]:'latest')")
+          TAG=$(bun -e "const v=require('./package.json').version; const m=v.match(/-([a-z]+)/); console.log(m?m[1]:'latest')")
           npm publish --provenance --access public --tag "$TAG"
 
       - uses: actions/checkout@v6
       - name: Publish package (jsr)
-        run: npx jsr publish
+        run: bunx jsr publish

@@ -1,17 +1,22 @@
 import { Readable } from 'node:stream'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { readSecret } from '../../src/cli/prompt'
+import { afterEach, describe, expect, it, vi } from 'bun:test'
+import { confirm, readSecret } from '../../src/cli/prompt'
 
-const mocks = vi.hoisted(() => {
-  const question = vi.fn(async () => ' hidden-token ')
-  const close = vi.fn()
-  const createInterface = vi.fn(() => ({
-    question,
-    close,
-    _writeToOutput: () => {},
-  }))
-  return { close, createInterface, question }
+interface QuestionContext {
+  _writeToOutput: (value: string) => void
+}
+
+const question = vi.fn(async function (this: QuestionContext, prompt: string) {
+  this._writeToOutput(prompt)
+  return ' hidden-token '
 })
+const close = vi.fn()
+const createInterface = vi.fn(() => ({
+  question,
+  close,
+  _writeToOutput: (_value: string) => {},
+}))
+const mocks = { close, createInterface, question }
 
 vi.mock('node:readline/promises', () => ({
   createInterface: mocks.createInterface,
@@ -57,5 +62,27 @@ describe('secret prompt', () => {
     } finally {
       Object.defineProperty(process, 'stdin', descriptor)
     }
+  })
+})
+
+describe('confirm prompt', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.clearAllMocks()
+  })
+
+  it('accepts affirmative answers', async () => {
+    mocks.question.mockResolvedValueOnce(' YES ')
+    await expect(confirm('Continue? ')).resolves.toBe(true)
+
+    mocks.question.mockResolvedValueOnce('y')
+    await expect(confirm('Continue? ')).resolves.toBe(true)
+  })
+
+  it('rejects any other answer', async () => {
+    mocks.question.mockResolvedValueOnce('nope')
+
+    await expect(confirm('Continue? ')).resolves.toBe(false)
+    expect(mocks.close).toHaveBeenCalled()
   })
 })

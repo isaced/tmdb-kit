@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { createTMDB } from '../../src'
 import { expectPaths, expectRequest } from '../_support/assertions'
 import { combinedCreditsResponse, paged, personDetails } from '../_support/fixtures'

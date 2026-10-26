@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { runCommand } from 'citty'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'bun:test'
 import { authCommand } from '../../../src/cli/commands/auth'
 import { readConfig, setConfigValue } from '../../../src/cli/config'
 import { movieDetails } from '../fixtures'
@@ -19,16 +19,14 @@ const OTHER_ACCESS_TOKEN =
   'eyJhbGciOiJIUzI1NiJ9.eyJzY29wZXMiOlsiYXBpX3JlYWQiXX0.other-signature'
 const API_KEY = '0123456789abcdef0123456789abcdef'
 
-const readlineMocks = vi.hoisted(() => {
-  const question = vi.fn(async () => 'tty-token')
-  const close = vi.fn()
-  const createInterface = vi.fn(() => ({
-    question,
-    close,
-    _writeToOutput: () => {},
-  }))
-  return { close, createInterface, question }
-})
+const question = vi.fn(async () => 'tty-token')
+const close = vi.fn()
+const createInterface = vi.fn(() => ({
+  question,
+  close,
+  _writeToOutput: () => {},
+}))
+const readlineMocks = { close, createInterface, question }
 
 vi.mock('node:readline/promises', () => ({
   createInterface: readlineMocks.createInterface,

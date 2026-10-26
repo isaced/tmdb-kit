@@ -30,7 +30,7 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "npm@11.12.1",
+  "packageManager": "bun@1.4.4",
   "exports": {
     ".": {
       "import": {
@@ -61,29 +61,26 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsdown && npm run build:cli",
-    "build:cli": "tsdown --config tsdown.cli.config.ts && node -e \"require('node:fs').chmodSync('dist/cli.js', 0o755)\"",
-    "cli": "npm run build:cli && node dist/cli.js",
-    "dev": "tsdown --watch",
-    "test": "vitest run",
-    "test:resources": "vitest run tests/resources",
-    "test:unit": "vitest run tests/unit",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
-    "typecheck": "tsc --noEmit",
-    "ci": "npm run typecheck && npm run test:coverage && npm run build",
+    "build": "bun run scripts/build.ts",
+    "build:cli": "bun run scripts/build.ts --cli",
+    "cli": "bun run build:cli && bun ./dist/cli.js",
+    "dev": "bun build ./src/index.ts --outdir ./dist --entry-naming '[name].js' --format esm --target browser --sourcemap=linked --watch",
+    "test": "bun test --isolate tests/unit tests/resources tests/cli",
+    "test:resources": "bun test --isolate tests/resources",
+    "test:unit": "bun test --isolate tests/unit",
+    "test:watch": "bun test --isolate --watch tests/unit tests/resources tests/cli",
+    "test:coverage": "bun test --isolate --coverage tests/unit tests/resources tests/cli",
+    "test:integration": "bun test --isolate tests/integration",
+    "typecheck": "bun check",
+    "ci": "bun run typecheck && bun run test:coverage && bun run build",
     "release": "bumpp",
-    "prepublishOnly": "npm run ci"
+    "prepublishOnly": "bun run ci"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.4",
     "@types/node": "^25.6.2",
-    "@vitest/coverage-v8": "^4.1.5",
-    "@typescript/native-preview": "7.0.0-dev.20260509.2",
     "bumpp": "^11.1.0",
     "citty": "^0.2.2",
-    "tsdown": "^0.22.0",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.5"
+    "typescript": "^6.0.3"
   }
 }

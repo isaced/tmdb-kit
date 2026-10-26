@@ -7,7 +7,7 @@ import {
 } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'bun:test'
 import {
   getConfigPath,
   readConfig,
@@ -15,34 +15,34 @@ import {
   unsetConfigValue,
 } from '../../src/cli/config'
 import { CliError } from '../../src/cli/errors'
-import { useCliTestEnv } from './helpers'
+import { mockPlatform, useCliTestEnv } from './helpers'
 
 describe('CLI config', () => {
   const env = useCliTestEnv()
 
   it('uses XDG_CONFIG_HOME outside Windows', () => {
-    vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')
+    mockPlatform('darwin')
     process.env.XDG_CONFIG_HOME = '/tmp/tmdb-xdg'
 
     expect(getConfigPath()).toBe(join('/tmp/tmdb-xdg', 'tmdb', 'config.json'))
   })
 
   it('falls back to the home directory when XDG_CONFIG_HOME is unset', () => {
-    vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')
+    mockPlatform('darwin')
     delete process.env.XDG_CONFIG_HOME
 
     expect(getConfigPath()).toBe(join(homedir(), '.config', 'tmdb', 'config.json'))
   })
 
   it('uses APPDATA on Windows', () => {
-    vi.spyOn(process, 'platform', 'get').mockReturnValue('win32')
+    mockPlatform('win32')
     process.env.APPDATA = '/tmp/tmdb-appdata'
 
     expect(getConfigPath()).toBe(join('/tmp/tmdb-appdata', 'tmdb', 'config.json'))
   })
 
   it('falls back to the home directory when APPDATA is unset', () => {
-    vi.spyOn(process, 'platform', 'get').mockReturnValue('win32')
+    mockPlatform('win32')
     delete process.env.APPDATA
 
     expect(getConfigPath()).toBe(join(homedir(), 'tmdb', 'config.json'))

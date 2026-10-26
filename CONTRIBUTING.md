@@ -4,29 +4,28 @@ Thanks for your interest in contributing! This guide covers the basics to get yo
 
 ## Prerequisites
 
-- Node.js 18+
-- npm
+- Bun 1.4.4+ (the published package still supports Node.js 18+)
 
 ## Getting Started
 
 ```bash
 git clone https://github.com/isaced/tmdb-kit.git
 cd tmdb-kit
-npm install
+bun install
 ```
 
 ## Development Workflow
 
 ```bash
-npm run typecheck      # type-check without emitting
-npm run test:coverage  # run tests with coverage
-npm run build          # build ESM + CJS output
+bun run typecheck      # type-check without emitting
+bun run test:coverage  # run tests with coverage
+bun run build          # build ESM + CJS output and type declarations
 ```
 
 Or run all three at once:
 
 ```bash
-npm run ci
+bun run ci
 ```
 
 ## Project Structure
@@ -58,7 +57,7 @@ tests/
 
 - **Unit tests** (`tests/unit/`): mock `fetch` via `TMDBTransport` stubs. No real network calls.
 - **Resource tests** (`tests/resources/`): same mock pattern, focused on resource methods.
-- **Integration tests** (`tests/integration/`): hit the live TMDB API. Require `TMDB_ACCESS_TOKEN` env var. Run with `npm run test:integration`.
+- **Integration tests** (`tests/integration/`): hit the live TMDB API. Require `TMDB_ACCESS_TOKEN` env var. Run with `bun run test:integration`.
 
 All tests must pass with 100% line coverage before submitting a PR.
 
@@ -85,7 +84,7 @@ test(movies): cover recommendations endpoint
 
 1. Fork the repo and create a feature branch from `main`.
 2. Make your changes following the guidelines above.
-3. Ensure `npm run ci` passes (typecheck + test:coverage + build).
+3. Ensure `bun run ci` passes (typecheck + test:coverage + build).
 4. Open a PR with a clear description of what changed and why.
 
 ## Questions?

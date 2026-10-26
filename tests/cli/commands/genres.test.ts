@@ -1,5 +1,5 @@
 import { runCommand } from 'citty'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { genresCommand } from '../../../src/cli/commands/genres'
 import { genresResponse } from '../fixtures'
 import { captureOutput, jsonResponse, mockFetch, useCliTestEnv } from '../helpers'

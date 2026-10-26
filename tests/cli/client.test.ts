@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { TMDBClient } from '../../src'
 import { createClient } from '../../src/cli/client'
 import { CliError } from '../../src/cli/errors'

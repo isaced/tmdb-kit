@@ -1,5 +1,5 @@
 import { renderUsage } from 'citty'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { mainCommand } from '../../src/cli/command'
 import { AUTHENTICATION_HELP } from '../../src/cli/help'
 
