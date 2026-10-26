@@ -1,8 +1,15 @@
 import { defineCommand } from 'citty'
 import { createClient } from '../client'
-import { printSearchResults } from '../format'
-import { printResult, runSafely } from '../output'
-import { commonArgs, parsePage, parseSearchType, parseWindow, TRENDING_WINDOWS } from '../options'
+import { printSearchResults, type SearchResult } from '../format'
+import { printPaged, runSafely } from '../output'
+import {
+  commonArgs,
+  paginationArgs,
+  parsePage,
+  parseSearchType,
+  parseWindow,
+  TRENDING_WINDOWS,
+} from '../options'
 
 export const trendingCommand = defineCommand({
   meta: {
@@ -11,6 +18,7 @@ export const trendingCommand = defineCommand({
   },
   args: {
     ...commonArgs,
+    ...paginationArgs,
     type: {
       type: 'positional',
       description: 'Media type: all, movie, tv, or person',
@@ -28,22 +36,32 @@ export const trendingCommand = defineCommand({
     },
   },
   async run({ args }) {
-    await runSafely(args, async (output) => {
-      const type = parseSearchType(args.type)
-      const window = parseWindow(args.window)
-      const page = parsePage(args.page)
-      const client = createClient({ language: args.lang })
+    await runSafely(
+      args,
+      async (output) => {
+        const type = parseSearchType(args.type)
+        const window = parseWindow(args.window)
+        const page = parsePage(args.page)
+        const client = createClient({ language: args.lang })
 
-      const response =
-        type === 'movie'
-          ? await client.trending.movies(window, { page })
-          : type === 'tv'
-            ? await client.trending.tv(window, { page })
-            : type === 'person'
-              ? await client.trending.people(window, { page })
-              : await client.trending.all(window, { page })
+        await printPaged<SearchResult>({
+          fetchPage: (nextPage) => {
+            const options = { page: nextPage }
 
-      printResult(response, output, () => printSearchResults(response, type))
-    })
+            return type === 'movie'
+              ? client.trending.movies(window, options)
+              : type === 'tv'
+                ? client.trending.tv(window, options)
+                : type === 'person'
+                  ? client.trending.people(window, options)
+                  : client.trending.all(window, options)
+          },
+          output,
+          renderText: (response) => printSearchResults(response, type),
+          startPage: page,
+        })
+      },
+      { paginated: true },
+    )
   },
 })

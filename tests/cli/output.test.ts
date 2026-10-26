@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'bun:test'
+import type { PagedResponse } from '../../src'
 import { CliError } from '../../src/cli/errors'
-import { printResult, resolveOutput, runSafely } from '../../src/cli/output'
+import { printPaged, printResult, resolveOutput, runSafely } from '../../src/cli/output'
 import { captureOutput } from './helpers'
 
 describe('output context', () => {
@@ -69,6 +70,52 @@ describe('output context', () => {
     expect(() => resolveOutput({ fields: 'id' })).toThrow(
       '--fields requires --format json or ndjson.',
     )
+  })
+
+  it('accepts --all for paginated ndjson output', () => {
+    expect(resolveOutput({ all: true, format: 'ndjson' }, { paginated: true })).toEqual({
+      all: true,
+      compact: false,
+      format: 'ndjson',
+    })
+  })
+
+  it('accepts --max-items for paginated ndjson output', () => {
+    expect(resolveOutput({ 'max-items': '5', format: 'ndjson' }, { paginated: true })).toEqual({
+      compact: false,
+      format: 'ndjson',
+      maxItems: 5,
+    })
+  })
+
+  it('rejects --all without ndjson', () => {
+    expect(() => resolveOutput({ all: true, format: 'json' }, { paginated: true })).toThrow(
+      '--all requires --format ndjson.',
+    )
+  })
+
+  it('rejects --max-items without ndjson', () => {
+    expect(() => resolveOutput({ 'max-items': '2' }, { paginated: true })).toThrow(
+      '--max-items requires --format ndjson.',
+    )
+  })
+
+  it('rejects pagination flags on other commands', () => {
+    expect(() => resolveOutput({ all: true, format: 'ndjson' })).toThrow(
+      '--all is only supported by list commands.',
+    )
+    expect(() => resolveOutput({ 'max-items': '2', format: 'ndjson' })).toThrow(
+      '--max-items is only supported by list commands.',
+    )
+  })
+
+  it('rejects invalid --max-items values', () => {
+    expect(() =>
+      resolveOutput({ 'max-items': '0', format: 'ndjson' }, { paginated: true }),
+    ).toThrow('Invalid --max-items value: expected a positive integer.')
+    expect(() =>
+      resolveOutput({ 'max-items': 'many', format: 'ndjson' }, { paginated: true }),
+    ).toThrow('Invalid --max-items value: expected a positive integer.')
   })
 
   it('rejects an empty field list', () => {
@@ -142,7 +189,7 @@ describe('ndjson output', () => {
       { page: 1, total_pages: 3, total_results: 6, type: 'meta' },
       { type: 'item', index: 0, value: { id: 1, title: 'A' } },
       { type: 'item', index: 1, value: { id: 2, title: 'B' } },
-      { type: 'summary', count: 2 },
+      { type: 'summary', count: 2, pages: 1 },
     ])
   })
 
@@ -163,7 +210,7 @@ describe('ndjson output', () => {
     const [meta, item, summary] = lines(captured)
     expect(meta).toEqual({ id: 550, type: 'meta' })
     expect(item).toEqual({ type: 'item', index: 0, value: { id: 'a' } })
-    expect(summary).toEqual({ type: 'summary', count: 1 })
+    expect(summary).toEqual({ type: 'summary', count: 1, pages: 1 })
   })
 
   it('projects fields on every item', () => {
@@ -282,6 +329,211 @@ describe('--fields projection', () => {
   })
 })
 
+describe('printPaged', () => {
+  type Item = { id: number }
+
+  function page(pageNumber: number, ids: number[], totalPages = 3): PagedResponse<Item> {
+    return {
+      page: pageNumber,
+      results: ids.map((id) => ({ id })),
+      total_pages: totalPages,
+      total_results: totalPages * 2,
+    }
+  }
+
+  function fetcher(pages: Record<number, PagedResponse<Item>>) {
+    const calls: number[] = []
+    return {
+      calls,
+      fetchPage: async (pageNumber: number) => {
+        calls.push(pageNumber)
+        const response = pages[pageNumber]
+        if (!response) {
+          throw new Error(`unexpected page ${pageNumber}`)
+        }
+        return response
+      },
+    }
+  }
+
+  function records(captured: ReturnType<typeof captureOutput>) {
+    return captured
+      .stdout()
+      .trimEnd()
+      .split('\n')
+      .map((line) => JSON.parse(line))
+  }
+
+  const ndjson = resolveOutput({ all: true, format: 'ndjson' }, { paginated: true })
+  const singlePage = resolveOutput({ format: 'ndjson' }, { paginated: true })
+
+  it('reads one page for text output', async () => {
+    const captured = captureOutput()
+    const { calls, fetchPage } = fetcher({ 1: page(1, [1, 2]) })
+    let rendered: unknown
+
+    await printPaged({
+      fetchPage,
+      output: resolveOutput({}),
+      renderText: (response) => {
+        rendered = response
+      },
+      startPage: 1,
+    })
+
+    expect(calls).toEqual([1])
+    expect(rendered).toEqual(page(1, [1, 2]))
+    expect(captured.stdout()).toBe('')
+  })
+
+  it('reads one page for JSON output', async () => {
+    const captured = captureOutput()
+    const { calls, fetchPage } = fetcher({ 1: page(1, [1, 2]) })
+
+    await printPaged({
+      fetchPage,
+      output: resolveOutput({ format: 'json' }),
+      renderText: () => {},
+      startPage: 1,
+    })
+
+    expect(calls).toEqual([1])
+    expect(JSON.parse(captured.stdout())).toEqual(page(1, [1, 2]))
+  })
+
+  it('streams a single page without --all', async () => {
+    const captured = captureOutput()
+    const { calls, fetchPage } = fetcher({ 1: page(1, [1, 2]) })
+
+    await printPaged({ fetchPage, output: singlePage, renderText: () => {}, startPage: 1 })
+
+    expect(calls).toEqual([1])
+    expect(records(captured)).toEqual([
+      { page: 1, total_pages: 3, total_results: 6, type: 'meta' },
+      { type: 'item', index: 0, value: { id: 1 } },
+      { type: 'item', index: 1, value: { id: 2 } },
+      { type: 'summary', count: 2, pages: 1 },
+    ])
+  })
+
+  it('follows every page with --all', async () => {
+    const captured = captureOutput()
+    const { calls, fetchPage } = fetcher({
+      1: page(1, [1, 2]),
+      2: page(2, [3]),
+      3: page(3, [4]),
+    })
+
+    await printPaged({ fetchPage, output: ndjson, renderText: () => {}, startPage: 1 })
+
+    expect(calls).toEqual([1, 2, 3])
+    expect(records(captured)).toEqual([
+      { page: 1, total_pages: 3, total_results: 6, type: 'meta' },
+      { type: 'item', index: 0, value: { id: 1 } },
+      { type: 'item', index: 1, value: { id: 2 } },
+      { type: 'item', index: 2, value: { id: 3 } },
+      { type: 'item', index: 3, value: { id: 4 } },
+      { type: 'summary', count: 4, pages: 3 },
+    ])
+  })
+
+  it('starts at --page when following pages', async () => {
+    const captured = captureOutput()
+    const { calls, fetchPage } = fetcher({ 2: page(2, [3]), 3: page(3, [4]) })
+
+    await printPaged({ fetchPage, output: ndjson, renderText: () => {}, startPage: 2 })
+
+    expect(calls).toEqual([2, 3])
+    expect(records(captured)[0]).toEqual({
+      page: 2,
+      total_pages: 3,
+      total_results: 6,
+      type: 'meta',
+    })
+  })
+
+  it('stops at the last page', async () => {
+    const captured = captureOutput()
+    const { calls, fetchPage } = fetcher({ 1: page(1, [1], 1) })
+
+    await printPaged({ fetchPage, output: ndjson, renderText: () => {}, startPage: 1 })
+
+    expect(calls).toEqual([1])
+    expect(records(captured).at(-1)).toEqual({ type: 'summary', count: 1, pages: 1 })
+  })
+
+  it('stops on an empty page', async () => {
+    const captured = captureOutput()
+    const { calls, fetchPage } = fetcher({ 1: page(1, [], 5) })
+
+    await printPaged({ fetchPage, output: ndjson, renderText: () => {}, startPage: 1 })
+
+    expect(calls).toEqual([1])
+    expect(records(captured).at(-1)).toEqual({ type: 'summary', count: 0, pages: 1 })
+  })
+
+  it('stops at --max-items without fetching the next page', async () => {
+    const captured = captureOutput()
+    const { calls, fetchPage } = fetcher({ 1: page(1, [1, 2, 3], 5), 2: page(2, [4], 5) })
+
+    await printPaged({
+      fetchPage,
+      output: resolveOutput({ all: true, 'max-items': '2', format: 'ndjson' }, { paginated: true }),
+      renderText: () => {},
+      startPage: 1,
+    })
+
+    expect(calls).toEqual([1])
+    expect(records(captured).filter((record) => record.type === 'item')).toEqual([
+      { type: 'item', index: 0, value: { id: 1 } },
+      { type: 'item', index: 1, value: { id: 2 } },
+    ])
+    expect(records(captured).at(-1)).toEqual({ type: 'summary', count: 2, pages: 1 })
+  })
+
+  it('caps a single page with --max-items', async () => {
+    const captured = captureOutput()
+    const { calls, fetchPage } = fetcher({ 1: page(1, [1, 2]) })
+
+    await printPaged({
+      fetchPage,
+      output: resolveOutput({ 'max-items': '1', format: 'ndjson' }, { paginated: true }),
+      renderText: () => {},
+      startPage: 1,
+    })
+
+    expect(calls).toEqual([1])
+    expect(records(captured).filter((record) => record.type === 'item')).toEqual([
+      { type: 'item', index: 0, value: { id: 1 } },
+    ])
+  })
+
+  it('projects fields across pages', async () => {
+    const captured = captureOutput()
+    const { fetchPage } = fetcher({ 1: page(1, [1], 2), 2: page(2, [2], 2) })
+
+    await printPaged({
+      fetchPage,
+      output: resolveOutput({ all: true, fields: 'id', format: 'ndjson' }, { paginated: true }),
+      renderText: () => {},
+      startPage: 1,
+    })
+
+    expect(records(captured).filter((record) => record.type === 'item')).toEqual([
+      { type: 'item', index: 0, value: { id: 1 } },
+      { type: 'item', index: 1, value: { id: 2 } },
+    ])
+  })
+
+  it('propagates fetch failures mid-stream', async () => {
+    const { fetchPage } = fetcher({ 1: page(1, [1]) })
+
+    await expect(
+      printPaged({ fetchPage, output: ndjson, renderText: () => {}, startPage: 1 }),
+    ).rejects.toThrow('unexpected page 2')
+  })
+})
+
 describe('runSafely', () => {
   beforeEach(() => {
     process.exitCode = 0
@@ -334,6 +586,14 @@ describe('runSafely', () => {
 
     expect(output.stdout()).toBe('')
     expect(output.stderr()).toBe('Invalid --format "yaml". Expected one of: text, json, ndjson.\n')
+    expect(process.exitCode).toBe(2)
+  })
+
+  it('keeps JSON errors when NDJSON output fails to resolve', async () => {
+    const output = captureOutput()
+    await runSafely({ fields: ' ', format: 'ndjson' }, async () => {})
+
+    expect(JSON.parse(output.stderr())).toMatchObject({ kind: 'usage', exitCode: 2 })
     expect(process.exitCode).toBe(2)
   })
 

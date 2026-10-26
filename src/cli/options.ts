@@ -28,6 +28,18 @@ export const outputArgs = {
   ...formatArg,
 } satisfies ArgsDef
 
+/** Extra flags for commands that return a paginated list. */
+export const paginationArgs = {
+  all: {
+    type: 'boolean',
+    description: 'Fetch every page instead of one (requires --format ndjson)',
+  },
+  'max-items': {
+    type: 'string',
+    description: 'Stop after this many items (requires --format ndjson)',
+  },
+} satisfies ArgsDef
+
 export const commonArgs = {
   ...outputArgs,
   lang: {
