@@ -46,16 +46,18 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Verify TMDB_ACCESS_TOKEN
+      - name: Verify TMDB credentials
         env:
           TMDB_ACCESS_TOKEN: ${{ secrets.TMDB_ACCESS_TOKEN }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
-          if [ -z "$TMDB_ACCESS_TOKEN" ]; then
-            echo "::error::TMDB_ACCESS_TOKEN is not configured. Add it under Settings > Secrets and variables > Actions."
+          if [ -z "$TMDB_ACCESS_TOKEN" ] && [ -z "$TMDB_API_KEY" ]; then
+            echo "::error::Set TMDB_ACCESS_TOKEN or TMDB_API_KEY under Settings > Secrets and variables > Actions."
             exit 1
           fi
 
       - name: Run integration tests
         env:
           TMDB_ACCESS_TOKEN: ${{ secrets.TMDB_ACCESS_TOKEN }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: bun run test:integration

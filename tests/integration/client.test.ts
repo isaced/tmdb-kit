@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { createTMDB, TMDBResponseError, type TMDBTransport } from '../../src'
-import { accessToken, apiEndpoint, createRealTMDB } from './setup'
+import { apiEndpoint, createRealTMDB } from './setup'
 
 describe('Client request() escape hatch (integration)', () => {
   const tmdb = createRealTMDB()
@@ -29,11 +29,7 @@ describe('Client request() escape hatch (integration)', () => {
 
 describe('Client configuration on the live API (integration)', () => {
   it('honors defaultLanguage when the caller does not pass one', async () => {
-    const tmdb = createTMDB({
-      accessToken,
-      ...(apiEndpoint ? { baseUrl: apiEndpoint } : {}),
-      defaultLanguage: 'zh-CN',
-    })
+    const tmdb = createRealTMDB({ defaultLanguage: 'zh-CN' })
 
     const movie = await tmdb.movies.details(550)
     expect(movie.id).toBe(550)
@@ -58,11 +54,7 @@ describe('Client configuration on the live API (integration)', () => {
       },
     }
 
-    const tmdb = createTMDB({
-      accessToken,
-      ...(apiEndpoint ? { baseUrl: apiEndpoint } : {}),
-      transport,
-    })
+    const tmdb = createRealTMDB({ transport })
 
     await tmdb.configuration.details()
     await tmdb.movies.popular()
