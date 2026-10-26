@@ -5,6 +5,8 @@ import {
   buildImageUrl,
   normalizeBaseUrl,
   toCommaList,
+  toEpisodeNumber,
+  toExternalId,
   toGroupId,
   toId,
   toSearchQuery,
@@ -81,6 +83,21 @@ describe('query utilities', () => {
 
     for (const value of ['', '   ', '../admin', 'a/b']) {
       expect(() => toGroupId(value), value).toThrow('groupId must be a non-empty identifier')
+    }
+  })
+
+  it('validates and encodes external IDs and episode numbers', () => {
+    expect(toExternalId(' tt0137523 ')).toBe('tt0137523')
+    expect(toExternalId('a/b?c#d')).toBe('a%2Fb%3Fc%23d')
+    expect(() => toExternalId('   ')).toThrow('externalId must not be empty')
+
+    expect(toEpisodeNumber(0)).toBe('0')
+    expect(toEpisodeNumber(3)).toBe('3')
+
+    for (const value of [-1, 1.5, Number.NaN]) {
+      expect(() => toEpisodeNumber(value), String(value)).toThrow(
+        'episodeNumber must be a non-negative integer',
+      )
     }
   })
 

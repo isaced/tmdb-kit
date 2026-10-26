@@ -113,6 +113,21 @@ export function toSeasonNumber(value: number): string {
 }
 
 /**
+ * Validate and convert an episode number to a string for use in URL paths.
+ *
+ * Episode `0` is valid for some shows and refers to a special.
+ *
+ * @throws {TMDBRequestError} If `value` is not a non-negative integer.
+ */
+export function toEpisodeNumber(value: number): string {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new TMDBRequestError('episodeNumber must be a non-negative integer')
+  }
+
+  return String(value)
+}
+
+/**
  * Validate and normalize a string identifier for use in URL paths.
  *
  * @throws {TMDBRequestError} If `value` is empty or contains non-identifier characters.
@@ -140,6 +155,25 @@ export function toSearchQuery(value: string): string {
   }
 
   return query
+}
+
+/**
+ * Validate, trim, and encode an external ID for use in a URL path.
+ *
+ * External IDs are opaque strings (IMDb's `tt...`, TVDB numbers, social
+ * handles). Encoding prevents `/`, `?`, and `#` from changing the request
+ * path.
+ *
+ * @throws {TMDBRequestError} If the ID is empty after trimming.
+ */
+export function toExternalId(value: string): string {
+  const externalId = value.trim()
+
+  if (externalId.length === 0) {
+    throw new TMDBRequestError('externalId must not be empty')
+  }
+
+  return encodeURIComponent(externalId)
 }
 
 /**
