@@ -1,8 +1,8 @@
 import { defineCommand } from 'citty'
 import { createClient } from '../client'
-import { printPerson, printPersonCredits } from '../format'
+import { printExternalIds, printPerson, printPersonCredits } from '../format'
 import { printResult, runSafely } from '../output'
-import { commonArgs, parseId, parseLimit } from '../options'
+import { commonArgs, outputArgs, parseId, parseLimit } from '../options'
 
 export const personCommand = defineCommand({
   meta: {
@@ -59,6 +59,30 @@ export const personCommand = defineCommand({
           const credits = await client.people.combinedCredits(id)
 
           printResult(credits, output, () => printPersonCredits(credits, limit))
+        })
+      },
+    }),
+
+    'external-ids': defineCommand({
+      meta: {
+        name: 'external-ids',
+        description: 'Show external IDs for a person',
+      },
+      args: {
+        ...outputArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB person ID',
+          required: true,
+        },
+      },
+      async run({ args }) {
+        await runSafely(args, async (output) => {
+          const id = parseId(args.id, 'person ID')
+          const client = createClient()
+          const ids = await client.people.externalIds(id)
+
+          printResult(ids, output, () => printExternalIds(ids))
         })
       },
     }),

@@ -1,10 +1,18 @@
 import { defineCommand } from 'citty'
 import type { MovieAppendToResponse } from '../../index'
 import { createClient } from '../client'
-import { printCredits, printImages, printMovie, printSearchResults, printVideos } from '../format'
+import {
+  printCredits,
+  printExternalIds,
+  printImages,
+  printMovie,
+  printSearchResults,
+  printVideos,
+} from '../format'
 import { printPaged, printResult, runSafely } from '../output'
 import {
   commonArgs,
+  outputArgs,
   paginationArgs,
   parseCommaList,
   parseId,
@@ -265,6 +273,30 @@ export const movieCommand = defineCommand({
           },
           { paginated: true },
         )
+      },
+    }),
+
+    'external-ids': defineCommand({
+      meta: {
+        name: 'external-ids',
+        description: 'Show external IDs for a movie',
+      },
+      args: {
+        ...outputArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB movie ID',
+          required: true,
+        },
+      },
+      async run({ args }) {
+        await runSafely(args, async (output) => {
+          const id = parseId(args.id, 'movie ID')
+          const client = createClient()
+          const ids = await client.movies.externalIds(id)
+
+          printResult(ids, output, () => printExternalIds(ids))
+        })
       },
     }),
   },

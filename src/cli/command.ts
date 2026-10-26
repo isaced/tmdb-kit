@@ -1,10 +1,14 @@
 import { defineCommand } from 'citty'
 import pkg from '../../package.json' with { type: 'json' }
 import { authCommand } from './commands/auth'
+import { collectionCommand } from './commands/collection'
 import { configCommand } from './commands/config'
+import { discoverCommand } from './commands/discover'
+import { findCommand } from './commands/find'
 import { genresCommand } from './commands/genres'
 import { movieCommand } from './commands/movie'
 import { personCommand } from './commands/person'
+import { providersCommand } from './commands/providers'
 import { searchCommand } from './commands/search'
 import { trendingCommand } from './commands/trending'
 import { tvCommand } from './commands/tv'
@@ -19,9 +23,13 @@ export const mainCommand = defineCommand({
   },
   subCommands: {
     search: searchCommand,
+    discover: discoverCommand,
+    find: findCommand,
     movie: movieCommand,
     tv: tvCommand,
     person: personCommand,
+    collection: collectionCommand,
+    providers: providersCommand,
     trending: trendingCommand,
     genres: genresCommand,
     auth: authCommand,

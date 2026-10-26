@@ -7,6 +7,7 @@ import {
   printEpisode,
   printEpisodeGroup,
   printEpisodeGroups,
+  printExternalIds,
   printImages,
   printSearchResults,
   printSeason,
@@ -17,6 +18,7 @@ import {
 import { printPaged, printResult, runSafely } from '../output'
 import {
   commonArgs,
+  outputArgs,
   paginationArgs,
   parseCommaList,
   parseGroupId,
@@ -551,6 +553,96 @@ export const tvCommand = defineCommand({
           const group = await client.tv.episodeGroup(groupId)
 
           printResult(group, output, () => printEpisodeGroup(group))
+        })
+      },
+    }),
+
+    'external-ids': defineCommand({
+      meta: {
+        name: 'external-ids',
+        description: 'Show external IDs for a TV show',
+      },
+      args: {
+        ...outputArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB TV show ID',
+          required: true,
+        },
+      },
+      async run({ args }) {
+        await runSafely(args, async (output) => {
+          const id = parseId(args.id, 'TV show ID')
+          const client = createClient()
+          const ids = await client.tv.externalIds(id)
+
+          printResult(ids, output, () => printExternalIds(ids))
+        })
+      },
+    }),
+
+    'season-external-ids': defineCommand({
+      meta: {
+        name: 'season-external-ids',
+        description: 'Show external IDs for a TV season',
+      },
+      args: {
+        ...outputArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB TV show ID',
+          required: true,
+        },
+        season: {
+          type: 'positional',
+          description: 'Season number (0 for specials)',
+          required: true,
+        },
+      },
+      async run({ args }) {
+        await runSafely(args, async (output) => {
+          const id = parseId(args.id, 'TV show ID')
+          const seasonNumber = parseSeasonNumber(args.season)
+          const client = createClient()
+          const ids = await client.tv.seasonExternalIds(id, seasonNumber)
+
+          printResult(ids, output, () => printExternalIds(ids))
+        })
+      },
+    }),
+
+    'episode-external-ids': defineCommand({
+      meta: {
+        name: 'episode-external-ids',
+        description: 'Show external IDs for a TV episode',
+      },
+      args: {
+        ...outputArgs,
+        id: {
+          type: 'positional',
+          description: 'TMDB TV show ID',
+          required: true,
+        },
+        season: {
+          type: 'positional',
+          description: 'Season number (0 for specials)',
+          required: true,
+        },
+        episode: {
+          type: 'positional',
+          description: 'Episode number',
+          required: true,
+        },
+      },
+      async run({ args }) {
+        await runSafely(args, async (output) => {
+          const id = parseId(args.id, 'TV show ID')
+          const seasonNumber = parseSeasonNumber(args.season)
+          const episodeNumber = parseId(args.episode, 'episode number')
+          const client = createClient()
+          const ids = await client.tv.episodeExternalIds(id, seasonNumber, episodeNumber)
+
+          printResult(ids, output, () => printExternalIds(ids))
         })
       },
     }),
