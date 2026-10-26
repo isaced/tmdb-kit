@@ -25,6 +25,7 @@ A minimal, fully typed SDK and read-only command-line interface (CLI) for The Mo
   - [Search](#search)
   - [Image sizes](#image-sizes)
   - [Errors](#errors)
+  - [Optional helpers](#optional-helpers)
 - [CLI](#cli)
   - [Credentials and config](#credentials-and-config)
   - [Commands](#commands)
@@ -43,9 +44,10 @@ A minimal, fully typed SDK and read-only command-line interface (CLI) for The Mo
 - **ESM output**: modern module output with bundled type declarations.
 - **Typed resources**: first-class methods for movies, TV, search, trending, people, genres, configuration, and images.
 - **Injectable transport**: swap the HTTP layer for tests, caching, or instrumentation without mocking `fetch`.
+- **Optional helpers**: async pagination, `Retry-After`-aware retries, `AbortSignal` timeouts, and an LRU memory cache — all opt-in and tree-shakeable.
 - **Image helpers**: build content delivery network (CDN), proxy, or signed URLs with per-request transform overrides.
 - **Search type guards**: narrow `search.multi()` results to movies, TV, or people with runtime-checked helpers.
-- **Tested**: unit and resource tests mock `fetch`; an optional live integration suite validates real API behavior.
+- **Tested**: unit and resource tests mock `fetch`; an optional live integration suite validates real API behavior, including the helpers.
 
 ## Install
 
@@ -101,24 +103,24 @@ A legacy v3 API key is sent as an `api_key` query parameter:
 createTMDB({ apiKey: 'your_api_key_here' })
 ```
 
-Pass exactly one of `accessToken` or `apiKey`. The client throws when both or neither are set.
+Pass exactly one of `accessToken` or `apiKey`. The client throws when both or neither are set. When you supply a `transport`, credentials are optional because the transport owns authentication.
 
 ### Configuration
 
 `createTMDB` accepts these options:
 
-| Option             | Default                              | Description                                                       |
-| ------------------ | ------------------------------------ | ----------------------------------------------------------------- |
-| `accessToken`      | required unless `apiKey` is set      | API Read Access Token, sent as a Bearer header.                   |
-| `apiKey`           | required unless `accessToken` is set | Legacy v3 API key, sent as `api_key`.                             |
-| `baseUrl`          | `https://api.themoviedb.org/3`       | API base URL. Useful for proxies and tests.                       |
-| `fetch`            | `globalThis.fetch` at request time   | Custom fetch implementation.                                      |
-| `defaultLanguage`  | TMDB default                         | Language for endpoints that accept `language`.                    |
-| `defaultRegion`    | TMDB default                         | Region for movie lists and search endpoints that accept `region`. |
-| `imageBaseUrl`     | `https://image.tmdb.org/t/p`         | Image host used by `tmdb.images`.                                 |
-| `images.transform` | none                                 | Default URL transform for `tmdb.images.url()`.                    |
-| `headers`          | none                                 | Extra headers merged into every request before authentication.    |
-| `transport`        | built-in HTTP client                 | Custom transport, see [Custom transport](#custom-transport).      |
+| Option             | Default                                             | Description                                                                                |
+| ------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `accessToken`      | required unless `apiKey` or `transport` is set      | API Read Access Token, sent as a Bearer header.                                            |
+| `apiKey`           | required unless `accessToken` or `transport` is set | Legacy v3 API key, sent as `api_key`.                                                      |
+| `baseUrl`          | `https://api.themoviedb.org/3`                      | API base URL. Useful for proxies and tests.                                                |
+| `fetch`            | `globalThis.fetch` at request time                  | Custom fetch implementation.                                                               |
+| `defaultLanguage`  | TMDB default                                        | Language for endpoints that accept `language`.                                             |
+| `defaultRegion`    | TMDB default                                        | Region for movie lists and search endpoints that accept `region`.                          |
+| `imageBaseUrl`     | `https://image.tmdb.org/t/p`                        | Image host used by `tmdb.images`.                                                          |
+| `images.transform` | none                                                | Default URL transform for `tmdb.images.url()`.                                             |
+| `headers`          | none                                                | Extra headers merged into every request before authentication.                             |
+| `transport`        | built-in HTTP client                                | Custom transport; credentials are not required. See [Custom transport](#custom-transport). |
 
 A typical client:
 
@@ -148,10 +150,10 @@ const stub: TMDBTransport = {
   get: async (path, _options) => ({ results: [] }),
 }
 
-const tmdb = createTMDB({ accessToken: 'your_access_token_here', transport: stub })
+const tmdb = createTMDB({ transport: stub })
 ```
 
-`transport.get()` runs for every resource and for `request()`, so a single stub covers the whole surface. `TMDBTransport` is part of the public API.
+`transport.get()` runs for every resource and for `request()`, so a single stub covers the whole surface. `TMDBTransport` is part of the public API. The built-in `TMDBHttpClient` is exported too, so you can wrap it instead of reimplementing authentication.
 
 ### Cancellation
 
@@ -165,7 +167,7 @@ controller.abort()
 await promise // rejects with an AbortError
 ```
 
-`client.request()` accepts the same `signal`. The SDK does not impose a timeout; combine the signal with your runtime's `AbortSignal.timeout()` when you need one.
+`client.request()` accepts the same `signal`. The SDK does not impose a timeout by default; use the optional `withTimeout()` helper (see [Optional helpers](#optional-helpers)) or your runtime's `AbortSignal.timeout()` when you need one.
 
 ### Supported resources
 
@@ -264,19 +266,23 @@ The SDK also exports `KNOWN_BACKDROP_SIZES`, `KNOWN_LOGO_SIZES`, `KNOWN_PROFILE_
 ### Errors
 
 ```ts
-import { TMDBRateLimitError, TMDBRequestError, TMDBResponseError } from 'tmdb-kit'
+import { TMDBRateLimitError, TMDBRequestError, TMDBResponseError, TMDBTimeoutError } from 'tmdb-kit'
 
 try {
   await tmdb.movies.popular()
 } catch (error) {
   if (error instanceof TMDBRateLimitError) {
-    // 429: TMDB asked the caller to back off. The SDK does not retry.
+    // 429: TMDB asked the caller to back off. The SDK does not retry by
+    // default; use retry() or withRetry() if you want automatic backoff.
     console.log('rate limited; retry in', error.retryAfter, 's')
   } else if (error instanceof TMDBResponseError) {
     console.log(error.status, error.statusCode, error.statusMessage)
   } else if (error instanceof TMDBRequestError) {
     // Network failure, missing fetch, or invalid client configuration.
     console.log('request error:', error.message)
+  } else if (error instanceof TMDBTimeoutError) {
+    // Thrown by withTimeout(), not by the HTTP layer.
+    console.log('timed out after', error.timeoutMs, 'ms')
   }
 }
 ```
@@ -291,7 +297,67 @@ try {
 | `isRateLimit`    | 429    |
 | `isServerError`  | 5xx    |
 
-All errors extend `TMDBError`, which you can use as a single catch-all.
+All errors extend `TMDBError`, which you can use as a single catch-all. `TMDBTimeoutError` is thrown by `withTimeout()` and exposes `timeoutMs`; the HTTP layer never throws it directly.
+
+### Optional helpers
+
+These helpers are opt-in and never change the default client behavior. They are exported from the package root and tree-shake out of ESM bundles when unused.
+
+**Pagination**
+
+```ts
+import { paginate, paginateItems } from 'tmdb-kit'
+
+for await (const page of paginate((page) => tmdb.movies.popular({ page, region: 'CN' }))) {
+  console.log(page.page, page.results.length)
+}
+
+// Or iterate items directly.
+for await (const movie of paginateItems((page) => tmdb.movies.popular({ page }))) {
+  console.log(movie.title)
+}
+```
+
+`startPage` defaults to 1. `paginate` stops at `total_pages`, an empty page, `endPage` (default 500), or an aborted signal. `endPage` is the last page number to request, so it yields nothing when it is lower than `startPage`.
+
+**Retry**
+
+```ts
+import { createTMDB, retry, TMDBHttpClient, withRetry } from 'tmdb-kit'
+
+// Wrap one call.
+const movie = await retry(() => tmdb.movies.details(550), { retries: 3 })
+
+// Or wrap the transport once. The transport owns authentication, so the
+// factory does not need credentials.
+const http = new TMDBHttpClient({ accessToken: 'your_access_token_here' })
+const retrying = createTMDB({ transport: withRetry(http, { retries: 3 }) })
+```
+
+Retries 429 and any response that carries `Retry-After` (including 503), retries 408, 5xx and network failures with exponential backoff, and leaves other errors untouched. Defaults are 2 retries, a 250 ms base delay, factor 2, full jitter, and a 60 s cap on `Retry-After`; use `retryOn` to replace the predicate and `onRetry` to observe delays. A wrapper-level `signal` and a per-request `signal` are combined, so aborting either cancels the call. The SDK itself still never retries by default.
+
+**Timeout**
+
+```ts
+import { withTimeout } from 'tmdb-kit'
+
+const movie = await withTimeout(5_000, (signal) => tmdb.movies.details(550, { signal }))
+```
+
+Timeouts reject with `TMDBTimeoutError`. The task must forward the signal to the SDK. Pass a parent `signal` in the options to cancel it externally; the parent's reason is preserved.
+
+**Memory cache**
+
+```ts
+import { createTMDB, TMDBHttpClient, withMemoryCache } from 'tmdb-kit'
+
+const http = new TMDBHttpClient({ accessToken: 'your_access_token_here' })
+const cached = createTMDB({
+  transport: withMemoryCache(http, { ttlMs: 60_000, maxEntries: 200 }),
+})
+```
+
+Defaults are a 5-minute TTL and 100 entries. The cache key includes the path, query, and headers, only successful responses are stored, and `clear()` invalidates every entry. Use one cache instance per client or credential: authentication is not part of the key.
 
 ## CLI
 
@@ -467,7 +533,7 @@ bun run test:coverage
 bun run build
 ```
 
-Run the integration suite with a real token. It exercises every SDK resource and the CLI against the live API:
+Run the integration suite with a real token. It exercises every SDK resource, the optional helpers, and the CLI against the live API:
 
 ```bash
 TMDB_ACCESS_TOKEN=your_access_token_here bun run test:integration
