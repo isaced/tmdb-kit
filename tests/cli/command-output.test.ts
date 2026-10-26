@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { runCommand } from 'citty'
 import { movieCommand } from '../../src/cli/commands/movie'
-import { movieDetails } from './fixtures'
+import { movieDetails, movieSummary, pagedResponse } from './fixtures'
 import { captureOutput, jsonResponse, mockFetch, useCliTestEnv } from './helpers'
 
 describe('command output', () => {
@@ -73,5 +73,122 @@ describe('command output', () => {
     expect(calls).toHaveLength(0)
     expect(JSON.parse(output.stderr())).toMatchObject({ kind: 'usage', exitCode: 2 })
     expect(process.exitCode).toBe(2)
+  })
+
+  it('streams list responses as NDJSON', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    mockFetch(() =>
+      jsonResponse(
+        pagedResponse([movieSummary(), movieSummary({ id: 2, title: 'Second' })], {
+          page: 1,
+          total_pages: 3,
+          total_results: 6,
+        }),
+      ),
+    )
+
+    const output = captureOutput()
+    await runCommand(movieCommand, { rawArgs: ['list', '--format', 'ndjson'] })
+
+    const lines = output
+      .stdout()
+      .trimEnd()
+      .split('\n')
+      .map((line) => JSON.parse(line))
+
+    expect(lines).toEqual([
+      { page: 1, total_pages: 3, total_results: 6, type: 'meta' },
+      { type: 'item', index: 0, value: movieSummary() },
+      { type: 'item', index: 1, value: movieSummary({ id: 2, title: 'Second' }) },
+      { type: 'summary', count: 2 },
+    ])
+  })
+
+  it('accepts jsonl as an NDJSON alias', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    mockFetch(() => jsonResponse(pagedResponse([movieSummary()])))
+
+    const output = captureOutput()
+    await runCommand(movieCommand, { rawArgs: ['list', '--format', 'jsonl'] })
+
+    expect(output.stdout().trimEnd().split('\n')).toHaveLength(3)
+  })
+
+  it('projects fields on every NDJSON item', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    mockFetch(() => jsonResponse(pagedResponse([movieSummary(), movieSummary({ id: 2 })])))
+
+    const output = captureOutput()
+    await runCommand(movieCommand, {
+      rawArgs: ['list', '--format', 'ndjson', '--fields', 'id,title'],
+    })
+
+    const items = output
+      .stdout()
+      .trimEnd()
+      .split('\n')
+      .map((line) => JSON.parse(line))
+      .filter((record) => record.type === 'item')
+
+    expect(items).toEqual([
+      { type: 'item', index: 0, value: { id: 1, title: 'Dune: Part Two' } },
+      { type: 'item', index: 1, value: { id: 2, title: 'Dune: Part Two' } },
+    ])
+  })
+
+  it('projects fields for JSON detail responses', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    mockFetch(() => jsonResponse(movieDetails()))
+
+    const output = captureOutput()
+    await runCommand(movieCommand, {
+      rawArgs: ['get', '693134', '--format', 'json', '--fields', 'id,title'],
+    })
+
+    expect(JSON.parse(output.stdout())).toEqual({ id: 693134, title: 'Dune: Part Two' })
+  })
+
+  it('reports unknown fields as a usage error', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    mockFetch(() => jsonResponse(movieDetails()))
+
+    const output = captureOutput()
+    await runCommand(movieCommand, {
+      rawArgs: ['get', '693134', '--format', 'json', '--fields', 'nope'],
+    })
+
+    expect(output.stdout()).toBe('')
+    expect(JSON.parse(output.stderr())).toMatchObject({
+      kind: 'usage',
+      exitCode: 2,
+      message: expect.stringContaining('Unknown --fields value(s): nope.'),
+    })
+    expect(process.exitCode).toBe(2)
+  })
+
+  it('rejects --fields without a JSON format', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    const { calls } = mockFetch(() => jsonResponse(movieDetails()))
+
+    const output = captureOutput()
+    await runCommand(movieCommand, { rawArgs: ['get', '693134', '--fields', 'id'] })
+
+    expect(calls).toHaveLength(0)
+    expect(output.stderr()).toBe('--fields requires --format json or ndjson.\n')
+    expect(process.exitCode).toBe(2)
+  })
+
+  it('rejects --json combined with --format ndjson', async () => {
+    process.env.TMDB_ACCESS_TOKEN = 'test-token'
+    const { calls } = mockFetch(() => jsonResponse(movieDetails()))
+
+    const output = captureOutput()
+    await runCommand(movieCommand, { rawArgs: ['get', '693134', '--json', '--format', 'ndjson'] })
+
+    expect(calls).toHaveLength(0)
+    expect(JSON.parse(output.stderr())).toMatchObject({
+      kind: 'usage',
+      message: '--json cannot be combined with --format ndjson.',
+    })
   })
 })
