@@ -38,8 +38,13 @@ jobs:
 
       - name: Publish package
         run: |
+          VERSION=$(bun -e "console.log(require('./package.json').version)")
           TAG=$(bun -e "const v=require('./package.json').version; const m=v.match(/-([a-z]+)/); console.log(m?m[1]:'latest')")
-          npm publish --provenance --access public --tag "$TAG"
+          if npm view "tmdb-kit@$VERSION" version > /dev/null 2>&1; then
+            echo "tmdb-kit@$VERSION is already on npm, skipping."
+          else
+            npm publish --provenance --access public --tag "$TAG"
+          fi
 
       - uses: actions/checkout@v7
       - name: Publish package (jsr)
