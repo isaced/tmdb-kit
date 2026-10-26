@@ -6,29 +6,67 @@
 [![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
 [![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/isaced/tmdb-kit/actions/workflows/ci.yml)
 
-A minimal, fully typed TMDB SDK with zero runtime dependencies. Built for Node.js, Bun, Deno, and edge runtimes.
+A minimal, fully typed SDK and read-only command-line interface (CLI) for The Movie Database (TMDB). Zero runtime dependencies. Built for Node.js, Bun, and edge runtimes.
 
-`tmdb-kit` covers the most common TMDB workflows — movies, TV shows, search, trending, people, genres, and more — with a small, hand-crafted API designed for day-to-day use.
+`tmdb-kit` covers common TMDB workflows: movies, TV shows, search, trending, people, genres, and images. Use it as a library, or run the bundled `tmdb` command in your terminal.
+
+## Contents
+
+- [Features](#features)
+- [Install](#install)
+- [SDK](#sdk)
+  - [Create a client](#create-a-client)
+  - [Authentication](#authentication)
+  - [Configuration](#configuration)
+  - [Custom transport](#custom-transport)
+  - [Supported resources](#supported-resources)
+  - [Image URLs](#image-urls)
+  - [Search](#search)
+  - [Image sizes](#image-sizes)
+  - [Errors](#errors)
+- [CLI](#cli)
+  - [Credentials and config](#credentials-and-config)
+  - [Commands](#commands)
+  - [Common options](#common-options)
+  - [Output and exit codes](#output-and-exit-codes)
+  - [Examples](#examples)
+- [Development](#development)
+- [References](#references)
 
 ## Features
 
-- **Zero dependencies** — nothing to audit, nothing to conflict.
-- **Universal runtime** — uses only `fetch`, `Headers`, `URL`, and `AbortSignal`. Works on Node.js 18+, Bun, Deno, Cloudflare Workers, Vercel Edge, and any fetch-compatible environment.
-- **Strict TypeScript** — full type safety with autocomplete for request options, response shapes, image sizes, and error handling.
-- **ESM + CommonJS** — dual-format output via Bun's bundler, ready for any module system.
-- **Typed resources** — first-class methods for movies, TV, search, trending, people, genres, configuration, and images.
-- **Injectable transport** — swap the HTTP layer for tests, caching, or instrumentation without mocking `fetch`.
-- **Image helpers** — build CDN / proxy / signed URLs with per-request transform overrides.
-- **Search type guards** — narrow `search.multi()` results to movies, TV, or people with runtime-checked helpers.
-- **100% test coverage** — comprehensive unit tests with mocked fetch; no real TMDB requests.
+- **Zero dependencies**: nothing to audit, nothing to conflict.
+- **Universal runtime**: uses only `fetch`, `Headers`, `URL`, and `AbortSignal`. Works on Node.js 18+, Bun, Cloudflare Workers, Vercel Edge, and any fetch-compatible environment.
+- **SDK and CLI**: typed resource methods for your app, plus `tmdb` and `tmdb-kit` binaries for terminal use.
+- **Strict TypeScript**: full type safety with autocomplete for request options, response shapes, image sizes, and error handling.
+- **ESM output**: modern module output with bundled type declarations.
+- **Typed resources**: first-class methods for movies, TV, search, trending, people, genres, configuration, and images.
+- **Injectable transport**: swap the HTTP layer for tests, caching, or instrumentation without mocking `fetch`.
+- **Image helpers**: build content delivery network (CDN), proxy, or signed URLs with per-request transform overrides.
+- **Search type guards**: narrow `search.multi()` results to movies, TV, or people with runtime-checked helpers.
+- **Tested**: unit and resource tests mock `fetch`; an optional live integration suite validates real API behavior.
 
 ## Install
+
+Install the SDK with npm:
 
 ```bash
 npm install tmdb-kit
 ```
 
-## Quick Start
+Install the CLI globally:
+
+```bash
+npm install --global tmdb-kit
+```
+
+The CLI is available as `tmdb`.
+
+## SDK
+
+Create a client, authenticate, and call typed resource methods. The client uses the Fetch API and has no runtime dependencies.
+
+### Create a client
 
 ```ts
 import { createTMDB } from 'tmdb-kit'
@@ -46,79 +84,60 @@ const movie = await tmdb.movies.details(popular.results[0]!.id, {
 const posterUrl = tmdb.images.url(movie.poster_path, 'w500')
 ```
 
-CommonJS:
+### Authentication
 
-```js
-const { createTMDB } = require('tmdb-kit')
+The SDK targets the TMDB v3 API at `api.themoviedb.org/3`. Two authentication methods are supported.
 
-const tmdb = createTMDB({ accessToken: process.env.TMDB_ACCESS_TOKEN })
-```
-
-Deno:
+An API Read Access Token is recommended and works with both v3 and v4:
 
 ```ts
-import { createTMDB } from 'npm:tmdb-kit'
-
-const tmdb = createTMDB({ accessToken: Deno.env.get('TMDB_ACCESS_TOKEN')! })
+createTMDB({ accessToken: 'your_access_token_here' })
 ```
 
-## Authentication
-
-The SDK targets the **TMDB v3 API** (`api.themoviedb.org/3`). Two authentication methods are supported:
-
-**API Read Access Token** (recommended) — works with both v3 and v4:
+A legacy v3 API key is sent as an `api_key` query parameter:
 
 ```ts
-createTMDB({ accessToken: 'tmdb-read-access-token' })
+createTMDB({ apiKey: 'your_api_key_here' })
 ```
 
-**Legacy v3 API key** — sent as an `api_key` query parameter:
+Pass exactly one of `accessToken` or `apiKey`. The client throws when both or neither are set.
+
+### Configuration
+
+`createTMDB` accepts these options:
+
+| Option             | Default                              | Description                                                       |
+| ------------------ | ------------------------------------ | ----------------------------------------------------------------- |
+| `accessToken`      | required unless `apiKey` is set      | API Read Access Token, sent as a Bearer header.                   |
+| `apiKey`           | required unless `accessToken` is set | Legacy v3 API key, sent as `api_key`.                             |
+| `baseUrl`          | `https://api.themoviedb.org/3`       | API base URL. Useful for proxies and tests.                       |
+| `fetch`            | `globalThis.fetch` at request time   | Custom fetch implementation.                                      |
+| `defaultLanguage`  | TMDB default                         | Language for endpoints that accept `language`.                    |
+| `defaultRegion`    | TMDB default                         | Region for movie lists and search endpoints that accept `region`. |
+| `imageBaseUrl`     | `https://image.tmdb.org/t/p`         | Image host used by `tmdb.images`.                                 |
+| `images.transform` | none                                 | Default URL transform for `tmdb.images.url()`.                    |
+| `headers`          | none                                 | Extra headers merged into every request before authentication.    |
+| `transport`        | built-in HTTP client                 | Custom transport, see [Custom transport](#custom-transport).      |
+
+A typical client:
 
 ```ts
-createTMDB({ apiKey: 'tmdb-v3-api-key' })
-```
-
-Exactly one of `accessToken` or `apiKey` is required.
-
-## Configuration
-
-The factory accepts a few options beyond authentication:
-
-```ts
-import { createTMDB } from 'tmdb-kit'
-
 const tmdb = createTMDB({
-  accessToken: 'tmdb-read-access-token',
-
-  // Defaults to https://api.themoviedb.org/3. Useful for tests or proxies.
-  baseUrl: 'https://api.themoviedb.org/3',
-
-  // Inject a fetch implementation. The SDK reads `globalThis.fetch` lazily
-  // on every request, so test-time mocks (vi.spyOn, etc.) are picked up
-  // automatically after the client has been constructed.
-  fetch: customFetch,
-
-  // Defaults applied to every request that supports them.
+  accessToken: 'your_access_token_here',
   defaultLanguage: 'en-US',
   defaultRegion: 'US',
-
-  // Custom image host. Defaults to https://image.tmdb.org/t/p.
-  imageBaseUrl: 'https://image.tmdb.org/t/p',
-
-  // Image URL transform applied by the ImagesHelper. See "Image URLs".
+  headers: { 'X-Client': 'my-app' },
   images: {
     transform: (url) => url.replace('image.tmdb.org/t/p', 'img-proxy.example/tmdb'),
   },
-
-  // Extra headers merged into every request before authentication.
-  headers: { 'X-Client': 'my-app' },
 })
 ```
 
-### Injecting a custom transport
+The SDK reads `globalThis.fetch` lazily on every request. Spies on `globalThis.fetch` are picked up after the client has been constructed.
 
-For tests, caching, or instrumentation, you can swap the entire transport
-layer instead of mocking `fetch`:
+### Custom transport
+
+For tests, caching, or instrumentation, swap the entire transport layer instead of mocking `fetch`:
 
 ```ts
 import { createTMDB, type TMDBTransport } from 'tmdb-kit'
@@ -128,64 +147,25 @@ const stub: TMDBTransport = {
   get: async (path, _options) => ({ results: [] }),
 }
 
-const tmdb = createTMDB({ accessToken: 'x', transport: stub })
+const tmdb = createTMDB({ accessToken: 'your_access_token_here', transport: stub })
 ```
 
-`transport.get()` is called for every resource and for the `request()`
-escape hatch, so a single stub covers the whole surface area.
-`TMDBTransport` is exported as part of the public API.
+`transport.get()` runs for every resource and for `request()`, so a single stub covers the whole surface. `TMDBTransport` is part of the public API.
 
-## Supported Resources
+### Supported resources
 
-```ts
-tmdb.movies.popular()
-tmdb.movies.topRated()
-tmdb.movies.nowPlaying()
-tmdb.movies.upcoming()
-tmdb.movies.details(550, { appendToResponse: ['credits', 'videos'] })
-tmdb.movies.credits(550)
-tmdb.movies.images(550)
-tmdb.movies.recommendations(550)
-tmdb.movies.similar(550)
-tmdb.movies.videos(550)
+| Resource             | Methods                                                                                                                                                         |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tmdb.movies`        | `popular()`, `topRated()`, `nowPlaying()`, `upcoming()`, `details()`, `credits()`, `images()`, `recommendations()`, `similar()`, `videos()`                     |
+| `tmdb.tv`            | `popular()`, `topRated()`, `airingToday()`, `onTheAir()`, `details()`, `credits()`, `images()`, `recommendations()`, `similar()`, `videos()`, `seasonDetails()` |
+| `tmdb.search`        | `movies()`, `tv()`, `people()`, `multi()`                                                                                                                       |
+| `tmdb.trending`      | `all()`, `movies()`, `tv()`, `people()`                                                                                                                         |
+| `tmdb.people`        | `popular()`, `details()`, `combinedCredits()`                                                                                                                   |
+| `tmdb.genres`        | `movies()`, `tv()`                                                                                                                                              |
+| `tmdb.configuration` | `details()`, `countries()`, `jobs()`, `languages()`, `primaryTranslations()`, `timezones()`                                                                     |
+| `tmdb.images`        | `url()`                                                                                                                                                         |
 
-tmdb.tv.popular()
-tmdb.tv.topRated()
-tmdb.tv.airingToday()
-tmdb.tv.onTheAir()
-tmdb.tv.details(1399)
-tmdb.tv.credits(1399)
-tmdb.tv.images(1399)
-tmdb.tv.recommendations(1399)
-tmdb.tv.similar(1399)
-tmdb.tv.videos(1399)
-tmdb.tv.seasonDetails(1399, 1)
-
-tmdb.search.movies('Dune')
-tmdb.search.tv('Dark')
-tmdb.search.people('Sofia Coppola')
-tmdb.search.multi('Tom Hardy')
-
-tmdb.trending.all('week')
-tmdb.trending.movies('day')
-tmdb.trending.tv('day')
-tmdb.trending.people('week')
-
-tmdb.people.popular()
-tmdb.people.details(31)
-
-tmdb.genres.movies()
-tmdb.genres.tv()
-
-tmdb.configuration.details()
-tmdb.configuration.countries()
-tmdb.configuration.jobs()
-tmdb.configuration.languages()
-tmdb.configuration.primaryTranslations()
-tmdb.configuration.timezones()
-```
-
-For an endpoint that is not wrapped yet:
+For an endpoint that is not wrapped yet, use the `request()` escape hatch:
 
 ```ts
 const response = await tmdb.request<{ results: unknown[] }>('/discover/movie', {
@@ -196,34 +176,29 @@ const response = await tmdb.request<{ results: unknown[] }>('/discover/movie', {
 })
 ```
 
-## Image URLs
+### Image URLs
 
-`tmdb.images.url(path, size)` builds a fully-qualified image URL. The
-helper returns `null` for nullish paths so UI code can branch naturally:
+`tmdb.images.url(path, size)` builds a fully qualified image URL. It returns `null` for nullish paths so UI code can branch naturally:
 
 ```ts
 const posterUrl = tmdb.images.url(movie.poster_path, 'w500')
 ```
 
-### Routing images through a CDN or proxy
-
-Pass a `transform` callback to rewrite the resolved URL. The most common
-use case is pointing TMDB image requests at a self-hosted proxy:
+Pass a `transform` callback to route images through a CDN or proxy:
 
 ```ts
 const tmdb = createTMDB({
-  accessToken: 'x',
+  accessToken: 'your_access_token_here',
   images: {
     transform: (url) => url.replace('https://image.tmdb.org/t/p', 'https://img-proxy.example/tmdb'),
   },
 })
 
 tmdb.images.url('/abc.jpg', 'w500')
-// → 'https://img-proxy.example/tmdb/w500/abc.jpg'
+// 'https://img-proxy.example/tmdb/w500/abc.jpg'
 ```
 
-You can also pass a one-off transform per call — useful for adding
-signed query parameters for selected sizes:
+Pass a one-off transform per call to add signed query parameters:
 
 ```ts
 tmdb.images.url('/abc.jpg', 'original', {
@@ -231,17 +206,11 @@ tmdb.images.url('/abc.jpg', 'original', {
 })
 ```
 
-The transform is never invoked for nullish paths, so `null` results stay
-`null`.
+The transform is never invoked for nullish paths, so `null` results stay `null`. `buildImageUrl(path, size, options)` is exported for callers that build URLs without a `TMDBClient` instance.
 
-`buildImageUrl(path, size, options)` is exported directly for callers
-that want to build URLs without a `TMDBClient` instance.
+### Search
 
-## Search
-
-`search.multi()` returns a union of movie / TV / person results. Filter
-out media types you do not want and narrow the result type with the
-provided type guards:
+`search.multi()` returns a union of movie, TV, and person results. Filter media types and narrow the result type with the provided type guards:
 
 ```ts
 import { createTMDB, isMovieSearchResult, isTVSearchResult, isPersonSearchResult } from 'tmdb-kit'
@@ -255,53 +224,29 @@ const tvShows = results.filter(isTVSearchResult) // TVMultiResult[]
 const people = results.filter(isPersonSearchResult) // PersonMultiResult[]
 ```
 
-- `exclude` performs client-side filtering — the TMDB multi-search
-  endpoint has no server-side media_type filter. `total_results` reflects
-  the unfiltered payload; the filtered count is just `results.length`.
-- Short-name aliases `isMovie` / `isTV` / `isPerson` are also exported
-  for callers that prefer them.
-- The single-resource search methods (`search.movies`, `search.tv`,
-  `search.people`) already return the narrowed result type, so the
-  guards are only useful for `search.multi()` payloads.
+`exclude` performs client-side filtering because the TMDB multi-search endpoint has no server-side media type filter. `total_results` reflects the unfiltered payload, and the filtered count is `results.length`.
 
-## Image Sizes
+The short-name aliases `isMovie`, `isTV`, and `isPerson` are also exported. The single-resource search methods already return narrowed types, so the guards matter only for `search.multi()`.
 
-The `ImageSize` type is intentionally permissive — TMDB has added new
-sizes in the past (e.g. `h632` for profile) without notice, and the SDK
-keeps the `(string & {})` escape hatch so any future size keeps
-working at runtime. If you need the canonical set of documented sizes,
-the SDK ships them as readonly constants:
+### Image sizes
+
+The `ImageSize` type is intentionally permissive. TMDB has added sizes without notice, such as `h632` for profiles, so the SDK keeps the `(string & {})` escape hatch for forward compatibility. The SDK also ships the documented sizes as readonly constants:
 
 ```ts
-import {
-  KNOWN_BACKDROP_SIZES,
-  KNOWN_LOGO_SIZES,
-  KNOWN_POSTER_SIZES,
-  KNOWN_PROFILE_SIZES,
-  KNOWN_STILL_SIZES,
-  KNOWN_IMAGE_SIZES,
-  isKnownBackdropSize,
-  isKnownImageSize,
-  // …plus one helper per type
-} from 'tmdb-kit'
+import { KNOWN_POSTER_SIZES, isKnownPosterSize } from 'tmdb-kit'
 
-// Iterate to build a size picker
 for (const size of KNOWN_POSTER_SIZES) {
   console.log(size) // 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original'
 }
 
-// Validate user-supplied sizes at runtime
 if (!isKnownPosterSize(userInput)) {
   throw new Error(`Unknown TMDB poster size: ${userInput}`)
 }
 ```
 
-`KnownBackdropSize` / `KnownPosterSize` / `KnownLogoSize` /
-`KnownProfileSize` / `KnownStillSize` / `KnownImageSize` are the
-matching TS literal-union types for callers that want strict typing
-without giving up forward-compatibility.
+The SDK also exports `KNOWN_BACKDROP_SIZES`, `KNOWN_LOGO_SIZES`, `KNOWN_PROFILE_SIZES`, `KNOWN_STILL_SIZES`, `KNOWN_IMAGE_SIZES`, and a matching type guard for each list. The literal-union types are `KnownBackdropSize`, `KnownPosterSize`, `KnownLogoSize`, `KnownProfileSize`, `KnownStillSize`, and `KnownImageSize`.
 
-## Errors
+### Errors
 
 ```ts
 import { TMDBRateLimitError, TMDBRequestError, TMDBResponseError } from 'tmdb-kit'
@@ -310,22 +255,18 @@ try {
   await tmdb.movies.popular()
 } catch (error) {
   if (error instanceof TMDBRateLimitError) {
-    // 429 — TMDB asked the caller to back off. The SDK does NOT retry
-    // automatically; back off for `retryAfter` seconds (or use your own
-    // policy) and try again.
+    // 429: TMDB asked the caller to back off. The SDK does not retry.
     console.log('rate limited; retry in', error.retryAfter, 's')
   } else if (error instanceof TMDBResponseError) {
     console.log(error.status, error.statusCode, error.statusMessage)
   } else if (error instanceof TMDBRequestError) {
-    // Thrown when a request fails before receiving a response (e.g. network
-    // error, no fetch implementation found, or invalid client configuration).
+    // Network failure, missing fetch, or invalid client configuration.
     console.log('request error:', error.message)
   }
 }
 ```
 
-`TMDBResponseError` exposes convenience getters for the most common
-status codes:
+`TMDBResponseError` exposes convenience getters for common status codes:
 
 | Getter           | Status |
 | ---------------- | ------ |
@@ -335,12 +276,159 @@ status codes:
 | `isRateLimit`    | 429    |
 | `isServerError`  | 5xx    |
 
-All errors are also instances of the base class `TMDBError`; use that
-when you want a single catch-all.
+All errors extend `TMDBError`, which you can use as a single catch-all.
+
+## CLI
+
+The `tmdb` command is a read-only client for the same TMDB API. It reads credentials from the environment or a config file, prints human-readable summaries by default, and accepts `--json` for raw TMDB payloads.
+
+The CLI runs on Node.js 18+ and Bun.
+
+### Credentials and config
+
+The CLI checks credentials in this order:
+
+1. `TMDB_ACCESS_TOKEN`
+2. `TMDB_API_KEY` (legacy v3 API key)
+3. `accessToken` in the config file
+4. `apiKey` in the config file
+
+Environment variables take precedence over the config file. `TMDB_BASE_URL` overrides the API base URL for every command.
+
+The config file lives at:
+
+- Windows: `%APPDATA%\tmdb\config.json`
+- macOS and Linux: `$XDG_CONFIG_HOME/tmdb/config.json`, or `~/.config/tmdb/config.json` when `XDG_CONFIG_HOME` is unset
+
+On Unix, the directory is created with mode `0700` and the file with mode `0600`.
+
+Set up credentials with the auth commands:
+
+```bash
+tmdb auth login                    # prompt, validate, and save a credential
+tmdb auth login --force            # replace existing credentials
+printf '%s' "$TMDB_ACCESS_TOKEN" | tmdb auth login --token-stdin --force
+tmdb auth status                   # source, masked token, and config path
+tmdb auth logout                   # remove saved credentials
+tmdb config test                   # verify credentials with a TMDB request
+```
+
+`auth login` validates the credential with a TMDB request before saving it. `config test` performs the same check without changing the config. Use `--force` to replace existing credentials, or to save a config token while an environment variable is set and stdin is not a TTY.
+
+Manage defaults with `config`:
+
+```bash
+tmdb config set language zh-CN
+tmdb config set region CN
+tmdb config set token              # prompts; secrets are not accepted as arguments
+tmdb config unset language
+tmdb config show                   # masked values and config path
+tmdb config path
+```
+
+Config keys are `token` or `accessToken`, `api-key` or `apiKey`, `language`, and `region`. Secrets entered with `config set token` or `config set api-key` are read from a prompt, never from the command line. `auth status` and `config show` mask stored secrets.
+
+Use `--lang` to override the config language for a single command. `auth logout` removes saved credentials but leaves environment variables in place.
+
+### Commands
+
+Every API command accepts `--lang` and `--json`. Run `tmdb <command> --help` for the full option list.
+
+| Command                           | Description                                                                       | Command options              |
+| --------------------------------- | --------------------------------------------------------------------------------- | ---------------------------- |
+| `tmdb search <query>`             | Search all media, movies, TV, or people.                                          | `--type`, `--year`, `--page` |
+| `tmdb movie list [category]`      | List movies. Default `popular`; also `top-rated`, `now-playing`, `upcoming`.      | `--page`, `--region`         |
+| `tmdb movie get <id>`             | Movie details.                                                                    | `--append`                   |
+| `tmdb movie credits <id>`         | Movie cast and crew.                                                              | `--limit`                    |
+| `tmdb movie images <id>`          | Movie image URLs.                                                                 | `--image-language`           |
+| `tmdb movie videos <id>`          | Movie videos and trailers.                                                        | none                         |
+| `tmdb movie similar <id>`         | Similar movies.                                                                   | `--page`, `--region`         |
+| `tmdb movie recommendations <id>` | Recommended movies.                                                               | `--page`, `--region`         |
+| `tmdb tv list [category]`         | List TV shows. Default `popular`; also `top-rated`, `airing-today`, `on-the-air`. | `--page`                     |
+| `tmdb tv get <id>`                | TV show details.                                                                  | `--append`                   |
+| `tmdb tv credits <id>`            | TV cast and crew.                                                                 | `--limit`                    |
+| `tmdb tv images <id>`             | TV image URLs.                                                                    | `--image-language`           |
+| `tmdb tv videos <id>`             | TV videos and trailers.                                                           | none                         |
+| `tmdb tv similar <id>`            | Similar TV shows.                                                                 | `--page`                     |
+| `tmdb tv recommendations <id>`    | Recommended TV shows.                                                             | `--page`                     |
+| `tmdb tv season <id> <season>`    | TV season and episodes. Use `0` for specials.                                     | none                         |
+| `tmdb person get <id>`            | Person details.                                                                   | none                         |
+| `tmdb person credits <id>`        | Combined cast and crew credits.                                                   | `--limit`                    |
+| `tmdb trending [type]`            | Trending media. Default `all`; also `movie`, `tv`, `person`.                      | `--window`, `--page`         |
+| `tmdb genres [type]`              | Genres. Default `movie`; also `tv`.                                               | none                         |
+
+Credential and config commands:
+
+| Command                         | Description                                            | Command options            |
+| ------------------------------- | ------------------------------------------------------ | -------------------------- |
+| `tmdb auth login`               | Validate and save credentials.                         | `--token-stdin`, `--force` |
+| `tmdb auth status`              | Show credential source, masked token, and config path. | `--json`                   |
+| `tmdb auth logout`              | Remove saved credentials.                              | none                       |
+| `tmdb config show`              | Show config values with secrets masked.                | `--json`                   |
+| `tmdb config path`              | Print the config file path.                            | none                       |
+| `tmdb config test`              | Verify credentials with an authenticated request.      | `--json`                   |
+| `tmdb config set <key> [value]` | Set `token`, `api-key`, `language`, or `region`.       | none                       |
+| `tmdb config unset <key>`       | Remove a config value.                                 | none                       |
+
+### Common options
+
+| Option                    | Description                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| `--json`                  | Print the raw TMDB JSON response instead of the formatted summary.                 |
+| `--lang <code>`           | Language for this command. Defaults to config `language`, then `en-US`.            |
+| `--page <number>`         | Page number. Defaults to `1`.                                                      |
+| `--region <code>`         | Region for movie lists, similar, and recommendations. Defaults to config `region`. |
+| `--limit <number>`        | Maximum rows for credits. Defaults to `10`.                                        |
+| `--append <list>`         | Comma-separated `append_to_response` values, such as `credits,videos`.             |
+| `--image-language <list>` | Comma-separated image language codes.                                              |
+| `--year <year>`           | Movie release year or TV first-air year. Only with `--type movie` or `--type tv`.  |
+| `--type <value>`          | Media selector for `search`: `all`, `movie`, `tv`, or `person`.                    |
+| `--window <day\|week>`    | Trending window. Defaults to `week`.                                               |
+
+`--version` prints the CLI version.
+
+### Output and exit codes
+
+The default output is a compact summary for reading in a terminal. Use `--json` for scripts:
+
+```bash
+tmdb movie get 550 --json | jq '.title, .release_date'
+```
+
+Exit codes:
+
+| Code | Meaning                                                        |
+| ---- | -------------------------------------------------------------- |
+| `0`  | Success.                                                       |
+| `1`  | Unexpected error, network failure, or non-auth TMDB response.  |
+| `2`  | Invalid command usage or input.                                |
+| `3`  | Missing or rejected credentials, or a config read/write error. |
+| `4`  | TMDB returned `404 Not Found`.                                 |
+| `5`  | TMDB rate limit (`429 Too Many Requests`).                     |
+
+### Examples
+
+```bash
+# Search movies released in 2010
+tmdb search "Inception" --type movie --year 2010
+
+# Movie details with credits and videos
+tmdb movie get 550 --append credits,videos
+
+# Trending movies today, raw JSON
+tmdb trending movie --window day --json | jq '.results[].title'
+
+# Season 1 episodes for a TV show
+tmdb tv season 1399 1 --json | jq '.episodes[].name'
+
+# Save defaults for later commands
+tmdb config set language zh-CN
+tmdb config set region CN
+```
 
 ## Development
 
-Requires [Bun](https://bun.sh) 1.4.4+ (the published package still runs on Node.js 18+).
+Requires [Bun](https://bun.sh) 1.4.4+. The published package still runs on Node.js 18+.
 
 ```bash
 bun install
@@ -348,6 +436,19 @@ bun run format
 bun run typecheck
 bun run test:coverage
 bun run build
+```
+
+Run the integration suite with a real token:
+
+```bash
+TMDB_ACCESS_TOKEN=your_access_token_here bun run test:integration
+```
+
+Build and run the CLI from source:
+
+```bash
+bun run build:cli
+bun dist/cli.js --help
 ```
 
 ## References
