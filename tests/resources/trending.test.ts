@@ -18,7 +18,7 @@ describe('TrendingResource', () => {
       fetch: mock.fetch,
     })
 
-    await tmdb.trending.all('week', { language: 'en-US' })
+    await tmdb.trending.all('week', { language: 'en-US', page: 3 })
     await tmdb.trending.movies()
     await tmdb.trending.tv('day')
     await tmdb.trending.people('week')
@@ -33,6 +33,7 @@ describe('TrendingResource', () => {
       path: '/3/trending/all/week',
       query: {
         language: 'en-US',
+        page: '3',
       },
     })
     expectRequest(mock.calls[1]!, {

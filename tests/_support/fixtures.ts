@@ -4,6 +4,7 @@ import type {
   GenresResponse,
   ImagesResponse,
   PagedResponse,
+  PersonCombinedCreditsResponse,
   TVSeasonDetails,
   VideosResponse,
 } from '../../src'
@@ -30,6 +31,12 @@ export const tvDetails = {
 export const personDetails = {
   id: 31,
   name: 'Tom Hanks',
+}
+
+export const combinedCreditsResponse: PersonCombinedCreditsResponse = {
+  cast: [],
+  crew: [],
+  id: 31,
 }
 
 export const creditsResponse: CreditsResponse = {
