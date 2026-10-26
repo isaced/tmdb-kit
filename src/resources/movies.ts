@@ -4,6 +4,7 @@ import type {
   CreditsResponse,
   ImageQueryOptions,
   ImagesResponse,
+  LanguageOptions,
   ListOptions,
   MovieDetails,
   MovieDetailsOptions,
@@ -28,24 +29,28 @@ export class MoviesResource {
   popular(options: ListOptions = {}): Promise<PagedResponse<MovieSummary>> {
     return this.#transport.get('/movie/popular', {
       query: movieListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
   topRated(options: ListOptions = {}): Promise<PagedResponse<MovieSummary>> {
     return this.#transport.get('/movie/top_rated', {
       query: movieListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
   nowPlaying(options: ListOptions = {}): Promise<PagedResponse<MovieSummary>> {
     return this.#transport.get('/movie/now_playing', {
       query: movieListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
   upcoming(options: ListOptions = {}): Promise<PagedResponse<MovieSummary>> {
     return this.#transport.get('/movie/upcoming', {
       query: movieListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
@@ -58,14 +63,16 @@ export class MoviesResource {
         append_to_response: toCommaList(options.appendToResponse),
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
-  credits(movieId: number, options: Pick<ListOptions, 'language'> = {}): Promise<CreditsResponse> {
+  credits(movieId: number, options: LanguageOptions = {}): Promise<CreditsResponse> {
     return this.#transport.get(`/movie/${toId(movieId, 'movieId')}/credits`, {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
@@ -75,6 +82,7 @@ export class MoviesResource {
         include_image_language: toCommaList(options.includeImageLanguage),
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
@@ -84,20 +92,23 @@ export class MoviesResource {
   ): Promise<PagedResponse<MovieSummary>> {
     return this.#transport.get(`/movie/${toId(movieId, 'movieId')}/recommendations`, {
       query: movieListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
   similar(movieId: number, options: ListOptions = {}): Promise<PagedResponse<MovieSummary>> {
     return this.#transport.get(`/movie/${toId(movieId, 'movieId')}/similar`, {
       query: movieListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
-  videos(movieId: number, options: Pick<ListOptions, 'language'> = {}): Promise<VideosResponse> {
+  videos(movieId: number, options: LanguageOptions = {}): Promise<VideosResponse> {
     return this.#transport.get(`/movie/${toId(movieId, 'movieId')}/videos`, {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 }

@@ -19,6 +19,7 @@ A minimal, fully typed SDK and read-only command-line interface (CLI) for The Mo
   - [Authentication](#authentication)
   - [Configuration](#configuration)
   - [Custom transport](#custom-transport)
+  - [Cancellation](#cancellation)
   - [Supported resources](#supported-resources)
   - [Image URLs](#image-urls)
   - [Search](#search)
@@ -151,6 +152,20 @@ const tmdb = createTMDB({ accessToken: 'your_access_token_here', transport: stub
 ```
 
 `transport.get()` runs for every resource and for `request()`, so a single stub covers the whole surface. `TMDBTransport` is part of the public API.
+
+### Cancellation
+
+Every resource method accepts an `AbortSignal` through its options. Pass the same signal to cancel one or more requests:
+
+```ts
+const controller = new AbortController()
+const promise = tmdb.movies.popular({ signal: controller.signal })
+
+controller.abort()
+await promise // rejects with an AbortError
+```
+
+`client.request()` accepts the same `signal`. The SDK does not impose a timeout; combine the signal with your runtime's `AbortSignal.timeout()` when you need one.
 
 ### Supported resources
 

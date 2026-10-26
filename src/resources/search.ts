@@ -29,12 +29,14 @@ export class SearchResource {
   ): Promise<PagedResponse<MovieSearchResult>> {
     return this.#transport.get('/search/movie', {
       query: movieSearchQuery(this.#transport, query, options),
+      signal: options.signal,
     })
   }
 
   tv(query: string, options: TVSearchOptions = {}): Promise<PagedResponse<TVSearchResult>> {
     return this.#transport.get('/search/tv', {
       query: tvSearchQuery(this.#transport, query, options),
+      signal: options.signal,
     })
   }
 
@@ -44,6 +46,7 @@ export class SearchResource {
   ): Promise<PagedResponse<PersonSearchResult>> {
     return this.#transport.get('/search/person', {
       query: commonSearchQuery(this.#transport, query, options),
+      signal: options.signal,
     })
   }
 
@@ -53,6 +56,7 @@ export class SearchResource {
   ): Promise<PagedResponse<SearchMultiResult>> {
     const response = await this.#transport.get<PagedResponse<SearchMultiResult>>('/search/multi', {
       query: commonSearchQuery(this.#transport, query, options),
+      signal: options.signal,
     })
 
     const excluded = options.exclude

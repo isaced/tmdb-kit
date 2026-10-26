@@ -19,6 +19,7 @@ export class GenresResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
@@ -27,6 +28,7 @@ export class GenresResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 }

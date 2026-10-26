@@ -1,5 +1,12 @@
 import type { TMDBTransport } from '../http'
-import type { Configuration, Country, JobDepartment, Language, Timezone } from '../types'
+import type {
+  Configuration,
+  Country,
+  JobDepartment,
+  Language,
+  RequestOptions,
+  Timezone,
+} from '../types'
 
 /**
  * Access TMDB configuration data (image sizes, countries, languages, etc.).
@@ -13,27 +20,29 @@ export class ConfigurationResource {
     this.#transport = transport
   }
 
-  details(): Promise<Configuration> {
-    return this.#transport.get('/configuration')
+  details(options: RequestOptions = {}): Promise<Configuration> {
+    return this.#transport.get('/configuration', { signal: options.signal })
   }
 
-  countries(): Promise<Country[]> {
-    return this.#transport.get('/configuration/countries')
+  countries(options: RequestOptions = {}): Promise<Country[]> {
+    return this.#transport.get('/configuration/countries', { signal: options.signal })
   }
 
-  jobs(): Promise<JobDepartment[]> {
-    return this.#transport.get('/configuration/jobs')
+  jobs(options: RequestOptions = {}): Promise<JobDepartment[]> {
+    return this.#transport.get('/configuration/jobs', { signal: options.signal })
   }
 
-  languages(): Promise<Language[]> {
-    return this.#transport.get('/configuration/languages')
+  languages(options: RequestOptions = {}): Promise<Language[]> {
+    return this.#transport.get('/configuration/languages', { signal: options.signal })
   }
 
-  primaryTranslations(): Promise<string[]> {
-    return this.#transport.get('/configuration/primary_translations')
+  primaryTranslations(options: RequestOptions = {}): Promise<string[]> {
+    return this.#transport.get('/configuration/primary_translations', {
+      signal: options.signal,
+    })
   }
 
-  timezones(): Promise<Timezone[]> {
-    return this.#transport.get('/configuration/timezones')
+  timezones(options: RequestOptions = {}): Promise<Timezone[]> {
+    return this.#transport.get('/configuration/timezones', { signal: options.signal })
   }
 }

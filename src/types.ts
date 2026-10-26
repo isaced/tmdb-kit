@@ -677,13 +677,19 @@ export type TVAppendToResponse =
   | 'watch/providers'
   | (string & {})
 
-export interface ListOptions {
+/** Per-request options shared by every resource method. */
+export interface RequestOptions {
+  /** AbortSignal used to cancel the underlying request. */
+  signal?: AbortSignal
+}
+
+export interface ListOptions extends RequestOptions {
   language?: LanguageCode
   page?: number
   region?: RegionCode
 }
 
-export interface LanguageOptions {
+export interface LanguageOptions extends RequestOptions {
   language?: LanguageCode
 }
 

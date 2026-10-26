@@ -24,6 +24,7 @@ export class PeopleResource {
   popular(options: Omit<ListOptions, 'region'> = {}): Promise<PagedResponse<PersonSummary>> {
     return this.#transport.get('/person/popular', {
       query: peopleListQuery(this.#transport, options),
+      signal: options.signal,
     })
   }
 
@@ -32,6 +33,7 @@ export class PeopleResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 
@@ -43,6 +45,7 @@ export class PeopleResource {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
       }),
+      signal: options.signal,
     })
   }
 }

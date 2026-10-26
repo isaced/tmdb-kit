@@ -98,6 +98,7 @@ export type {
   ProductionCountry,
   ProfileSize,
   RegionCode,
+  RequestOptions,
   SearchMultiResult,
   TVMultiResult,
   EpisodeAppendToResponse,
