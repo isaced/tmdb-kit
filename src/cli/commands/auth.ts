@@ -2,6 +2,10 @@ import { existsSync } from 'node:fs'
 import { defineCommand } from 'citty'
 import { createTMDB, TMDBResponseError } from '../../index'
 import { getConfigPath, readConfig, writeConfig } from '../config'
+import {
+  detectCredential,
+  unrecognizedCredentialMessage,
+} from '../credential-format'
 import { resolveCredentials, type ResolvedCredentials } from '../credentials'
 import { CliError, errorMessage, exitCodeFor, runSafely } from '../errors'
 import { printJson } from '../format'
@@ -18,12 +22,12 @@ export const authCommand = defineCommand({
     login: defineCommand({
       meta: {
         name: 'login',
-        description: 'Validate and save a TMDB API Read Access Token',
+        description: 'Validate and save TMDB API credentials',
       },
       args: {
         'token-stdin': {
           type: 'boolean',
-          description: 'Read the token from stdin instead of prompting',
+          description: 'Read the credential from stdin instead of prompting',
         },
         force: {
           type: 'boolean',
@@ -51,20 +55,28 @@ export const authCommand = defineCommand({
             }
           }
 
-          const token = args['token-stdin']
+          const input = args['token-stdin']
             ? await readStdinSecret()
-            : await promptForToken()
+            : await promptForCredential()
 
-          if (!token) {
-            throw new CliError('Token must not be empty.', 2)
+          if (!input) {
+            throw new CliError('Credential must not be empty.', 2)
+          }
+
+          const credential = detectCredential(input)
+          if (!credential) {
+            throw new CliError(unrecognizedCredentialMessage(), 2)
           }
 
           const config = readConfig()
-          const client = createTMDB({
-            accessToken: token,
+          const common = {
             baseUrl: process.env.TMDB_BASE_URL,
             defaultLanguage: config.language ?? 'en-US',
-          })
+          }
+          const client =
+            credential.kind === 'accessToken'
+              ? createTMDB({ accessToken: credential.value, ...common })
+              : createTMDB({ apiKey: credential.value, ...common })
 
           try {
             await client.movies.details(550)
@@ -75,8 +87,8 @@ export const authCommand = defineCommand({
             ) {
               throw new CliError(
                 [
-                  'Token validation failed: TMDB rejected the token.',
-                  'Make sure you copied the API Read Access Token, not the legacy API Key.',
+                  'Credential validation failed: TMDB rejected the credential.',
+                  'Make sure you copied the API Read Access Token or API Key correctly.',
                   'Existing config was not changed.',
                 ].join('\n'),
                 3,
@@ -84,17 +96,24 @@ export const authCommand = defineCommand({
             }
 
             throw new CliError(
-              `Token validation failed; existing config was not changed.\n${errorMessage(error)}`,
+              `Credential validation failed; existing config was not changed.\n${errorMessage(error)}`,
               exitCodeFor(error),
             )
           }
 
+          delete config.accessToken
           delete config.apiKey
-          config.accessToken = token
+          config[credential.kind] = credential.value
           writeConfig(config)
           process.stdout.write(
-            `Token validated.\nSaved accessToken to ${getConfigPath()}\n`,
+            `Credential validated.\nSaved ${credential.kind} to ${getConfigPath()}\n`,
           )
+
+          if (credential.kind === 'apiKey') {
+            process.stdout.write(
+              'Note: API Key is the legacy v3 method. The API Read Access Token is recommended.\n',
+            )
+          }
 
           const effective = resolveCredentials()
           if (effective.source === 'environment') {
@@ -195,14 +214,14 @@ export const authCommand = defineCommand({
   },
 })
 
-async function promptForToken(): Promise<string> {
+async function promptForCredential(): Promise<string> {
   if (!process.stdin.isTTY) {
     throw new CliError(
       [
         'No interactive terminal available.',
-        'Pipe the token with --token-stdin:',
+        'Pipe the credential with --token-stdin:',
         '  printf \'%s\' "$TMDB_ACCESS_TOKEN" | tmdb auth login --token-stdin',
-        'Or set TMDB_ACCESS_TOKEN directly.',
+        'Or set TMDB_ACCESS_TOKEN / TMDB_API_KEY directly.',
       ].join('\n'),
       2,
     )
@@ -210,13 +229,13 @@ async function promptForToken(): Promise<string> {
 
   process.stdout.write(
     [
-      'Create a token at https://www.themoviedb.org/settings/api',
-      'Use the API Read Access Token (not the legacy API Key).',
+      'Create credentials at https://www.themoviedb.org/settings/api',
+      'API Read Access Token (recommended) or API Key are accepted.',
       '',
     ].join('\n'),
   )
 
-  return readSecret('TMDB access token: ')
+  return readSecret('TMDB credential: ')
 }
 
 function describeSource(credentials: ResolvedCredentials): string {
