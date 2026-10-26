@@ -248,6 +248,44 @@ export interface PersonDetails extends Omit<PersonSummary, 'known_for'> {
   place_of_birth: string | null
 }
 
+export interface PersonCombinedCastMovie extends MovieSummary {
+  character: string
+  credit_id: string
+  media_type: 'movie'
+  order?: number
+}
+
+export interface PersonCombinedCastTV extends TVSummary {
+  character: string
+  credit_id: string
+  episode_count?: number
+  media_type: 'tv'
+}
+
+export type PersonCombinedCast = PersonCombinedCastMovie | PersonCombinedCastTV
+
+export interface PersonCombinedCrewMovie extends MovieSummary {
+  credit_id: string
+  department: string
+  job: string
+  media_type: 'movie'
+}
+
+export interface PersonCombinedCrewTV extends TVSummary {
+  credit_id: string
+  department: string
+  job: string
+  media_type: 'tv'
+}
+
+export type PersonCombinedCrew = PersonCombinedCrewMovie | PersonCombinedCrewTV
+
+export interface PersonCombinedCreditsResponse {
+  cast: PersonCombinedCast[]
+  crew: PersonCombinedCrew[]
+  id: number
+}
+
 export interface MovieSearchResult extends MovieSummary {
   media_type?: 'movie'
 }

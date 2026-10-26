@@ -21,8 +21,19 @@ describe('People API (integration)', () => {
     expect(typeof person.biography).toBe('string')
   })
 
+  it('fetches combined credits for a person', async () => {
+    const credits = await tmdb.people.combinedCredits(31) // Tom Hanks
+    expect(credits.id).toBe(31)
+    expect(Array.isArray(credits.cast)).toBe(true)
+    expect(Array.isArray(credits.crew)).toBe(true)
+    expect(credits.cast.length).toBeGreaterThan(0)
+  })
+
   it('rejects invalid person ids before a request is made', () => {
     expect(() => tmdb.people.details(0)).toThrow('personId must be a positive integer')
     expect(() => tmdb.people.details(-5)).toThrow('personId must be a positive integer')
+    expect(() => tmdb.people.combinedCredits(0)).toThrow(
+      'personId must be a positive integer',
+    )
   })
 })

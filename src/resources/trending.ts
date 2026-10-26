@@ -1,7 +1,7 @@
 import type { TMDBTransport } from '../http'
 import { toTimeWindow, withLanguage } from '../query'
 import type {
-  LanguageOptions,
+  ListOptions,
   MovieSummary,
   PagedResponse,
   PersonSummary,
@@ -9,6 +9,8 @@ import type {
   TrendingTimeWindow,
   TVSummary,
 } from '../types'
+
+type TrendingOptions = Omit<ListOptions, 'region'>
 
 /**
  * Access TMDB trending content (movies, TV, people) for day/week windows.
@@ -24,44 +26,48 @@ export class TrendingResource {
 
   all(
     timeWindow: TrendingTimeWindow = 'day',
-    options: LanguageOptions = {},
+    options: TrendingOptions = {},
   ): Promise<PagedResponse<TrendingResult>> {
     return this.#transport.get(`/trending/all/${toTimeWindow(timeWindow)}`, {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
+        page: options.page,
       }),
     })
   }
 
   movies(
     timeWindow: TrendingTimeWindow = 'day',
-    options: LanguageOptions = {},
+    options: TrendingOptions = {},
   ): Promise<PagedResponse<MovieSummary & { media_type?: 'movie' }>> {
     return this.#transport.get(`/trending/movie/${toTimeWindow(timeWindow)}`, {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
+        page: options.page,
       }),
     })
   }
 
   tv(
     timeWindow: TrendingTimeWindow = 'day',
-    options: LanguageOptions = {},
+    options: TrendingOptions = {},
   ): Promise<PagedResponse<TVSummary & { media_type?: 'tv' }>> {
     return this.#transport.get(`/trending/tv/${toTimeWindow(timeWindow)}`, {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
+        page: options.page,
       }),
     })
   }
 
   people(
     timeWindow: TrendingTimeWindow = 'day',
-    options: LanguageOptions = {},
+    options: TrendingOptions = {},
   ): Promise<PagedResponse<PersonSummary & { media_type?: 'person' }>> {
     return this.#transport.get(`/trending/person/${toTimeWindow(timeWindow)}`, {
       query: withLanguage(this.#transport.defaults, {
         language: options.language,
+        page: options.page,
       }),
     })
   }
