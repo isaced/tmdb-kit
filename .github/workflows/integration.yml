@@ -11,8 +11,10 @@ on:
       - 'tests/_support/**'
       - 'tests/integration/**'
   schedule:
-    # Nightly so upstream TMDB changes surface even without a push.
-    - cron: '0 3 * * *'
+    # Weekly so upstream TMDB changes surface even without a push. Nightly
+    # proved too noisy: TMDB drift is rare, but one bad night means a failure
+    # email before anyone has looked at it.
+    - cron: '0 3 * * 1'
   workflow_dispatch:
 
 permissions:
